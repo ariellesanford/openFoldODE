@@ -5,9 +5,10 @@ set -e
 cd /home/visitor/PycharmProjects/openFold/neural_ODE
 
 # === Define variables ===
-DATA_DIR="/home/visitor/PycharmProjects/openFold/neural_ODE/quick_inference_data/data"
+DATA_DIR="/home/visitor/PycharmProjects/openFold/neural_ODE/quick_inference_data"
 OUTPUT_DIR="/home/visitor/PycharmProjects/openFold/neural_ODE/config_test_outputs"
-TEST_PROTEIN="4cue_A_evoformer_blocks"
+#TEST_PROTEIN="4cue_A_evoformer_blocks"
+TEST_PROTEIN="all"
 
 # Create output directory if it doesn't exist
 mkdir -p "${OUTPUT_DIR}"

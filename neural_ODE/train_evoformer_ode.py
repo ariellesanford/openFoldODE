@@ -62,7 +62,7 @@ parser.add_argument('--test-configs', action='store_true', default=False,
 parser.add_argument('--test-single-step', action='store_true', default=False,
                     help='Run only one training step for testing')
 parser.add_argument('--test-protein', type=str, default=None,
-                    help='Specific protein ID to test (only with --test-single-step)')
+                    help='Specific protein ID to test (use "all" to test all proteins)')
 
 # Parse arguments
 args = parser.parse_args()
@@ -435,7 +435,11 @@ def train(input_dir):
     if args.test_single_step:
         epochs_to_run = 1
         if args.test_protein:
-            if args.test_protein in dataset:
+            if args.test_protein.lower() == "all":
+                # Test on all proteins in the dataset
+                dataset_to_process = dataset
+                print(f"Testing all {len(dataset)} proteins in dataset")
+            elif args.test_protein in dataset:
                 dataset_to_process = [args.test_protein]
                 print(f"Testing single protein: {args.test_protein}")
             else:
@@ -454,6 +458,8 @@ def train(input_dir):
             clear_memory()
 
         epoch_loss = 0
+        max_mem_allocated = 0
+        max_mem_reserved = 0
 
         for step_idx, protein_id in enumerate(dataset_to_process):
             try:
@@ -461,6 +467,13 @@ def train(input_dir):
                 loss = train_step(protein_id, step_idx)
                 epoch_loss += loss
                 print(f"  - Loss: {loss}")
+
+                # Track maximum memory usage across all proteins
+                curr_mem_allocated = torch.cuda.max_memory_allocated() / 1024 ** 2
+                curr_mem_reserved = torch.cuda.max_memory_reserved() / 1024 ** 2
+                max_mem_allocated = max(max_mem_allocated, curr_mem_allocated)
+                max_mem_reserved = max(max_mem_reserved, curr_mem_reserved)
+
                 print_memory_stats(f"After protein {protein_id}")
 
             except RuntimeError as e:
@@ -475,6 +488,12 @@ def train(input_dir):
                     raise e
 
         print(f"Epoch {epoch + 1} - Average Loss: {epoch_loss / len(dataset_to_process)}")
+
+        # Print maximum memory usage across all proteins
+        if len(dataset_to_process) > 1:
+            print(f"Maximum Memory Usage Across All Proteins:")
+            print(f"  Max Memory Allocated: {max_mem_allocated:.2f} MiB")
+            print(f"  Max Memory Reserved: {max_mem_reserved:.2f} MiB")
 
         # Only save checkpoints in full training mode
         if not args.test_single_step:
