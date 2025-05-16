@@ -8,31 +8,30 @@ import re
 PDB_ID = "4cue_A"
 ROOT_FOLDER = f"../checkpointing/monomers/predictions_debugging/{PDB_ID}_evoformer_blocks"
 CHANNEL = 0
-OUTPUT_BASE_DIR = f"{PDB_ID}_plots2"
+OUTPUT_BASE_DIR = f"{PDB_ID}_plots_z"
 # ==============================
 
 def natural_key(file):
     """Sort filenames by numeric index."""
-    return int(re.findall(r"m_block_(\d+)\.pt", file)[0])
-
+    return int(re.findall(r"z_block_(\d+)\.pt", file)[0])
 
 def plot_channel_deltas_for_recycle(recycle_path, channel, output_pdf):
-    m_files = sorted([f for f in os.listdir(recycle_path) if f.startswith("m_block_")], key=natural_key)
+    z_files = sorted([f for f in os.listdir(recycle_path) if f.startswith("z_block_")], key=natural_key)
 
-    if not m_files:
-        raise ValueError(f"{recycle_path}: No m_block_*.pt files found.")
+    if not z_files:
+        raise ValueError(f"{recycle_path}: No z_block_*.pt files found.")
 
     # Load and store all blocks
-    m_blocks = [torch.load(os.path.join(recycle_path, f)) for f in m_files]
-    m_blocks = [m[0] if m.ndim == 4 else m for m in m_blocks]  # Remove batch dim if present
+    z_blocks = [torch.load(os.path.join(recycle_path, f)) for f in z_files]
+    z_blocks = [z[0] if z.ndim == 4 else z for z in z_blocks]  # Remove batch dim if present
 
     # Extract the reference (initial) slice
-    ref_slice = m_blocks[0][..., :, channel]
+    ref_slice = z_blocks[0][..., channel]  # [N_res, N_res]
 
     # === First pass: calculate global max absolute difference ===
     global_max = 0.0
-    for m in m_blocks:
-        cur_slice = m[..., :, channel]
+    for z in z_blocks:
+        cur_slice = z[..., channel]
         diff = (cur_slice - ref_slice).abs().max().item()
         if diff > global_max:
             global_max = diff
@@ -41,9 +40,9 @@ def plot_channel_deltas_for_recycle(recycle_path, channel, output_pdf):
 
     # === Second pass: plot diffs with fixed color scale ===
     with PdfPages(output_pdf) as pdf:
-        for i, m in enumerate(m_blocks):
-            cur_slice = m[..., :, channel]
-            diff = (cur_slice - ref_slice).T  # Shape: (N_seq, N_res)
+        for i, z in enumerate(z_blocks):
+            cur_slice = z[..., channel]
+            diff = (cur_slice - ref_slice).T  # Shape: (N_res, N_res)
 
             fig, ax = plt.subplots(figsize=(8, 6), facecolor='white')
             ax.set_facecolor("white")
@@ -58,16 +57,15 @@ def plot_channel_deltas_for_recycle(recycle_path, channel, output_pdf):
             )
             plt.colorbar(im, ax=ax, label=f"ΔChannel {channel} (from initial)")
 
-            title = "Initial Input" if i == 0 else f"Layer {i - 1}" if i < len(m_blocks) - 1 else "Final Output"
+            title = "Initial Input" if i == 0 else f"Layer {i - 1}" if i < len(z_blocks) - 1 else "Final Output"
             ax.set_title(f"{os.path.basename(recycle_path)} — {title} — ΔChannel {channel}")
             ax.set_xlabel("Residue Index (N_res)")
-            ax.set_ylabel("Sequence Index (N_seq)")
+            ax.set_ylabel("Residue Index (N_res)")
 
             pdf.savefig(fig)
             plt.close(fig)
 
     print(f"✅ PDF saved: {output_pdf}")
-
 
 def plot_deltas_across_recycles(root_folder, channel, output_base_dir):
     os.makedirs(output_base_dir, exist_ok=True)
@@ -75,9 +73,8 @@ def plot_deltas_across_recycles(root_folder, channel, output_base_dir):
     recycle_folders = sorted([f for f in os.listdir(root_folder) if f.startswith("recycle_")])
     for recycle_name in recycle_folders:
         recycle_path = os.path.join(root_folder, recycle_name)
-        output_pdf = os.path.join(output_base_dir, f"{PDB_ID}_{recycle_name}_channel{channel}_input_deltas.pdf")
+        output_pdf = os.path.join(output_base_dir, f"{PDB_ID}_{recycle_name}_channel{channel}_z_input_deltas.pdf")
         plot_channel_deltas_for_recycle(recycle_path, channel, output_pdf)
-
 
 if __name__ == "__main__":
     plot_deltas_across_recycles(ROOT_FOLDER, channel=CHANNEL, output_base_dir=OUTPUT_BASE_DIR)

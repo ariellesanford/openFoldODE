@@ -396,7 +396,6 @@ def main(args):
                     logger.info(f"Model output written to {output_dict_path}...")
 
             except Exception as e:
-                logger.error(f"❌ Failed to run inference for {tag}: {str(e)} — skipping to next.")
                 continue
 
 

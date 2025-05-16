@@ -5,8 +5,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 import re
 
 # === EDIT THESE PARAMETERS ===
-PDB_ID = "4cue_A"
-ROOT_FOLDER = f'/home/visitor/PycharmProjects/openFold/neural_ODE/data/{PDB_ID}_evoformer_blocks'
+PDB_ID = "1fme_A"
+ROOT_FOLDER = f'/home/visitor/PycharmProjects/openFold/neural_ODE/quick_inference_data/{PDB_ID}_evoformer_blocks'
 CHANNEL = 0
 OUTPUT_BASE_DIR = f"{ROOT_FOLDER}"
 DEVICE = "cuda:0"  # Change to "cpu" if CUDA is not available

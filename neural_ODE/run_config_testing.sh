@@ -5,7 +5,7 @@ set -e
 cd /home/visitor/PycharmProjects/openFold/neural_ODE
 
 # === Define variables ===
-DATA_DIR="/home/visitor/PycharmProjects/openFold/neural_ODE/data"
+DATA_DIR="/home/visitor/PycharmProjects/openFold/neural_ODE/quick_inference_data/data"
 OUTPUT_DIR="/home/visitor/PycharmProjects/openFold/neural_ODE/config_test_outputs"
 TEST_PROTEIN="4cue_A_evoformer_blocks"
 

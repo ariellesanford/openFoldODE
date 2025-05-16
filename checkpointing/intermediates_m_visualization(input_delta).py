@@ -5,10 +5,10 @@ from matplotlib.backends.backend_pdf import PdfPages
 import re
 
 # === EDIT THESE PARAMETERS ===
-PDB_ID = "4cue_A"
-ROOT_FOLDER = f"../checkpointing/monomers/predictions_debugging/{PDB_ID}_evoformer_blocks"
+PDB_ID = "1fme_A"
+ROOT_FOLDER = f"../checkpointing/monomers/predictions_noRecycles/{PDB_ID}_evoformer_blocks"
 CHANNEL = 0
-OUTPUT_BASE_DIR = f"{PDB_ID}_plots2"
+OUTPUT_BASE_DIR = f"{ROOT_FOLDER}"
 # ==============================
 
 def natural_key(file):
@@ -75,7 +75,7 @@ def plot_deltas_across_recycles(root_folder, channel, output_base_dir):
     recycle_folders = sorted([f for f in os.listdir(root_folder) if f.startswith("recycle_")])
     for recycle_name in recycle_folders:
         recycle_path = os.path.join(root_folder, recycle_name)
-        output_pdf = os.path.join(output_base_dir, f"{PDB_ID}_{recycle_name}_channel{channel}_input_deltas.pdf")
+        output_pdf = os.path.join(output_base_dir, f"{PDB_ID}_{recycle_name}_channel{channel}_m_input_deltas.pdf")
         plot_channel_deltas_for_recycle(recycle_path, channel, output_pdf)
 
 
