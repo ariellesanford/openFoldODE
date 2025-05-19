@@ -45,6 +45,10 @@ parser.add_argument('--integrator', choices=['dopri5', 'rk4', 'euler'], default=
                     help='ODE integrator method')
 parser.add_argument('--batch_size', type=int, default=5,
                     help='Batch size for time steps')
+parser.add_argument('--use_fast_ode', action='store_true', default=False,
+                    help='Use the faster implementation of EvoformerODEFunc')
+parser.add_argument('--no-use_fast_ode', dest='use_fast_ode', action='store_false',
+                    help='Use the standard implementation of EvoformerODEFunc')
 parser.add_argument('--monitor_memory', action='store_true', default=False,
                     help='Print memory usage statistics')
 parser.add_argument('--no-monitor_memory', dest='monitor_memory', action='store_false',
@@ -53,7 +57,7 @@ parser.add_argument('--no-monitor_memory', dest='monitor_memory', action='store_
 # Data and output directory options
 parser.add_argument('--data_dir', type=str, default=None,
                     help='Path to data directory')
-parser.add_argument('--output_dir', type=str, default='.',
+parser.add_argument('--output_dir', type=str, default=None,
                     help='Path to output directory')
 
 # Test mode option
@@ -63,6 +67,8 @@ parser.add_argument('--test-single-step', action='store_true', default=False,
                     help='Run only one training step for testing')
 parser.add_argument('--test-protein', type=str, default=None,
                     help='Specific protein ID to test (use "all" to test all proteins)')
+parser.add_argument('--epochs', type=int, default=5,
+                    help='Number of training epochs')
 
 # Parse arguments
 args = parser.parse_args()
@@ -111,12 +117,22 @@ c_m = 256  # MSA (M) channels
 c_z = 128  # Pair (Z) channels
 hidden_dim = args.reduced_hidden_dim  # Configurable hidden dimension
 learning_rate = 1e-3
-epochs = 5
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Use command line data directory if provided, otherwise use default
-DATA_DIR = args.data_dir if args.data_dir else "/home/visitor/PycharmProjects/openFold/neural_ODE/data"
-OUTPUT_DIR = args.output_dir
+if args.data_dir is None:
+    print("Warning: No data directory specified. Using default.")
+    DATA_DIR = "/home/visitor/PycharmProjects/openFold/neural_ODE/data"
+else:
+    DATA_DIR = args.data_dir
+    print(f"Using data directory: {DATA_DIR}")
+
+if args.output_dir is None:
+    print("Warning: No output directory specified. Using current directory.")
+    OUTPUT_DIR = "."
+else:
+    OUTPUT_DIR = args.output_dir
+    print(f"Using output directory: {OUTPUT_DIR}")
 
 # Use configured memory optimization settings
 USE_AMP = args.use_amp
@@ -227,7 +243,14 @@ class CheckpointedEvoformerODEFunc(torch.nn.Module):
 
 
 # Initialize model with configurable parameters
-ode_func = EvoformerODEFunc(c_m, c_z, hidden_dim).to(device)
+if args.use_fast_ode:
+    print("Using FAST EvoformerODEFunc implementation")
+    from evoformer_ode import EvoformerODEFuncFast as OdeFunction
+else:
+    print("Using standard EvoformerODEFunc implementation")
+    from evoformer_ode import EvoformerODEFunc as OdeFunction
+
+ode_func = OdeFunction(c_m, c_z, hidden_dim).to(device)
 checkpointed_ode_func = CheckpointedEvoformerODEFunc(ode_func, use_checkpoint=args.use_checkpoint)
 optimizer = optim.Adam(ode_func.parameters(), lr=learning_rate)
 
@@ -388,8 +411,24 @@ def train_step(protein_id, step_idx):
                     print(f"Skipping block {time_idx} for {protein_id} (not found)")
                     continue
 
-                # Get predictions
-                pred_m, pred_z = pred_trajectory[0][i], pred_trajectory[1][i]
+                # Get predictions - FIX: Check if i is within bounds
+                # This is the fix for the index out of bounds error
+                if isinstance(pred_trajectory, tuple):
+                    # Make sure i is within bounds of pred_trajectory
+                    if i < pred_trajectory[0].shape[0] and i < pred_trajectory[1].shape[0]:
+                        pred_m, pred_z = pred_trajectory[0][i], pred_trajectory[1][i]
+                    else:
+                        print(f"Warning: Index {i} out of bounds for pred_trajectory with shape "
+                              f"{pred_trajectory[0].shape[0]}, {pred_trajectory[1].shape[0]}. Skipping...")
+                        continue
+                else:
+                    # Handle different output formats for different integrators
+                    if i < pred_trajectory[0].shape[0] and i < pred_trajectory[1].shape[0]:
+                        pred_m, pred_z = pred_trajectory[0][i], pred_trajectory[1][i]
+                    else:
+                        print(f"Warning: Index {i} out of bounds for pred_trajectory with shape "
+                              f"{pred_trajectory[0].shape[0]}, {pred_trajectory[1].shape[0]}. Skipping...")
+                        continue
 
                 # Compute loss
                 loss = loss_fn(pred_m, gt_m) + loss_fn(pred_z, gt_z)
@@ -450,7 +489,7 @@ def train(input_dir):
             dataset_to_process = dataset[:1]
             print(f"Testing first protein: {dataset_to_process[0]}")
     else:
-        epochs_to_run = epochs
+        epochs_to_run = args.epochs  # Use configurable epochs parameter
         dataset_to_process = dataset
 
     for epoch in range(epochs_to_run):

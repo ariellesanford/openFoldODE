@@ -16,7 +16,7 @@ def clear_memory():
     torch.cuda.reset_peak_memory_stats()
 
 
-def test_memory_configurations(python_path, script_path, data_dir, output_dir, test_protein=None):
+def test_memory_configurations(python_path, script_path, data_dir, output_dir, test_protein=None, use_fast_ode=False):
     """
     Test different memory optimization configurations by calling the training script
     with different flag combinations.
@@ -27,6 +27,7 @@ def test_memory_configurations(python_path, script_path, data_dir, output_dir, t
         data_dir: Data directory path
         output_dir: Output directory path
         test_protein: Specific protein ID to test (optional)
+        use_fast_ode: Whether to use the fast ODE implementation
 
     Returns:
         List of results for each configuration tested
@@ -38,10 +39,10 @@ def test_memory_configurations(python_path, script_path, data_dir, output_dir, t
             "name": "True Baseline (Original values, no optimizations)",
             "flags": {
                 "memory_split_size": 128,
-                "reduced_cluster_size": 128,  # Original cluster size
-                "reduced_hidden_dim": 128,  # Original hidden dim
-                "num_time_points": 49,  # Original time points (49)
-                "batch_size": 5,
+                "reduced_cluster_size": 64,  # Reduced cluster size to avoid OOM
+                "reduced_hidden_dim": 64,  # Reduced hidden dim to avoid OOM
+                "num_time_points": 25,  # Fewer time points
+                "batch_size": 1,
                 "integrator": "rk4",
                 "gradient_accumulation": 1,
                 "chunk_size": 0,
@@ -50,15 +51,49 @@ def test_memory_configurations(python_path, script_path, data_dir, output_dir, t
             "no_flags": ["use_amp", "use_checkpoint", "reduced_precision_integration", "clean_memory"]
         },
 
-        # 2. Memory optimized baseline - original values with key memory optimizations
+        # 2. AMP Only - only use Automatic Mixed Precision
+        {
+            "name": "AMP Only",
+            "flags": {
+                "memory_split_size": 128,
+                "reduced_cluster_size": 64,  # Reduced cluster size
+                "reduced_hidden_dim": 64,  # Reduced hidden dim
+                "num_time_points": 25,  # Fewer time points
+                "batch_size": 1,
+                "integrator": "rk4",
+                "gradient_accumulation": 1,
+                "chunk_size": 0,
+            },
+            "bool_flags": ["use_amp", "monitor_memory", "test-single-step"],
+            "no_flags": ["use_checkpoint", "reduced_precision_integration", "clean_memory"]
+        },
+
+        # 3. Checkpoint Only - only use gradient checkpointing
+        {
+            "name": "Checkpoint Only",
+            "flags": {
+                "memory_split_size": 128,
+                "reduced_cluster_size": 64,  # Reduced cluster size
+                "reduced_hidden_dim": 64,  # Reduced hidden dim
+                "num_time_points": 25,  # Fewer time points
+                "batch_size": 1,
+                "integrator": "rk4",
+                "gradient_accumulation": 1,
+                "chunk_size": 0,
+            },
+            "bool_flags": ["use_checkpoint", "monitor_memory", "test-single-step"],
+            "no_flags": ["use_amp", "reduced_precision_integration", "clean_memory"]
+        },
+
+        # 4. Memory optimized baseline - original values with key memory optimizations
         {
             "name": "Memory Optimized Baseline",
             "flags": {
                 "memory_split_size": 128,
-                "reduced_cluster_size": 128,  # Original cluster size
-                "reduced_hidden_dim": 128,  # Original hidden dim
-                "num_time_points": 49,  # Original time points
-                "batch_size": 5,
+                "reduced_cluster_size": 96,  # Slightly reduced but not too much
+                "reduced_hidden_dim": 96,  # Slightly reduced but not too much
+                "num_time_points": 25,  # Fewer time points for speed
+                "batch_size": 1,
                 "integrator": "rk4",
                 "gradient_accumulation": 1,
                 "chunk_size": 0,
@@ -67,148 +102,39 @@ def test_memory_configurations(python_path, script_path, data_dir, output_dir, t
             "no_flags": ["reduced_precision_integration", "clean_memory"]
         },
 
-        # 3. Previous best balanced configuration
+        # 5. Speed-Optimized Configuration
         {
-            "name": "Previous Best Balanced",
+            "name": "Speed-Optimized",
             "flags": {
                 "memory_split_size": 128,
-                "reduced_cluster_size": 96,
-                "reduced_hidden_dim": 128,
-                "num_time_points": 35,
-                "batch_size": 3,
-                "integrator": "dopri5",
-                "gradient_accumulation": 2,
-                "chunk_size": 5,
+                "reduced_cluster_size": 64,  # Reduced cluster size
+                "reduced_hidden_dim": 64,  # Reduced hidden dim
+                "num_time_points": 15,  # Very few time points for speed
+                "batch_size": 1,
+                "integrator": "rk4",  # RK4 is faster for low precision
+                "gradient_accumulation": 1,
+                "chunk_size": 0,
             },
-            "bool_flags": ["use_amp", "use_checkpoint", "reduced_precision_integration",
-                           "clean_memory", "monitor_memory", "test-single-step"],
-            "no_flags": []
+            "bool_flags": ["use_amp", "use_checkpoint", "reduced_precision_integration", "monitor_memory",
+                           "test-single-step", "use_fast_ode"],
+            "no_flags": ["clean_memory"]
         },
 
-        # 4. Balanced with full cluster size
+        # 6. Balance of Speed and Quality
         {
-            "name": "Balanced with Full Cluster Size",
+            "name": "Balanced Speed-Quality",
             "flags": {
                 "memory_split_size": 128,
-                "reduced_cluster_size": 128,  # Full cluster size
-                "reduced_hidden_dim": 128,
-                "num_time_points": 35,
-                "batch_size": 3,
-                "integrator": "dopri5",
-                "gradient_accumulation": 2,
-                "chunk_size": 5,
+                "reduced_cluster_size": 80,  # Moderate cluster size
+                "reduced_hidden_dim": 80,  # Moderate hidden dim
+                "num_time_points": 20,  # Moderate time points
+                "batch_size": 1,
+                "integrator": "rk4",
+                "gradient_accumulation": 1,
+                "chunk_size": 5,  # Use chunking for memory efficiency
             },
-            "bool_flags": ["use_amp", "use_checkpoint", "reduced_precision_integration",
-                           "clean_memory", "monitor_memory", "test-single-step"],
-            "no_flags": []
-        },
-
-        # 5. Balanced with more time points
-        {
-            "name": "Balanced with More Time Points",
-            "flags": {
-                "memory_split_size": 128,
-                "reduced_cluster_size": 96,
-                "reduced_hidden_dim": 128,
-                "num_time_points": 45,  # More time points
-                "batch_size": 3,
-                "integrator": "dopri5",
-                "gradient_accumulation": 2,
-                "chunk_size": 5,
-            },
-            "bool_flags": ["use_amp", "use_checkpoint", "reduced_precision_integration",
-                           "clean_memory", "monitor_memory", "test-single-step"],
-            "no_flags": []
-        },
-
-        # 6. Balanced with larger batch size
-        {
-            "name": "Balanced with Larger Batch",
-            "flags": {
-                "memory_split_size": 128,
-                "reduced_cluster_size": 96,
-                "reduced_hidden_dim": 128,
-                "num_time_points": 35,
-                "batch_size": 5,  # Larger batch
-                "integrator": "dopri5",
-                "gradient_accumulation": 2,
-                "chunk_size": 5,
-            },
-            "bool_flags": ["use_amp", "use_checkpoint", "reduced_precision_integration",
-                           "clean_memory", "monitor_memory", "test-single-step"],
-            "no_flags": []
-        },
-
-        # 7. Balanced with gradient accum = 1
-        {
-            "name": "Balanced with Grad Accum = 1",
-            "flags": {
-                "memory_split_size": 128,
-                "reduced_cluster_size": 96,
-                "reduced_hidden_dim": 128,
-                "num_time_points": 35,
-                "batch_size": 3,
-                "integrator": "dopri5",
-                "gradient_accumulation": 1,  # No accumulation
-                "chunk_size": 5,
-            },
-            "bool_flags": ["use_amp", "use_checkpoint", "reduced_precision_integration",
-                           "clean_memory", "monitor_memory", "test-single-step"],
-            "no_flags": []
-        },
-
-        # 8. Balanced with larger chunk size
-        {
-            "name": "Balanced with Larger Chunks",
-            "flags": {
-                "memory_split_size": 128,
-                "reduced_cluster_size": 96,
-                "reduced_hidden_dim": 128,
-                "num_time_points": 35,
-                "batch_size": 3,
-                "integrator": "dopri5",
-                "gradient_accumulation": 2,
-                "chunk_size": 10,  # Larger chunks
-            },
-            "bool_flags": ["use_amp", "use_checkpoint", "reduced_precision_integration",
-                           "clean_memory", "monitor_memory", "test-single-step"],
-            "no_flags": []
-        },
-
-        # 9. Balanced with larger hidden dim
-        {
-            "name": "Balanced with Larger Hidden Dim",
-            "flags": {
-                "memory_split_size": 128,
-                "reduced_cluster_size": 96,
-                "reduced_hidden_dim": 160,  # Larger hidden dim
-                "num_time_points": 35,
-                "batch_size": 3,
-                "integrator": "dopri5",
-                "gradient_accumulation": 2,
-                "chunk_size": 5,
-            },
-            "bool_flags": ["use_amp", "use_checkpoint", "reduced_precision_integration",
-                           "clean_memory", "monitor_memory", "test-single-step"],
-            "no_flags": []
-        },
-
-        # 10. Optimal full parameter combination
-        {
-            "name": "Optimal Full Configuration",
-            "flags": {
-                "memory_split_size": 128,
-                "reduced_cluster_size": 128,  # Full cluster size
-                "reduced_hidden_dim": 160,  # Larger hidden dim
-                "num_time_points": 45,  # More time points
-                "batch_size": 3,
-                "integrator": "dopri5",
-                "gradient_accumulation": 1,  # No accumulation
-                "chunk_size": 5,
-            },
-            "bool_flags": ["use_amp", "use_checkpoint", "reduced_precision_integration",
-                           "clean_memory", "monitor_memory", "test-single-step"],
-            "no_flags": []
+            "bool_flags": ["use_amp", "use_checkpoint", "monitor_memory", "test-single-step"],
+            "no_flags": ["reduced_precision_integration", "clean_memory"]
         }
     ]
 
@@ -235,9 +161,20 @@ def test_memory_configurations(python_path, script_path, data_dir, output_dir, t
         for flag, value in config["flags"].items():
             cmd.extend([f"--{flag}", str(value)])
 
-        # Add boolean flags
+        # Add boolean flags for the train_evoformer_ode.py script
+        training_bool_flags = []
         for flag in config["bool_flags"]:
-            cmd.append(f"--{flag}")
+            if flag == "use_fast_ode" and flag in cmd:
+                # Skip if we've already added this flag to avoid duplication
+                continue
+            training_bool_flags.append(f"--{flag}")
+
+        # If global use_fast_ode is enabled, add it to all configurations
+        if use_fast_ode and "--use_fast_ode" not in training_bool_flags and "use_fast_ode" not in config["no_flags"]:
+            training_bool_flags.append("--use_fast_ode")
+
+        # Add all bool flags to the command
+        cmd.extend(training_bool_flags)
 
         # IMPORTANT: Explicitly disable flags that should be off
         for flag in config["no_flags"]:
@@ -265,7 +202,7 @@ def test_memory_configurations(python_path, script_path, data_dir, output_dir, t
             start_time = time_module.time()
 
             # Run training script as subprocess and capture output
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)  # Reduced timeout to 2 minutes
 
             elapsed_time = (time_module.time() - start_time) * 1000  # Convert to ms
 
@@ -282,13 +219,15 @@ def test_memory_configurations(python_path, script_path, data_dir, output_dir, t
                 output_lines = result.stdout.split('\n')
                 loss = None
                 max_memory = None
+                all_proteins_skipped = True  # Flag to check if all proteins were skipped
 
                 for line in output_lines:
-                    if "Loss:" in line and loss is None:  # Get first loss value
+                    if "Loss:" in line and "Step" in line and loss is None:  # Get first loss value
                         try:
                             # Extract loss from lines like "  - Loss: 5888.4352"
                             loss_str = line.split("Loss:")[-1].strip()
                             loss = float(loss_str)
+                            all_proteins_skipped = False  # At least one protein was processed
                         except:
                             pass
                     if "Max Memory Allocated:" in line:
@@ -297,6 +236,9 @@ def test_memory_configurations(python_path, script_path, data_dir, output_dir, t
                             max_memory = float(mem_str)
                         except:
                             pass
+                    # Check if any protein was processed successfully
+                    if "CUDA OOM for protein" not in line and "Step" in line and "Processing protein" in line:
+                        all_proteins_skipped = False
 
                 # Check for max memory info for all proteins
                 for line in output_lines:
@@ -311,27 +253,43 @@ def test_memory_configurations(python_path, script_path, data_dir, output_dir, t
                                 except:
                                     pass
 
-                if loss is None:
-                    loss = 0.0
-                if max_memory is None:
-                    max_memory = torch.cuda.max_memory_allocated() / 1024 ** 2
+                if all_proteins_skipped:
+                    # All proteins were skipped due to OOM
+                    error_msg = "All proteins were skipped due to OOM"
+                    result_dict = {
+                        "name": config['name'],
+                        "config": config["flags"],
+                        "bool_flags": config["bool_flags"],
+                        "no_flags": config["no_flags"],
+                        "success": False,
+                        "error": "All OOM",
+                        "max_memory_mb": max_memory if max_memory is not None else 0
+                    }
+                    results.append(result_dict)
+                    print(f"\n✗ FAILED - All proteins skipped due to OOM")
+                else:
+                    # At least one protein was processed
+                    if loss is None:
+                        loss = 0.0
+                    if max_memory is None:
+                        max_memory = torch.cuda.max_memory_allocated() / 1024 ** 2
 
-                result_dict = {
-                    "name": config['name'],
-                    "config": config["flags"],
-                    "bool_flags": config["bool_flags"],
-                    "no_flags": config["no_flags"],
-                    "success": True,
-                    "loss": loss,
-                    "max_memory_mb": max_memory,
-                    "time_ms": elapsed_time
-                }
-                results.append(result_dict)
+                    result_dict = {
+                        "name": config['name'],
+                        "config": config["flags"],
+                        "bool_flags": config["bool_flags"],
+                        "no_flags": config["no_flags"],
+                        "success": True,
+                        "loss": loss,
+                        "max_memory_mb": max_memory,
+                        "time_ms": elapsed_time
+                    }
+                    results.append(result_dict)
 
-                print(f"\n✓ SUCCESS")
-                print(f"  Loss: {loss:.4f}")
-                print(f"  Max Memory: {max_memory:.2f} MB")
-                print(f"  Time: {elapsed_time:.2f} ms")
+                    print(f"\n✓ SUCCESS")
+                    print(f"  Loss: {loss:.4f}")
+                    print(f"  Max Memory: {max_memory:.2f} MB")
+                    print(f"  Time: {elapsed_time:.2f} ms")
 
             else:
                 # Failed
@@ -387,20 +345,20 @@ def test_memory_configurations(python_path, script_path, data_dir, output_dir, t
         clear_memory()
 
     # Print summary
-    print_configuration_summary(results)
+    summary_text = print_configuration_summary(results)
 
     return results
 
 
 def print_configuration_summary(results: List[Dict[str, Any]]):
     """Print a formatted summary of configuration test results"""
-    print("\n" + "=" * 60)
-    print("CONFIGURATION TEST SUMMARY")
-    print("=" * 60)
+    summary_text = "\n" + "=" * 60 + "\n"
+    summary_text += "CONFIGURATION TEST SUMMARY\n"
+    summary_text += "=" * 60 + "\n\n"
 
     # Table header
-    print(f"\n{'Name':<25} {'Status':<10} {'Memory (MB)':<12} {'Time (ms)':<12} {'Loss':<10}")
-    print("-" * 80)
+    summary_text += f"{'Name':<25} {'Status':<10} {'Memory (MB)':<12} {'Time (ms)':<12} {'Loss':<10}\n"
+    summary_text += "-" * 80 + "\n"
 
     # Results table
     for result in results:
@@ -410,39 +368,39 @@ def print_configuration_summary(results: List[Dict[str, Any]]):
         time = f"{result.get('time_ms', 0):.2f}" if 'time_ms' in result else "N/A"
         loss = f"{result.get('loss', 0):.4f}" if 'loss' in result else "N/A"
 
-        print(f"{name:<25} {status:<10} {memory:<12} {time:<12} {loss:<10}")
+        summary_text += f"{name:<25} {status:<10} {memory:<12} {time:<12} {loss:<10}\n"
 
     # Find best configurations
     successful_configs = [r for r in results if r['success']]
 
     if successful_configs:
-        print("\n" + "=" * 60)
-        print("BEST CONFIGURATIONS")
-        print("=" * 60)
+        summary_text += "\n" + "=" * 60 + "\n"
+        summary_text += "BEST CONFIGURATIONS\n"
+        summary_text += "=" * 60 + "\n"
 
         # Best for memory
         best_memory = min(successful_configs, key=lambda x: x['max_memory_mb'])
-        print(f"\n🏆 Best Memory Efficiency:")
-        print(f"   Name: {best_memory['name']}")
-        print(f"   Memory: {best_memory['max_memory_mb']:.2f} MB")
-        print(f"   Time: {best_memory['time_ms']:.2f} ms")
-        print(f"   Loss: {best_memory['loss']:.4f}")
+        summary_text += f"\n🏆 Best Memory Efficiency:\n"
+        summary_text += f"   Name: {best_memory['name']}\n"
+        summary_text += f"   Memory: {best_memory['max_memory_mb']:.2f} MB\n"
+        summary_text += f"   Time: {best_memory['time_ms']:.2f} ms\n"
+        summary_text += f"   Loss: {best_memory['loss']:.4f}\n"
 
         # Best for speed
         best_speed = min(successful_configs, key=lambda x: x['time_ms'])
-        print(f"\n🏆 Best Speed:")
-        print(f"   Name: {best_speed['name']}")
-        print(f"   Memory: {best_speed['max_memory_mb']:.2f} MB")
-        print(f"   Time: {best_speed['time_ms']:.2f} ms")
-        print(f"   Loss: {best_speed['loss']:.4f}")
+        summary_text += f"\n🏆 Best Speed:\n"
+        summary_text += f"   Name: {best_speed['name']}\n"
+        summary_text += f"   Memory: {best_speed['max_memory_mb']:.2f} MB\n"
+        summary_text += f"   Time: {best_speed['time_ms']:.2f} ms\n"
+        summary_text += f"   Loss: {best_speed['loss']:.4f}\n"
 
         # Best for loss
         best_loss = min(successful_configs, key=lambda x: x['loss'])
-        print(f"\n🏆 Best Loss Performance:")
-        print(f"   Name: {best_loss['name']}")
-        print(f"   Memory: {best_loss['max_memory_mb']:.2f} MB")
-        print(f"   Time: {best_loss['time_ms']:.2f} ms")
-        print(f"   Loss: {best_loss['loss']:.4f}")
+        summary_text += f"\n🏆 Best Loss Performance:\n"
+        summary_text += f"   Name: {best_loss['name']}\n"
+        summary_text += f"   Memory: {best_loss['max_memory_mb']:.2f} MB\n"
+        summary_text += f"   Time: {best_loss['time_ms']:.2f} ms\n"
+        summary_text += f"   Loss: {best_loss['loss']:.4f}\n"
 
         # Recommended balance
         # Score = normalized memory + normalized time (lower is better)
@@ -457,15 +415,21 @@ def print_configuration_summary(results: List[Dict[str, Any]]):
             config['balance_score'] = norm_mem + norm_time
 
         best_balance = min(successful_configs, key=lambda x: x['balance_score'])
-        print(f"\n🏆 Best Balance (Memory + Speed):")
-        print(f"   Name: {best_balance['name']}")
-        print(f"   Memory: {best_balance['max_memory_mb']:.2f} MB")
-        print(f"   Time: {best_balance['time_ms']:.2f} ms")
-        print(f"   Loss: {best_balance['loss']:.4f}")
+        summary_text += f"\n🏆 Best Balance (Memory + Speed):\n"
+        summary_text += f"   Name: {best_balance['name']}\n"
+        summary_text += f"   Memory: {best_balance['max_memory_mb']:.2f} MB\n"
+        summary_text += f"   Time: {best_balance['time_ms']:.2f} ms\n"
+        summary_text += f"   Loss: {best_balance['loss']:.4f}\n"
     else:
-        print("\n⚠️  No successful configurations found!")
+        summary_text += "\n⚠️  No successful configurations found!\n"
 
-    print("\n" + "=" * 60)
+    summary_text += "\n" + "=" * 60
+
+    # Print the summary to console
+    print(summary_text)
+
+    # Return the text for file writing
+    return summary_text
 
 
 def generate_config_report(results: List[Dict[str, Any]], output_file: str = "memory_optimization_report.txt"):
@@ -483,80 +447,12 @@ def generate_config_report(results: List[Dict[str, Any]], output_file: str = "me
             f.write(f"  PyTorch Version: {torch.__version__}\n")
         f.write("\n")
 
-        # Summary table (same as the printed one)
-        f.write("=" * 60 + "\n")
-        f.write("CONFIGURATION TEST SUMMARY\n")
-        f.write("=" * 60 + "\n\n")
+        # Get summary text (will also print to console)
+        summary_text = print_configuration_summary(results)
 
-        # Table header
-        f.write(f"{'Name':<25} {'Status':<10} {'Memory (MB)':<12} {'Time (ms)':<12} {'Loss':<10}\n")
-        f.write("-" * 80 + "\n")
-
-        # Results table
-        for result in results:
-            name = result['name'][:24]  # Truncate long names
-            status = "SUCCESS" if result['success'] else f"FAILED ({result.get('error', 'Unknown')})"
-            memory = f"{result.get('max_memory_mb', 0):.2f}" if 'max_memory_mb' in result else "N/A"
-            time = f"{result.get('time_ms', 0):.2f}" if 'time_ms' in result else "N/A"
-            loss = f"{result.get('loss', 0):.4f}" if 'loss' in result else "N/A"
-
-            f.write(f"{name:<25} {status:<10} {memory:<12} {time:<12} {loss:<10}\n")
-
-        f.write("\n")
-
-        # Best configurations section
-        successful_configs = [r for r in results if r['success']]
-        if successful_configs:
-            f.write("=" * 60 + "\n")
-            f.write("BEST CONFIGURATIONS\n")
-            f.write("=" * 60 + "\n\n")
-
-            # Best for memory
-            best_memory = min(successful_configs, key=lambda x: x['max_memory_mb'])
-            f.write(f"🏆 Best Memory Efficiency:\n")
-            f.write(f"   Name: {best_memory['name']}\n")
-            f.write(f"   Memory: {best_memory['max_memory_mb']:.2f} MB\n")
-            f.write(f"   Time: {best_memory['time_ms']:.2f} ms\n")
-            f.write(f"   Loss: {best_memory['loss']:.4f}\n\n")
-
-            # Best for speed
-            best_speed = min(successful_configs, key=lambda x: x['time_ms'])
-            f.write(f"🏆 Best Speed:\n")
-            f.write(f"   Name: {best_speed['name']}\n")
-            f.write(f"   Memory: {best_speed['max_memory_mb']:.2f} MB\n")
-            f.write(f"   Time: {best_speed['time_ms']:.2f} ms\n")
-            f.write(f"   Loss: {best_speed['loss']:.4f}\n\n")
-
-            # Best for loss
-            best_loss = min(successful_configs, key=lambda x: x['loss'])
-            f.write(f"🏆 Best Loss Performance:\n")
-            f.write(f"   Name: {best_loss['name']}\n")
-            f.write(f"   Memory: {best_loss['max_memory_mb']:.2f} MB\n")
-            f.write(f"   Time: {best_loss['time_ms']:.2f} ms\n")
-            f.write(f"   Loss: {best_loss['loss']:.4f}\n\n")
-
-            # Recommended balance
-            # Score = normalized memory + normalized time (lower is better)
-            min_mem = min(c['max_memory_mb'] for c in successful_configs)
-            max_mem = max(c['max_memory_mb'] for c in successful_configs)
-            min_time = min(c['time_ms'] for c in successful_configs)
-            max_time = max(c['time_ms'] for c in successful_configs)
-
-            for config in successful_configs:
-                norm_mem = (config['max_memory_mb'] - min_mem) / (max_mem - min_mem) if max_mem > min_mem else 0
-                norm_time = (config['time_ms'] - min_time) / (max_time - min_time) if max_time > min_time else 0
-                config['balance_score'] = norm_mem + norm_time
-
-            best_balance = min(successful_configs, key=lambda x: x['balance_score'])
-            f.write(f"🏆 Best Balance (Memory + Speed):\n")
-            f.write(f"   Name: {best_balance['name']}\n")
-            f.write(f"   Memory: {best_balance['max_memory_mb']:.2f} MB\n")
-            f.write(f"   Time: {best_balance['time_ms']:.2f} ms\n")
-            f.write(f"   Loss: {best_balance['loss']:.4f}\n\n")
-
-            f.write("=" * 60 + "\n\n")
-        else:
-            f.write("\n⚠️  No successful configurations found!\n\n")
+        # Write the summary to the file
+        f.write(summary_text)
+        f.write("\n\n")
 
         # Detailed results
         f.write("Detailed Configuration Results:\n")
@@ -610,6 +506,10 @@ def main():
                         help='Path to training script')
     parser.add_argument('--test-protein', type=str, default=None,
                         help='Specific protein ID to test (use "all" to test all proteins)')
+    parser.add_argument('--use_fast_ode', action='store_true', default=False,
+                        help='Use fast EvoformerODE implementation for all configs')
+    parser.add_argument('--no-use_fast_ode', dest='use_fast_ode', action='store_false',
+                        help='Use standard EvoformerODE implementation for all configs')
 
     args = parser.parse_args()
 
@@ -621,6 +521,14 @@ def main():
     print(f"Output directory: {args.output_dir}")
     print(f"Python path: {args.python_path}")
     print(f"Script path: {args.script_path}")
+    # Check if USE_FAST_ODE environment variable is set
+    use_fast_ode_env = os.environ.get('USE_FAST_ODE', '').lower() == 'true'
+    if use_fast_ode_env:
+        print("Using FAST ODE implementation (from environment variable)")
+        # Override the command line argument
+        use_fast_ode = True
+
+    print(f"Using fast ODE implementation: {use_fast_ode}")
     if args.test_protein:
         print(f"Testing protein: {args.test_protein}")
 
@@ -630,7 +538,8 @@ def main():
         script_path=args.script_path,
         data_dir=args.data_dir,
         output_dir=args.output_dir,
-        test_protein=args.test_protein
+        test_protein=args.test_protein,
+        use_fast_ode=use_fast_ode
     )
 
     # Generate report
