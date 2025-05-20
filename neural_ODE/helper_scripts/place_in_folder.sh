@@ -1,8 +1,12 @@
 #!/bin/bash
 set -e
 
-# Directory containing the FASTA files
-FASTA_DIR="/home/visitor/PycharmProjects/openFold/checkpointing/monomers/fasta_dir"
+# Get the actual directory where the script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
+
+# Find path to required directories
+FASTA_DIR="${ROOT_DIR}/checkpointing/monomers/fasta_dir"
 
 # Loop over all FASTA files in the directory
 for fasta_file in "${FASTA_DIR}"/*.fasta; do

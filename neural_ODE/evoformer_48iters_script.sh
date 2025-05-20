@@ -1,12 +1,13 @@
 #!/bin/bash
 set -e
 
-# === Change to the desired working directory ===
-cd /home/visitor/PycharmProjects/openFold/evoformer_iter
+# Get the actual directory where the script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
 
-# === Define variables ===
+# === Define variables based on project root ===
 PDB_ID="5fr6_A"
-DATA_DIR="../neural_ODE/quick_inference_data/${PDB_ID}_evoformer_blocks/recycle_0"
+DATA_DIR="${SCRIPT_DIR}/quick_inference_data/${PDB_ID}_evoformer_blocks/recycle_0"
 OUTPUT_DIR="${DATA_DIR}"
 
 # Initial paths for m and z
@@ -16,6 +17,9 @@ Z_PATH="${DATA_DIR}/z_block_${INDEX}.pt"
 
 # Number of iterations
 NUM_ITERATIONS=48
+
+# Get path to python interpreter (use the system's python if not in specific environment)
+PYTHON_PATH=$(which python)
 
 # Start total timer
 TOTAL_START=$(date +%s)
@@ -27,8 +31,11 @@ do
   # Start timer for current iteration
   START_TIME=$(date +%s)
 
+  # Find the path to run_evoformer_iter.py relative to the project structure
+  EVOFORMER_ITER_SCRIPT="${ROOT_DIR}/evoformer_iter/run_evoformer_iter.py"
+
   # Run Evoformer Block
-  /home/visitor/anaconda3/envs/openfold_env/bin/python run_evoformer_iter.py \
+  ${PYTHON_PATH} "${EVOFORMER_ITER_SCRIPT}" \
     --m_path "${M_PATH}" \
     --z_path "${Z_PATH}" \
     --output_dir "${OUTPUT_DIR}" \

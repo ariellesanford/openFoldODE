@@ -3,14 +3,8 @@ import matplotlib.pyplot as plt
 import os
 from matplotlib.backends.backend_pdf import PdfPages
 import re
+import argparse
 
-# === EDIT THESE PARAMETERS ===
-PDB_ID = "1fme_A"
-ROOT_FOLDER = f'/home/visitor/PycharmProjects/openFold/neural_ODE/quick_inference_data/{PDB_ID}_evoformer_blocks'
-CHANNEL = 0
-OUTPUT_BASE_DIR = f"{ROOT_FOLDER}"
-DEVICE = "cuda:0"  # Change to "cpu" if CUDA is not available
-# ==============================
 
 def natural_key(file):
     """Sort filenames by numeric index."""
@@ -71,15 +65,46 @@ def plot_channel_deltas_for_recycle(recycle_path, channel, output_pdf, device):
     print(f"✅ PDF saved: {output_pdf}")
 
 
-def plot_deltas_across_recycles(root_folder, channel, output_base_dir, device):
+def plot_deltas_across_recycles(root_folder, channel, output_base_dir, device, pdb_id):
     os.makedirs(output_base_dir, exist_ok=True)
 
     recycle_folders = sorted([f for f in os.listdir(root_folder) if f.startswith("recycle_")])
     for recycle_name in recycle_folders:
         recycle_path = os.path.join(root_folder, recycle_name)
-        output_pdf = os.path.join(output_base_dir, f"{PDB_ID}_{recycle_name}_channel{channel}_m_input_deltas.pdf")
+        output_pdf = os.path.join(output_base_dir, f"{pdb_id}_{recycle_name}_channel{channel}_m_input_deltas.pdf")
         plot_channel_deltas_for_recycle(recycle_path, channel, output_pdf, device)
 
 
+def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Visualize input deltas in MSA representations.')
+    parser.add_argument('--pdb_id', type=str, default="1fme_A", help='PDB ID')
+    parser.add_argument('--root_folder', type=str, help='Root folder path')
+    parser.add_argument('--channel', type=int, default=0, help='Channel index to visualize')
+    parser.add_argument('--output_dir', type=str, help='Output directory for PDF files')
+    parser.add_argument('--device', type=str, default="cpu", help='Device for tensor operations')
+
+    args = parser.parse_args()
+
+    # Use provided paths or default to relative paths
+    root_folder = args.root_folder
+    if not root_folder:
+        # Get the directory of this script
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        # Construct path relative to script location
+        root_folder = os.path.join(script_dir, "..", "quick_inference_data", f"{args.pdb_id}_evoformer_blocks")
+
+    output_dir = args.output_dir if args.output_dir else root_folder
+
+    # Run plotting function
+    plot_deltas_across_recycles(
+        root_folder=root_folder,
+        channel=args.channel,
+        output_base_dir=output_dir,
+        device=args.device,
+        pdb_id=args.pdb_id
+    )
+
+
 if __name__ == "__main__":
-    plot_deltas_across_recycles(ROOT_FOLDER, channel=CHANNEL, output_base_dir=OUTPUT_BASE_DIR, device=DEVICE)
+    main()

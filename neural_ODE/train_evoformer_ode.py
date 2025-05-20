@@ -9,6 +9,16 @@ from evoformer_ode import EvoformerODEFunc  # Import from existing module
 from torch.cuda.amp import autocast, GradScaler
 from torch.utils.checkpoint import checkpoint
 
+
+# Function to get project root directory
+def get_project_root():
+    """Get the path to the project root directory."""
+    # Get the directory of the current file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # The current file should be in the neural_ODE directory, so current_dir is the project root
+    return current_dir
+
+
 # === Parse command line arguments for memory optimizations ===
 parser = argparse.ArgumentParser(description='Train Evoformer ODE with configurable memory optimizations')
 
@@ -53,6 +63,8 @@ parser.add_argument('--monitor_memory', action='store_true', default=False,
                     help='Print memory usage statistics')
 parser.add_argument('--no-monitor_memory', dest='monitor_memory', action='store_false',
                     help='Disable memory usage statistics')
+parser.add_argument('--cpu-only', action='store_true', default=False,
+                    help='Force CPU-only mode regardless of CUDA availability')
 
 # Data and output directory options
 parser.add_argument('--data_dir', type=str, default=None,
@@ -79,35 +91,92 @@ print(f"PYTORCH_CUDA_ALLOC_CONF: {os.getenv('PYTORCH_CUDA_ALLOC_CONF')}")
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = f"max_split_size_mb:{args.memory_split_size}"
 print(f"PYTORCH_CUDA_ALLOC_CONF: {os.getenv('PYTORCH_CUDA_ALLOC_CONF')}")
 
+# Get project root directory
+PROJECT_ROOT = get_project_root()
+
+# Check if CPU-only mode is forced
+if args.cpu_only:
+    print("Forcing CPU-only mode (CUDA disabled)")
+    device = "cpu"
+    # Disable features that only work with CUDA
+    args.use_amp = False
+else:
+    # Set device based on CUDA availability
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if device == "cpu":
+        print("CUDA not available, using CPU")
+        args.use_amp = False
+
 
 # Define a memory tracking function
 def print_memory_stats(label=""):
     if not args.monitor_memory:
         return
 
-    torch.cuda.synchronize()
-    allocated = torch.cuda.memory_allocated() / 1024 ** 2
-    reserved = torch.cuda.memory_reserved() / 1024 ** 2
-    max_allocated = torch.cuda.max_memory_allocated() / 1024 ** 2
-    max_reserved = torch.cuda.max_memory_reserved() / 1024 ** 2
-    print(f"=== Memory Stats {label} ===")
-    print(f"Allocated Memory: {allocated:.2f} MiB")
-    print(f"Reserved Memory: {reserved:.2f} MiB")
-    print(f"Max Memory Allocated: {max_allocated:.2f} MiB")
-    print(f"Max Memory Reserved: {max_reserved:.2f} MiB")
-    print("=" * 30)
+    if device == "cpu":
+        print(f"=== Memory Stats {label} (CPU mode) ===")
+        print("Memory monitoring is limited in CPU mode")
+        import psutil
+        process = psutil.Process(os.getpid())
+        print(f"Current Process Memory Usage: {process.memory_info().rss / 1024 ** 2:.2f} MiB")
+        print("=" * 30)
+        return
+
+    try:
+        torch.cuda.synchronize()
+        allocated = torch.cuda.memory_allocated() / 1024 ** 2
+        reserved = torch.cuda.memory_reserved() / 1024 ** 2
+
+        try:
+            max_allocated = torch.cuda.max_memory_allocated() / 1024 ** 2
+            max_reserved = torch.cuda.max_memory_reserved() / 1024 ** 2
+        except RuntimeError:
+            # Handle case where peak stats aren't available
+            max_allocated = allocated
+            max_reserved = reserved
+
+        print(f"=== Memory Stats {label} ===")
+        print(f"Allocated Memory: {allocated:.2f} MiB")
+        print(f"Reserved Memory: {reserved:.2f} MiB")
+        print(f"Max Memory Allocated: {max_allocated:.2f} MiB")
+        print(f"Max Memory Reserved: {max_reserved:.2f} MiB")
+        print("=" * 30)
+    except Exception as e:
+        print(f"=== Memory Stats {label} (Error) ===")
+        print(f"Could not get memory stats: {e}")
+        print("=" * 30)
 
 
-# Trigger CUDA initialization by creating a tensor on the GPU
-_ = torch.tensor([0.0], device="cuda")
+# Trigger CUDA initialization if using CUDA
+if device == "cuda":
+    try:
+        _ = torch.tensor([0.0], device=device)
+        print("CUDA initialized successfully")
+    except RuntimeError as e:
+        print(f"Error initializing CUDA: {e}")
+        print("Falling back to CPU mode")
+        device = "cpu"
+        args.use_amp = False
+else:
+    print("Using CPU - CUDA initialization skipped")
 
 
 # Force garbage collection and clear CUDA cache
 def clear_memory():
-    if args.clean_memory:
-        gc.collect()
-        torch.cuda.empty_cache()
-        torch.cuda.reset_peak_memory_stats()
+    if not args.clean_memory:
+        return
+
+    gc.collect()
+
+    if device == "cuda":
+        try:
+            torch.cuda.empty_cache()
+            try:
+                torch.cuda.reset_peak_memory_stats()
+            except RuntimeError as e:
+                print(f"Warning: Could not reset CUDA peak memory stats: {e}")
+        except Exception as e:
+            print(f"Warning: CUDA error when clearing memory: {e}")
 
 
 clear_memory()
@@ -117,25 +186,24 @@ c_m = 256  # MSA (M) channels
 c_z = 128  # Pair (Z) channels
 hidden_dim = args.reduced_hidden_dim  # Configurable hidden dimension
 learning_rate = 1e-3
-device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Use command line data directory if provided, otherwise use default
 if args.data_dir is None:
     print("Warning: No data directory specified. Using default.")
-    DATA_DIR = "/home/visitor/PycharmProjects/openFold/neural_ODE/data"
+    DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 else:
     DATA_DIR = args.data_dir
     print(f"Using data directory: {DATA_DIR}")
 
 if args.output_dir is None:
     print("Warning: No output directory specified. Using current directory.")
-    OUTPUT_DIR = "."
+    OUTPUT_DIR = PROJECT_ROOT
 else:
     OUTPUT_DIR = args.output_dir
     print(f"Using output directory: {OUTPUT_DIR}")
 
 # Use configured memory optimization settings
-USE_AMP = args.use_amp
+USE_AMP = args.use_amp and device == "cuda"  # AMP only works with CUDA
 GRADIENT_ACCUMULATION_STEPS = args.gradient_accumulation
 CHUNK_SIZE = args.chunk_size
 
@@ -143,9 +211,10 @@ CHUNK_SIZE = args.chunk_size
 scaler = GradScaler(enabled=USE_AMP)
 
 # Print active optimizations
-print("\n=== ACTIVE MEMORY OPTIMIZATIONS ===")
+print("\n=== ACTIVE CONFIGURATION ===")
+print(f"Device: {device.upper()}")
 print(f"Memory Split Size: {args.memory_split_size} MB")
-print(f"Mixed Precision (AMP): {'Enabled' if args.use_amp else 'Disabled'}")
+print(f"Mixed Precision (AMP): {'Enabled' if USE_AMP else 'Disabled'}")
 print(f"Gradient Checkpointing: {'Enabled' if args.use_checkpoint else 'Disabled'}")
 print(f"Gradient Accumulation: {args.gradient_accumulation} steps")
 print(f"Integration Chunking: {'Enabled' if args.chunk_size > 0 else 'Disabled'}")
@@ -177,8 +246,8 @@ def load_initial_input(protein_id):
         raise FileNotFoundError(f"Initial block not found for {protein_id}")
 
     # Load tensors
-    m_init = torch.load(m_path).to(device)  # (s_c, r, c_m)
-    z_init = torch.load(z_path).to(device)  # (r, r, c_z)
+    m_init = torch.load(m_path, map_location=device)  # (s_c, r, c_m)
+    z_init = torch.load(z_path, map_location=device)  # (r, r, c_z)
 
     # Ensure proper dimensions
     if m_init.dim() == 4 and m_init.size(0) == 1:
@@ -206,8 +275,8 @@ def load_block(protein_id, block_index):
         raise FileNotFoundError(f"Block {block_index} not found for {protein_id}")
 
     # Load tensors
-    m = torch.load(m_path).to(device)  # (1, s_c, r, c_m)
-    z = torch.load(z_path).to(device)  # (1, r, r, c_z)
+    m = torch.load(m_path, map_location=device)  # (1, s_c, r, c_m)
+    z = torch.load(z_path, map_location=device)  # (1, r, r, c_z)
 
     # Remove batch dimension for consistency
     m = m.squeeze(0)  # (s_c, r, c_m)
@@ -339,8 +408,7 @@ def train_step(protein_id, step_idx):
     NOTE: For neural ODEs, we must process time sequentially. The 'batches' here
     are contiguous chunks of the time sequence, not independent batches.
     """
-    if args.clean_memory:
-        clear_memory()
+    clear_memory()
 
     m_init, z_init = load_initial_input(protein_id)
 
@@ -411,8 +479,7 @@ def train_step(protein_id, step_idx):
                     print(f"Skipping block {time_idx} for {protein_id} (not found)")
                     continue
 
-                # Get predictions - FIX: Check if i is within bounds
-                # This is the fix for the index out of bounds error
+                # Get predictions - Make sure i is within bounds
                 if isinstance(pred_trajectory, tuple):
                     # Make sure i is within bounds of pred_trajectory
                     if i < pred_trajectory[0].shape[0] and i < pred_trajectory[1].shape[0]:
@@ -452,13 +519,11 @@ def train_step(protein_id, step_idx):
 
         # Free memory
         del pred_trajectory, batch_loss
-        if args.clean_memory:
-            clear_memory()
+        clear_memory()
 
     # Free remaining memory
     del m_init, z_init, ode_state, current_state
-    if args.clean_memory:
-        clear_memory()
+    clear_memory()
 
     return total_loss
 
@@ -493,8 +558,7 @@ def train(input_dir):
         dataset_to_process = dataset
 
     for epoch in range(epochs_to_run):
-        if args.clean_memory:
-            clear_memory()
+        clear_memory()
 
         epoch_loss = 0
         max_mem_allocated = 0
@@ -508,20 +572,20 @@ def train(input_dir):
                 print(f"  - Loss: {loss}")
 
                 # Track maximum memory usage across all proteins
-                curr_mem_allocated = torch.cuda.max_memory_allocated() / 1024 ** 2
-                curr_mem_reserved = torch.cuda.max_memory_reserved() / 1024 ** 2
-                max_mem_allocated = max(max_mem_allocated, curr_mem_allocated)
-                max_mem_reserved = max(max_mem_reserved, curr_mem_reserved)
+                if device == "cuda":
+                    curr_mem_allocated = torch.cuda.max_memory_allocated() / 1024 ** 2
+                    curr_mem_reserved = torch.cuda.max_memory_reserved() / 1024 ** 2
+                    max_mem_allocated = max(max_mem_allocated, curr_mem_allocated)
+                    max_mem_reserved = max(max_mem_reserved, curr_mem_reserved)
 
                 print_memory_stats(f"After protein {protein_id}")
 
             except RuntimeError as e:
-                if "CUDA out of memory" in str(e):
+                if device == "cuda" and "CUDA out of memory" in str(e):
                     print(f"CUDA OOM for protein {protein_id}. Skipping...")
                     # Print memory usage when OOM occurs
                     print_memory_stats("At OOM error")
-                    if args.clean_memory:
-                        clear_memory()
+                    clear_memory()
                     continue
                 else:
                     raise e
@@ -531,8 +595,11 @@ def train(input_dir):
         # Print maximum memory usage across all proteins
         if len(dataset_to_process) > 1:
             print(f"Maximum Memory Usage Across All Proteins:")
-            print(f"  Max Memory Allocated: {max_mem_allocated:.2f} MiB")
-            print(f"  Max Memory Reserved: {max_mem_reserved:.2f} MiB")
+            if device == "cuda":
+                print(f"  Max Memory Allocated: {max_mem_allocated:.2f} MiB")
+                print(f"  Max Memory Reserved: {max_mem_reserved:.2f} MiB")
+            else:
+                print("  Memory tracking not available in CPU mode")
 
         # Only save checkpoints in full training mode
         if not args.test_single_step:
@@ -554,14 +621,16 @@ if __name__ == "__main__":
         try:
             from pytorch_memlab import MemReporter
 
-            reporter = MemReporter()
-            # Silently enable memory profiling
-            if args.monitor_memory:
+            reporter = None
+
+            if device == "cuda" and args.monitor_memory:
+                reporter = MemReporter()
                 # Profile initial memory state silently
                 reporter.report()
         except ImportError:
             reporter = None
-            # Don't print the unavailable message
+            if args.monitor_memory:
+                print("pytorch_memlab not available, detailed memory monitoring disabled")
 
         # Choose whether to train or test configurations based on the argument
         if args.test_configs:

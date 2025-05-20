@@ -1,26 +1,21 @@
 #!/bin/bash
 set -e
 
-#chmod +x run_openfold_inference.sh
-#./run_openfold_inference.sh
+# Get the actual directory where the script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
 
+# === Define variables based on project root ===
+INPUT_FASTA_DIR="${ROOT_DIR}/checkpointing/monomers/fasta_dir"
+TEMPLATE_MMCIF_DIR="${ROOT_DIR}/openfold/data/pdb70_mmcif/mmcif_files"
+OUTPUT_DIR="${ROOT_DIR}/checkpointing/evoformer_inits"
+PRECOMPUTED_ALIGNMENTS="${ROOT_DIR}/checkpointing/monomers/RODA/alignments"
 
-# === Change to the desired working directory ===
-cd /home/visitor/PycharmProjects/openFold/evoformer_init
-
-# === Define variables ===
-INPUT_FASTA_DIR="../checkpointing/monomers/fasta_dir"
-TEMPLATE_MMCIF_DIR="../openfold/data/pdb70_mmcif/mmcif_files"
-OUTPUT_DIR="../checkpointing/evoformer_inits"
-PRECOMPUTED_ALIGNMENTS="../checkpointing/monomers/RODA/alignments"
-
-#INPUT_FASTA_DIR="examples/monomer/fasta_dir"
-#TEMPLATE_MMCIF_DIR="data/pdb70_mmcif/mmcif_files"
-#OUTPUT_DIR="examples/monomer/predictions"
-#PRECOMPUTED_ALIGNMENTS="examples/monomer/alignments"
+# Get path to python interpreter (use the system's python if not in specific environment)
+PYTHON_PATH=$(which python)
 
 # === Run OpenFold ===
-/home/visitor/anaconda3/envs/openfold_env/bin/python run_evoformer_init.py \
+${PYTHON_PATH} "${ROOT_DIR}/evoformer_init/run_evoformer_init.py" \
   "${INPUT_FASTA_DIR}" \
   "${TEMPLATE_MMCIF_DIR}" \
   --output_dir "${OUTPUT_DIR}" \
@@ -29,6 +24,3 @@ PRECOMPUTED_ALIGNMENTS="../checkpointing/monomers/RODA/alignments"
   --model_device "cuda:0" \
   --save_intermediates \
   --save_outputs
-
-#  --experiment_config_json "/home/visitor/PycharmProjects/openFold/custom_config.json" \
-
