@@ -1,9 +1,11 @@
 #!/bin/bash
-
+#DONT RUN UNLESS YOU WANT EVERYTHING IN RODA!
 set -e
 
 # Define target base directory
-BASE_DIR="/home/visitor/PycharmProjects/openFold/openfold/data/RODA"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
+BASE_DIR="${ROOT_DIR}/neural_ODE/data/RODA"
 
 # Define paths
 ALIGNMENT_DIR="$BASE_DIR/alignment_data/alignment_dir_roda"

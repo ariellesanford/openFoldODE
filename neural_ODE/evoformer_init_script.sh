@@ -6,11 +6,11 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
 
 # === Define variables based on project root ===
-PDB_ID="4cue_A"
-INPUT_FASTA_DIR="${SCRIPT_DIR}/fasta_data/${PDB_ID}"
+PDB_ID="1l2y_A"
+INPUT_FASTA_DIR="${SCRIPT_DIR}/data/fasta_data/${PDB_ID}"
 TEMPLATE_MMCIF_DIR="${ROOT_DIR}/openfold/data/pdb70_mmcif/mmcif_files"
 OUTPUT_DIR="${SCRIPT_DIR}/data"
-PRECOMPUTED_ALIGNMENTS="${SCRIPT_DIR}/checkpointing/monomers/alignment_data"
+PRECOMPUTED_ALIGNMENTS="${SCRIPT_DIR}/data/RODA/alignments"
 
 # Get path to python interpreter (use the system's python if not in specific environment)
 PYTHON_PATH=$(which python)

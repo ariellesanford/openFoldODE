@@ -14,13 +14,17 @@ set -e
 #    "6YNH_A", "7F1T_A", "7FFM_A", "7FFU_A", "7PNJ_A", "7VON_A", "8BRC_A", "8DNS_A", "8EX4_A", "8EX5_A",
 #    "8EX6_A", "8EX7_A", "8EX8_A", "8G92_A", "8JHQ_A", "8JHR_A", "8RL8_A", "8RLD_A", "8UQC_A", "8UQD_A",
 #    "8UQE_A", "9F6Q_A", "9F6P_A", "8WZS_A"]'
-RAW_LIST='["1H2P_A", "1H2Q_A", "1K58_A", "1LFH_A"]'
-BASE_DIR="/home/visitor/PycharmProjects/openFold/checkpointing/monomers/RODA"
+
+#RAW_LIST='["1H2P_A", "1H2Q_A", "1K58_A", "1LFH_A"]'
+RAW_LIST='["1L2Y_A"]'
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
+BASE_DIR="${ROOT_DIR}/neural_ODE/data/RODA"
 RODA_TMP="${BASE_DIR}/alignment_dir_roda_subset"
 ALIGNMENT_OUT="${BASE_DIR}"
 PDB_DATA_DIR="${BASE_DIR}/pdb_data"
-FASTA_DIR="/home/visitor/PycharmProjects/openFold/checkpointing/fasta_dir"
-FLATTEN_SCRIPT="/home/visitor/PycharmProjects/openFold/openfold/scripts/flatten_roda.sh"
+FASTA_DIR="${ROOT_DIR}/neural_ODE/data/fasta_data"
+FLATTEN_SCRIPT="${ROOT_DIR}/openfold/scripts/flatten_roda.sh"
 
 # === Extract and normalize PDB_CHAIN IDs (lowercase pdb ID, uppercase chain) ===
 PDB_IDS=$(echo "$RAW_LIST" | sed -E 's/[^A-Za-z0-9_]+/\n/g' | grep -E '^[0-9][A-Za-z0-9]{3}_[A-Za-z0-9]+$' | sort -u)
