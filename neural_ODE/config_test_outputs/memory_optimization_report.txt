@@ -1,0 +1,75 @@
+EVOFORMER ODE CPU-ONLY MODE OPTIMIZATION REPORT
+========================================
+
+System Information:
+  CUDA Available: False
+  Running in CPU-only mode (CUDA disabled)
+  PyTorch Version: 2.7.0+cu126
+
+
+============================================================
+CONFIGURATION TEST SUMMARY (CPU-ONLY MODE)
+============================================================
+
+Name                      Status     Time (ms)    Loss      
+--------------------------------------------------------------------------------
+CPU Baseline              SUCCESS    5432.68      0.0000    
+CPU Fast                  SUCCESS    5342.39      0.0000    
+
+============================================================
+BEST CPU CONFIGURATIONS
+============================================================
+
+🏆 Best Speed:
+   Name: CPU Fast
+   Time: 5342.39 ms
+   Loss: 0.0000
+
+🏆 Best Loss Performance:
+   Name: CPU Baseline
+   Time: 5432.68 ms
+   Loss: 0.0000
+
+============================================================
+
+Detailed Configuration Results:
+----------------------------------------
+
+Configuration 1: CPU Baseline
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 32
+    reduced_hidden_dim: 32
+    num_time_points: 10
+    batch_size: 1
+    integrator: euler
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: monitor_memory, test-single-step, cpu-only
+    disabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory
+  Results:
+    Loss: 0.000000
+    Max Memory: CPU mode (no GPU metrics)
+    Time: 5432.68 ms
+
+Configuration 2: CPU Fast
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 16
+    reduced_hidden_dim: 16
+    num_time_points: 5
+    batch_size: 1
+    integrator: euler
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_fast_ode, monitor_memory, test-single-step, cpu-only, reduced_precision_integration
+    disabled flags: use_amp, use_checkpoint, clean_memory
+  Results:
+    Loss: 0.000000
+    Max Memory: CPU mode (no GPU metrics)
+    Time: 5342.39 ms
+
+========================================
+Report generated at: 2025-05-21 12:46:08
