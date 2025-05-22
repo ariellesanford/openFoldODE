@@ -6,14 +6,17 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
 
 # === Define variables based on project root ===
-PDB_ID="5fr6_A"
-DATA_DIR="${SCRIPT_DIR}/quick_inference_data/${PDB_ID}_evoformer_blocks/recycle_0"
+PDB_ID="4d0f_A"
+DATA_DIR="${SCRIPT_DIR}/data/quick_inference_data/${PDB_ID}_evoformer_blocks/recycle_0"
 OUTPUT_DIR="${DATA_DIR}"
 
 # Initial paths for m and z
 INDEX="0"
 M_PATH="${DATA_DIR}/m_block_${INDEX}.pt"
 Z_PATH="${DATA_DIR}/z_block_${INDEX}.pt"
+
+# === Change to the desired working directory ===
+cd "${ROOT_DIR}/evoformer_iter"
 
 # Number of iterations
 NUM_ITERATIONS=48
@@ -31,11 +34,9 @@ do
   # Start timer for current iteration
   START_TIME=$(date +%s)
 
-  # Find the path to run_evoformer_iter.py relative to the project structure
-  EVOFORMER_ITER_SCRIPT="${ROOT_DIR}/evoformer_iter/run_evoformer_iter.py"
 
   # Run Evoformer Block
-  ${PYTHON_PATH} "${EVOFORMER_ITER_SCRIPT}" \
+  ${PYTHON_PATH} run_evoformer_iter.py \
     --m_path "${M_PATH}" \
     --z_path "${Z_PATH}" \
     --output_dir "${OUTPUT_DIR}" \

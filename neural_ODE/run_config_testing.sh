@@ -6,7 +6,7 @@ set -e
 # =======================================================================================
 
 # Enable CPU-only mode (set to true even if CUDA is available)
-CPU_ONLY=true
+CPU_ONLY=false
 
 # Test only a specific protein (set to "all" for all proteins, or a specific name like "1fme_A")
 TEST_PROTEIN="all"

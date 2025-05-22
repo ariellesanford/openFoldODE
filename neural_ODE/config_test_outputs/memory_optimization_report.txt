@@ -1,75 +1,146 @@
-EVOFORMER ODE CPU-ONLY MODE OPTIMIZATION REPORT
+EVOFORMER ODE MEMORY OPTIMIZATION REPORT
 ========================================
 
 System Information:
-  CUDA Available: False
-  Running in CPU-only mode (CUDA disabled)
-  PyTorch Version: 2.7.0+cu126
+  CUDA Available: True
+  GPU: Quadro P4000
+  CUDA Version: 12.1
+  PyTorch Version: 2.1.2
 
 
 ============================================================
-CONFIGURATION TEST SUMMARY (CPU-ONLY MODE)
+CONFIGURATION TEST SUMMARY
 ============================================================
 
-Name                      Status     Time (ms)    Loss      
+Name                      Status     Memory (MB)  Time (ms)    Loss      
 --------------------------------------------------------------------------------
-CPU Baseline              SUCCESS    5432.68      0.0000    
-CPU Fast                  SUCCESS    5342.39      0.0000    
+True Baseline (Original   FAILED (usage: train_evoformer_ode.py [-h] [--memory_split_size MEMORY_SPLIT_SIZE]
+                              [--use_amp] [--no-use_amp] [--use_checkpoint]
+                              [--no-use_checkpoin) N/A          N/A          N/A       
+AMP Only                  FAILED (usage: train_evoformer_ode.py [-h] [--memory_split_size MEMORY_SPLIT_SIZE]
+                              [--use_amp] [--no-use_amp] [--use_checkpoint]
+                              [--no-use_checkpoin) N/A          N/A          N/A       
+Checkpoint Only           FAILED (usage: train_evoformer_ode.py [-h] [--memory_split_size MEMORY_SPLIT_SIZE]
+                              [--use_amp] [--no-use_amp] [--use_checkpoint]
+                              [--no-use_checkpoin) N/A          N/A          N/A       
+Memory Optimized Baselin  FAILED (usage: train_evoformer_ode.py [-h] [--memory_split_size MEMORY_SPLIT_SIZE]
+                              [--use_amp] [--no-use_amp] [--use_checkpoint]
+                              [--no-use_checkpoin) N/A          N/A          N/A       
+Speed-Optimized           FAILED (usage: train_evoformer_ode.py [-h] [--memory_split_size MEMORY_SPLIT_SIZE]
+                              [--use_amp] [--no-use_amp] [--use_checkpoint]
+                              [--no-use_checkpoin) N/A          N/A          N/A       
+Balanced Speed-Quality    FAILED (usage: train_evoformer_ode.py [-h] [--memory_split_size MEMORY_SPLIT_SIZE]
+                              [--use_amp] [--no-use_amp] [--use_checkpoint]
+                              [--no-use_checkpoin) N/A          N/A          N/A       
 
-============================================================
-BEST CPU CONFIGURATIONS
-============================================================
-
-🏆 Best Speed:
-   Name: CPU Fast
-   Time: 5342.39 ms
-   Loss: 0.0000
-
-🏆 Best Loss Performance:
-   Name: CPU Baseline
-   Time: 5432.68 ms
-   Loss: 0.0000
+⚠️  No successful configurations found!
 
 ============================================================
 
 Detailed Configuration Results:
 ----------------------------------------
 
-Configuration 1: CPU Baseline
-  Status: SUCCESS
+Configuration 1: True Baseline (Original values, no optimizations)
+  Status: FAILED
   Settings:
     memory_split_size: 128
-    reduced_cluster_size: 32
-    reduced_hidden_dim: 32
-    num_time_points: 10
+    reduced_cluster_size: 64
+    reduced_hidden_dim: 64
+    num_time_points: 25
     batch_size: 1
-    integrator: euler
+    integrator: rk4
     gradient_accumulation: 1
     chunk_size: 0
-    enabled flags: monitor_memory, test-single-step, cpu-only
-    disabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory
-  Results:
-    Loss: 0.000000
-    Max Memory: CPU mode (no GPU metrics)
-    Time: 5432.68 ms
+    enabled flags: monitor_memory, test-single-step
+    disabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, cpu-only
+  Error: usage: train_evoformer_ode.py [-h] [--memory_split_size MEMORY_SPLIT_SIZE]
+                              [--use_amp] [--no-use_amp] [--use_checkpoint]
+                              [--no-use_checkpoin
 
-Configuration 2: CPU Fast
-  Status: SUCCESS
+Configuration 2: AMP Only
+  Status: FAILED
   Settings:
     memory_split_size: 128
-    reduced_cluster_size: 16
-    reduced_hidden_dim: 16
-    num_time_points: 5
+    reduced_cluster_size: 64
+    reduced_hidden_dim: 64
+    num_time_points: 25
     batch_size: 1
-    integrator: euler
+    integrator: rk4
     gradient_accumulation: 1
     chunk_size: 0
-    enabled flags: use_fast_ode, monitor_memory, test-single-step, cpu-only, reduced_precision_integration
-    disabled flags: use_amp, use_checkpoint, clean_memory
-  Results:
-    Loss: 0.000000
-    Max Memory: CPU mode (no GPU metrics)
-    Time: 5342.39 ms
+    enabled flags: use_amp, monitor_memory, test-single-step
+    disabled flags: use_checkpoint, reduced_precision_integration, clean_memory, cpu-only
+  Error: usage: train_evoformer_ode.py [-h] [--memory_split_size MEMORY_SPLIT_SIZE]
+                              [--use_amp] [--no-use_amp] [--use_checkpoint]
+                              [--no-use_checkpoin
+
+Configuration 3: Checkpoint Only
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 64
+    reduced_hidden_dim: 64
+    num_time_points: 25
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_checkpoint, monitor_memory, test-single-step
+    disabled flags: use_amp, reduced_precision_integration, clean_memory, cpu-only
+  Error: usage: train_evoformer_ode.py [-h] [--memory_split_size MEMORY_SPLIT_SIZE]
+                              [--use_amp] [--no-use_amp] [--use_checkpoint]
+                              [--no-use_checkpoin
+
+Configuration 4: Memory Optimized Baseline
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 96
+    num_time_points: 25
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_amp, use_checkpoint, monitor_memory, test-single-step
+    disabled flags: reduced_precision_integration, clean_memory, cpu-only
+  Error: usage: train_evoformer_ode.py [-h] [--memory_split_size MEMORY_SPLIT_SIZE]
+                              [--use_amp] [--no-use_amp] [--use_checkpoint]
+                              [--no-use_checkpoin
+
+Configuration 5: Speed-Optimized
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 64
+    reduced_hidden_dim: 64
+    num_time_points: 15
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, monitor_memory, test-single-step, use_fast_ode
+    disabled flags: clean_memory, cpu-only
+  Error: usage: train_evoformer_ode.py [-h] [--memory_split_size MEMORY_SPLIT_SIZE]
+                              [--use_amp] [--no-use_amp] [--use_checkpoint]
+                              [--no-use_checkpoin
+
+Configuration 6: Balanced Speed-Quality
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 80
+    reduced_hidden_dim: 80
+    num_time_points: 20
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, monitor_memory, test-single-step
+    disabled flags: reduced_precision_integration, clean_memory, cpu-only
+  Error: usage: train_evoformer_ode.py [-h] [--memory_split_size MEMORY_SPLIT_SIZE]
+                              [--use_amp] [--no-use_amp] [--use_checkpoint]
+                              [--no-use_checkpoin
 
 ========================================
-Report generated at: 2025-05-21 12:46:08
+Report generated at: 2025-05-22 13:18:44

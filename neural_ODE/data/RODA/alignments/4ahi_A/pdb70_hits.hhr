@@ -1,0 +1,1355 @@
+Query         query 
+Match_columns 123
+No_of_seqs    126 out of 1239
+Neff          6.34027
+Searched_HMMs 90139
+Date          Sat Dec 25 16:21:40 2021
+Command       /mnt/home/dberenberg/gustaf_stuff/hh-suite/build/bin/hhsearch -i /tmp/tmp80qkr6kd/query.a3m -o /tmp/tmp80qkr6kd/output.hhr -maxseq 1000000 -cpu 2 -d /mnt/home/dberenberg/gustaf_stuff/OpenFold/pdb70/pdb70 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 4AOH_A ANGIOGENIN (E.C.3.1.27. 100.0 1.5E-39 1.6E-44  231.5   0.0  123    1-123     2-124 (124)
+  2 5M9Q_A Angiogenin (E.C.3.1.27. 100.0   5E-39 5.5E-44  228.7   0.0  123    1-123     2-124 (124)
+  3 1AGI_A ANGIOGENIN; ENDONUCLEAS 100.0 5.6E-38 6.2E-43  223.7   0.0  122    1-122     2-123 (125)
+  4 1HBY_A ANGIOGENIN; ANGIOGENIN, 100.0 8.5E-38 9.5E-43  222.3   0.0  121    2-123     2-123 (123)
+  5 2J4T_B ANGIOGENIN-4 (E.C.3.1.2 100.0 4.3E-37 4.8E-42  224.0   0.0  118    3-121    26-143 (144)
+  6 2ZPO_A Ribonuclease (E.C.3.1.2 100.0 6.3E-37   7E-42  216.2   0.0  115    4-119     2-119 (119)
+  7 3LJE_A Zebrafish RNase5; angio 100.0 3.7E-36 4.1E-41  216.0   0.0  117    2-123     7-127 (130)
+  8 3LJD_B Zebrafish RNase1; angio 100.0 5.4E-36   6E-41  214.5   0.0  116    2-122     3-125 (126)
+  9 3LN8_A HYDROLASE; angiogenins, 100.0 5.4E-36   6E-41  214.5   0.0  116    2-122     3-125 (126)
+ 10 7BFK_A Angiogenin-1; RNase, au 100.0 6.9E-36 7.6E-41  213.7   0.0  117    2-122     3-122 (127)
+ 11 1RNF_A PROTEIN (RIBONUCLEASE 4 100.0 1.7E-35 1.9E-40  209.6   0.0  113    2-117     2-120 (120)
+ 12 2RNF_A RIBONUCLEASE 4 (E.C.3.1 100.0 1.7E-35 1.9E-40  209.6   0.0  113    2-117     2-120 (120)
+ 13 1F0V_C RIBONUCLEASE A/DNA COMP 100.0 1.9E-35 2.1E-40  210.4   0.0  117    2-119     1-124 (124)
+ 14 6ETL_A Ribonuclease pancreatic 100.0 1.9E-35 2.1E-40  210.4   0.0  117    2-119     1-124 (124)
+ 15 1DY5_A RIBONUCLEASE A (E.C.3.1 100.0   2E-35 2.2E-40  210.3   0.0  117    2-119     1-124 (124)
+ 16 4PER_B Gallus Ribonuclease Inh 100.0 2.7E-35   3E-40  206.6   0.0  108    5-118     2-113 (113)
+ 17 2VQ8_A RNASE ZF-1A; EVOLUTION, 100.0 3.2E-35 3.5E-40  213.9   0.0  116    2-122    16-138 (139)
+ 18 1M07_B Ribonuclease (E.C.3.1.2 100.0 3.3E-35 3.7E-40  205.8   0.0  107    5-121     2-110 (111)
+ 19 6YMT_A RNASE 3/1 version1, HYD 100.0   5E-35 5.5E-40  209.2   0.0  115    4-119     7-128 (128)
+ 20 1H1H_A EOSINOPHIL CATIONIC PRO 100.0 7.7E-35 8.5E-40  210.8   0.0  110    4-119     7-134 (134)
+ 21 5AR6_A RIBONUCLEASE 4 (E.C.3.1 100.0 7.7E-35 8.6E-40  206.7   0.0  113    2-117     4-122 (122)
+ 22 4X08_B Eosinophil cationic pro 100.0 8.8E-35 9.8E-40  210.6   0.0  112    2-119     5-134 (134)
+ 23 2LVZ_A Eosinophil cationic pro 100.0 1.2E-34 1.3E-39  209.6   0.0  112    2-119     4-133 (133)
+ 24 1HI5_A EOSINOPHIL-DERIVED NEUR 100.0 1.3E-34 1.5E-39  209.8   0.0  112    2-119     5-135 (135)
+ 25 2BZZ_A NONSECRETORY RIBONUCLEA 100.0 1.3E-34 1.5E-39  209.8   0.0  112    2-119     5-135 (135)
+ 26 6YBE_A RNASE 3/1 version2, HYD 100.0 1.4E-34 1.6E-39  209.2   0.0  115    4-119     7-136 (136)
+ 27 1YV6_A P-30 protein (E.C.3.1.2 100.0 1.9E-34 2.2E-39  200.3   0.0  101    5-119     2-102 (104)
+ 28 2P6Z_B Recombinant Amphinase-2 100.0 2.3E-34 2.5E-39  202.6   0.0  108    2-120     5-114 (115)
+ 29 2VQ9_A RNASE 1; NUCLEASE, EVOL 100.0 3.2E-34 3.5E-39  210.5   0.0  113    4-120    28-147 (148)
+ 30 1GQV_A EOSINOPHIL-DERIVED NEUR 100.0 3.4E-34 3.7E-39  207.6   0.0  110    4-119     7-135 (135)
+ 31 5OAB_A Ribonuclease K6 (E.C.3. 100.0 3.6E-34   4E-39  205.3   0.0  111    2-119     5-128 (128)
+ 32 6ENP_A Ribonuclease K6 (E.C.3. 100.0 3.6E-34   4E-39  205.3   0.0  111    2-119     5-128 (128)
+ 33 1KM8_A RIBONUCLEASE, OOCYTES ( 100.0 4.6E-34 5.1E-39  200.2   0.0  106    5-120     2-109 (111)
+ 34 2P7S_A Amphinase-2 (E.C.3.1.27 100.0 5.6E-34 6.2E-39  200.6   0.0  107    2-119     4-112 (114)
+ 35 2HKY_A Ribonuclease 7 (E.C.3.1 100.0 8.3E-34 9.2E-39  203.8   0.0  109    4-119     7-129 (129)
+ 36 6MV7_A Ribonuclease K6 (E.C.3. 100.0 8.9E-34 9.9E-39  203.2   0.0  111    2-119     5-128 (128)
+ 37 2P6Z_A Recombinant Amphinase-2 100.0 1.2E-33 1.4E-38  198.9   0.0  107    2-119     5-113 (115)
+ 38 1OJ8_A RC-RNASE6 RIBONUCLEASE; 100.0 2.2E-33 2.4E-38  195.5   0.0  102    5-120     2-103 (105)
+ 39 1KVZ_A RC-RNase4; antitumor, b  99.9 6.9E-33 7.6E-38  193.3   0.0  104    4-120     2-105 (107)
+ 40 5E13_A Non-secretory ribonucle  99.9 7.9E-33 8.8E-38  205.9   0.0  111    3-119    32-161 (161)
+ 41 1OJ1_A RC-RNASE6 RIBONUCLEASE;  99.9 1.6E-32 1.8E-37  190.9   0.0  102    5-120     2-103 (105)
+ 42 3U01_A Protein P-30 (E.C.3.1.2  99.9 1.7E-32 1.9E-37  190.4   0.0  101    5-119     2-102 (104)
+ 43 3SNF_A Protein P-30 (E.C.3.1.2  99.9   4E-32 4.5E-37  188.6   0.0  101    5-119     2-102 (104)
+ 44 3MWQ_A Ribonuclease pancreatic  99.9 6.5E-32 7.2E-37  212.7   0.0  115    4-119   135-256 (256)
+ 45 3MX8_A Ribonuclease pancreatic  99.9   1E-31 1.1E-36  210.7   0.0  115    4-119   131-252 (252)
+ 46 4O36_B S-peptide (E.C.3.1.27.5  99.9 2.3E-31 2.6E-36  184.7   0.0   97   22-119     2-104 (104)
+ 47 4K7L_B Ribonuclease pancreatic  99.9 2.4E-31 2.7E-36  184.6   0.0   97   22-119     2-104 (104)
+ 48 3MWR_A Ribonuclease pancreatic  99.9   3E-31 3.3E-36  208.4   0.0  115    4-119   133-254 (254)
+ 49 1RBF_A RIBONUCLEASE S (E.C.3.1  99.9   3E-31 3.4E-36  183.9   0.0   97   22-119     2-104 (104)
+ 50 3MWR_A Ribonuclease pancreatic  99.9 3.2E-31 3.5E-36  208.3   0.0  118    3-121     2-126 (254)
+ 51 3MX8_A Ribonuclease pancreatic  99.9 9.2E-31   1E-35  205.3   0.0  118    3-121     2-126 (252)
+ 52 3MWQ_A Ribonuclease pancreatic  99.9 9.3E-31   1E-35  206.2   0.0  117    3-120     2-125 (256)
+ 53 2LT5_A Protein P-30 (E.C.3.1.2  99.6 4.7E-20 5.2E-25  132.1   0.0   74    2-85     47-120 (120)
+ 54 2LT5_A Protein P-30 (E.C.3.1.2  97.8 6.3E-08   7E-13   70.0   0.0   31   90-120     1-31  (120)
+ 55 2MVO_A Putative lipoprotein; l  21.5      91   0.001   24.4   0.0   24    3-26     19-42  (147)
+
+No 1
+>4AOH_A ANGIOGENIN (E.C.3.1.27.-); HYDROLASE, ANGIOGENESIS, NEOVASCULARISATION, AMYOTROPIC LATERAL; HET: TLA, TAR; 1.041A {HOMO SAPIENS}
+Probab=100.00  E-value=1.5e-39  Score=231.55  Aligned_cols=123  Identities=99%  Similarity=1.604  Sum_probs=112.6  Template_Neff=7.500
+
+Q query             1 QDNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTT   80 (123)
+Q Consensus         1 ~~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~   80 (123)
+                      |++++|++|++||+|++.++.++.||+.||+.|++.+.||+.|||||++++.|++||.++++.+++++|++|..+|++|+
+T Consensus         2 ~~~~~~~~F~~qHi~~~~~~~~~~yCn~mM~~r~~~~~CK~~nTFIh~~~~~v~~IC~~~~~~~~~~~~~~S~~~f~vt~   81 (124)
+T 4AOH_A            2 QDNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCKDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTT   81 (124)
+T ss_dssp             CCCHHHHHHHHHHBCSSCSCCSHHHHHHHHHHTTCBTTBCSEEEEECSCHHHHHGGGSTTTEEEETTTEEEESSCEEEEE
+T ss_pred             CcchHHHHHHHhhcCCCCCCCCcchHHHHHHHcCCCCCCCCcceeeeCCHHHHHHHHhCCCCCCCCcCcEecCCceEEEE
+Confidence            68889999999999998766678899999999999777999999999999999999999755466899999999999999
+
+
+Q query            81 CKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIFRRP  123 (123)
+Q Consensus        81 C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~~~~  123 (123)
+                      |++.+++++|+|.|++...+++|+|+|++++||||++.++++|
+T Consensus        82 C~l~~~~~~~~C~Y~~~~~~~~I~V~C~~~~PVH~~~~~~~~~  124 (124)
+T 4AOH_A           82 CKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIFRRP  124 (124)
+T ss_dssp             EEEESSCSSSSCEEEEEEEEECCEEEEETTEEEEECGGGGC--
+T ss_pred             eEEcCCCCCCCceeEEceeeeEEEEEecCCcccccchhhccCC
+Confidence            9999998889999999999999999999999999999999987
+
+
+No 2
+>5M9Q_A Angiogenin (E.C.3.1.27.-); ALS, RNase, angiogenesis, hydrolase; HET: PEG, SO4, PGE; 1.35A {Homo sapiens}
+Probab=100.00  E-value=5e-39  Score=228.67  Aligned_cols=123  Identities=98%  Similarity=1.595  Sum_probs=112.9  Template_Neff=7.600
+
+Q query             1 QDNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTT   80 (123)
+Q Consensus         1 ~~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~   80 (123)
+                      ||+++|++|++||+|++.++.++.||+.||++|++.+.||+.|||||++++.|++||.++++.+++.+|++|..+|.+|+
+T Consensus         2 ~~~~~~~~F~~~Hi~~~~~~~~~~yCn~~M~~r~~~~~CK~~nTFIh~~~~~v~~iC~~~~~~~~~~~~~~S~~~f~vt~   81 (124)
+T 5M9Q_A            2 QDNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCKDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTT   81 (124)
+T ss_dssp             CCCHHHHHHHHHHBCSSCSCCSHHHHHHHHHHTTCBTTBCSEEEEECSCHHHHHGGGSTTTEEEETTTEEEESSCEEEEE
+T ss_pred             CCchhHHHHHHhhcCCCCCCCCcchHHHHHHHcCCCCCCCCCceeeeCCHHHHHHHHhCCCCCCCCcCcEecCCceEEEE
+Confidence            78999999999999998766678899999999999778999999999999999999999755466899999999999999
+
+
+Q query            81 CKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIFRRP  123 (123)
+Q Consensus        81 C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~~~~  123 (123)
+                      |++.+++++|+|.|+++..+++|+|+|++++||||++.++++|
+T Consensus        82 C~l~~~~~~p~C~Y~~~~~~~~I~V~C~~~~PVh~~~~~~~~~  124 (124)
+T 5M9Q_A           82 CKLHGGSPWPPCQYQATAGFRNVVVACENGLPVHLDQSIFRRP  124 (124)
+T ss_dssp             EEEESSCSSSSCEEEEEEEEECCEEEEETTEEEEECGGGGC--
+T ss_pred             eEEcCCCCCCCceeEEceeeeEEEEEecCCcccccchhhccCC
+Confidence            9999998889999999999999999999999999999999987
+
+
+No 3
+>1AGI_A ANGIOGENIN; ENDONUCLEASE; 1.5A {Bos taurus} SCOP: d.5.1.1
+Probab=100.00  E-value=5.6e-38  Score=223.75  Aligned_cols=122  Identities=64%  Similarity=1.129  Sum_probs=111.8  Template_Neff=7.500
+
+Q query             1 QDNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTT   80 (123)
+Q Consensus         1 ~~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~   80 (123)
+                      |++++|++|++||||+++++.++.||+.||++|++.+.||+.|||||++++.|++||.++++.+++.+|++|..+|++|+
+T Consensus         2 ~~~~~~~~F~~~Hid~p~~~~~~~yCn~~M~~r~i~~~CK~~NTFIh~~~~~v~~IC~~~~~~~~~~~~~~S~~~~~vt~   81 (125)
+T 1AGI_A            2 QDDYRYIHFLTQHYDAKPKGRNDEYCFNMMKNRRLTRPCKDRNTFIHGNKNDIKAICEDRNGQPYRGDLRISKSEFQITI   81 (125)
+T ss_pred             CcchHHHHHHHhhcCCCCCCCCcchHHHHHHhCCCCCCCCCCceEeeCCHHHHHHHHhCCCCcccCCceEEcCCCcCeeE
+Confidence            67889999999999998765678899999999999777999999999999999999998655466789999999999999
+
+
+Q query            81 CKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIFRR  122 (123)
+Q Consensus        81 C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~~~  122 (123)
+                      |+|++|+++|+|+|.+...+++|+|+|++++||||++.+.++
+T Consensus        82 C~l~~g~~~p~C~Y~~~~~~~~i~V~C~~~~PVh~~~~~~~~  123 (125)
+T 1AGI_A           82 CKHKGGSSRPPCRYGATEDSRVIVVGCENGLPVHFDESFITP  123 (125)
+T ss_pred             EEEcCCCCCCCCcceeeceeeEEEEEecCCccCccCCCCCCC
+Confidence            999999888999999999999999999999999999998764
+
+
+No 4
+>1HBY_A ANGIOGENIN; ANGIOGENIN, RIBONUCLEASE, PHOSPHATE, PYROPHOSPHATE; 2.0A {HOMO SAPIENS} SCOP: d.5.1.1
+Probab=100.00  E-value=8.5e-38  Score=222.26  Aligned_cols=121  Identities=98%  Similarity=1.606  Sum_probs=111.7  Template_Neff=7.500
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCIDINTFIHGNKRSIKAICEN-KNGNPHRENLRISKSSFQVTT   80 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~~~CK~~NTFIh~~~~~v~~vC~~-~~g~~~~~n~~~S~~~F~vt~   80 (123)
+                      ++++|++|++||+|++++..++.||+.||++|++.+.||+.|||||+++++|++||.+ + +.+++.+|++|..+|++|+
+T Consensus         2 ~~~~~~~F~~~Hi~~~~~~~~~~yCn~~M~~r~~~~~CK~~nTFIh~~~~~I~~iC~~~~-~~~~~~n~~~S~~~f~vt~   80 (123)
+T 1HBY_A            2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCKDINTFIHGNKRSIKAICENKN-GNPHRENLRISKSSFQVTT   80 (123)
+T ss_dssp             TTHHHHHHHHHHBCSCCSCCSHHHHHHHHHHTTCBTTBCSEEEEECSCHHHHHHTTSTTT-EEEETTTEEEESSCEEEEE
+T ss_pred             CCchHHHHHHhhcCCCCCCCCcchHHHHHHHcCCCCCCCCCceEEeCCHHHHHHHHhcCC-CCcCccccEeCCCCeeEEE
+Confidence            5678999999999998755577899999999999778999999999999999999998 6 4467899999999999999
+
+
+Q query            81 CKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIFRRP  123 (123)
+Q Consensus        81 C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~~~~  123 (123)
+                      |++.+++++|+|.|+++..+++|+|+|++++||||++.++++|
+T Consensus        81 C~l~~~~~~~~C~Y~~~~~~~~I~V~C~~~~PVh~~~~~~~~~  123 (123)
+T 1HBY_A           81 CKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIFRRP  123 (123)
+T ss_dssp             EEEESSCSSSSCEEEEEEEEECCEEEEETTEEEEECCGGGCCC
+T ss_pred             EEEcCCCCCCCceeEEceeeeEEEEEecCCcccccccccccCC
+Confidence            9999998899999999999999999999999999999999886
+
+
+No 5
+>2J4T_B ANGIOGENIN-4 (E.C.3.1.27.5); ANGIOGENESIS, ENDONUCLEASE, DIFFERENTIATION, CANCER, NUCLEASE; 2.02A {MUS MUSCULUS}
+Probab=100.00  E-value=4.3e-37  Score=224.02  Aligned_cols=118  Identities=65%  Similarity=1.221  Sum_probs=108.5  Template_Neff=7.400
+
+Q query             3 NSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTTCK   82 (123)
+Q Consensus         3 ~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~C~   82 (123)
+                      +++|++|++||+|+++++.++.|||.||++|++.+.||+.|||||++++.|++||.++ +.++++++++|..+|++|+|+
+T Consensus        26 ~~~~~~F~~~Hv~~~~~~~~~~yCn~~M~~r~~~~~CK~~nTFIh~~~~~i~~IC~~~-~~~~~~~~~~S~~~f~vt~C~  104 (144)
+T 2J4T_B           26 NERYEKFLRQHYDAKPQGRDDRYCESMMKERKLTSPCKDVNTFIHGTKKNIRAICGKK-GSPYGENFRISNSPFQITTCT  104 (144)
+T ss_dssp             CHHHHHHHHHHBCSSCSSCSHHHHHHHHHHTTCTTTTCSEEEEEESCHHHHHGGGTTT-EEECSSSCEEESSCEEEEEEE
+T ss_pred             ChHHHHHHHhhcCCCCCCCCcchHHHHHhhcCCCCCCCCcceEEeCCHHHHHHHHccC-CCCCCCCcEecCCCeEeeEEE
+Confidence            3689999999999987666788999999999997789999999999999999999986 446778999999999999999
+
+
+Q query            83 LHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIFR  121 (123)
+Q Consensus        83 l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~~  121 (123)
+                      +.+++++|+|.|+++..+++|+|+|++++||||++.++.
+T Consensus       105 l~~~~~~p~C~Y~~~~~~~~I~VaC~~~~PVh~~~~~~~  143 (144)
+T 2J4T_B          105 HSRGSPWPPCGYRAFKDFRYIVIACEDGWPVHFDESFIS  143 (144)
+T ss_dssp             ECSSCCSSSCCEEEEEEEECCEEEEETTEEEEECTTTTC
+T ss_pred             EcCCCCCCCceeEeeeecceEEEEecCCccccccccccC
+Confidence            999888999999999999999999999999999998764
+
+
+No 6
+>2ZPO_A Ribonuclease (E.C.3.1.27.5); Green Turtle Egg White Ribonuclease; HET: SO4, GOL; 1.6A {Chelonia mydas}
+Probab=100.00  E-value=6.3e-37  Score=216.19  Aligned_cols=115  Identities=43%  Similarity=0.842  Sum_probs=104.6  Template_Neff=7.800
+
+Q query             4 SRYTHFLTQHYDAKPQG--RDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTT   80 (123)
+Q Consensus         4 ~~Y~~F~~qHvd~~~~~--~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~   80 (123)
+                      ++|++|++||||++++.  .++.||+.||++|++. +.||+.|||||++++.|++||.+++ .+++++|++|..+|.+|+
+T Consensus         2 ~~~~~F~~~Hv~~~~~~~~~~~~yCn~~M~~r~~~~~~CK~~ntFIh~~~~~I~~iC~~~~-~~~~~n~~~S~~~f~vt~   80 (119)
+T 2ZPO_A            2 TRYEKFLRQHVDYPRTAAPDTRTYCNQMMQRRGMTLPVCKFTNTFVHASAASITTICGPGG-APAGGNLRDSTASFALTT   80 (119)
+T ss_dssp             CHHHHHHHHHBCSSCCCCSSHHHHHHHHHHHTTCSSSSCCSEEEEECSCHHHHHGGGTTTE-EECSTTEEEEEEEEEEEE
+T ss_pred             cHHHHHHHhhCCCCCCCCCCccchHHHHHHHcCcCCCCCcccceeeeCCHHHHHHHhcCCC-CCCCCCceecCCCeeeEE
+Confidence            68999999999998753  3678999999999995 6899999999999999999999864 466899999999999999
+
+
+Q query            81 CKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSI  119 (123)
+Q Consensus        81 C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i  119 (123)
+                      |+|.+++++|+|+|++...+++|+|+|++++||||++.+
+T Consensus        81 C~l~~~~~~p~C~Y~~~~~~~~I~v~C~~~~PVh~~~~~  119 (119)
+T 2ZPO_A           81 CRLQGGSQRPPCNYNGGTSTQRIRIACDGGLPVHYDRAI  119 (119)
+T ss_dssp             EEESSSCCSSCCCEEEEEEEEEEEEEEETTEEEEEEEEC
+T ss_pred             EEECCCCCCCCceeEEeeeeeEEEEEecCCcccccccCC
+Confidence            999999888999999999999999999999999999863
+
+
+No 7
+>3LJE_A Zebrafish RNase5; angiogenins, fish rnases, HYDROLASE; HET: SO4; 1.8A {Danio rerio}
+Probab=100.00  E-value=3.7e-36  Score=215.98  Aligned_cols=117  Identities=38%  Similarity=0.731  Sum_probs=103.1  Template_Neff=7.300
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT----SPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQ   77 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~----~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~   77 (123)
+                      ++++|++|++||||+++   +..||+.||++|++.    +.||+.|||||++++.|++||.+++. ++ .+|++|..+|+
+T Consensus         7 ~~~~~~~F~~qHi~~~~---~~~yCn~~M~~r~i~~~~~~~CK~~NTFIh~~~~~V~~IC~~~~~-~~-~n~~~S~~~f~   81 (130)
+T 3LJE_A            7 VDPRYQKFLRQHVDADM---SVQKCDRAMSIKKITAGTGNDCKEVNTFIQATKDRITTVCGDAGT-PV-NNLFKSNQPFP   81 (130)
+T ss_dssp             THHHHHHHHHHHBCTTC---CGGGHHHHHHHTTCBSSSSSBBCSEEEEECSCHHHHHGGGTTTEE-EE-TTEEEESSCEE
+T ss_pred             CChHHHHHHHhhcCCCC---CcccHHHHHHHccccccCCCCCccceeEEecCHHHHHHHHhCCCC-cc-ccceecCCCcc
+Confidence            56789999999999875   467999999999884    57999999999999999999999754 55 78999999999
+
+
+Q query            78 VTTCKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIFRRP  123 (123)
+Q Consensus        78 vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~~~~  123 (123)
+                      +|+|++.+++++|+|.|+++..+++|+|+|++++||||++.++.++
+T Consensus        82 vt~C~l~~g~~~p~C~Y~~~~~~~~I~VaC~~~~PVH~~~~~~~~~  127 (130)
+T 3LJE_A           82 VVTCKLKSGNRRPNCQYRGTSSTRYIVLGCDKGWPVHYDEGIIDVN  127 (130)
+T ss_dssp             EEEEEEEECSBTTCCEEEEEEEEECCEEEEETTEEEEECCC-----
+T ss_pred             eeEEEEcCCCCCCCceeEeceeecEEEEEeCCCccccccccccccc
+Confidence            9999999998899999999999999999999999999999988764
+
+
+No 8
+>3LJD_B Zebrafish RNase1; angiogenins, fish rnases, HYDROLASE; HET: SO4; 1.38A {Danio rerio}
+Probab=100.00  E-value=5.4e-36  Score=214.53  Aligned_cols=116  Identities=35%  Similarity=0.655  Sum_probs=106.0  Template_Neff=7.000
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRG--LT-----SPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKS   74 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~--~~-----~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~   74 (123)
+                      ++++|++|++||+|+++   .+.||+.||++|+  +.     +.||+.|||||++++.|++||.+++. ++ .+|++|+.
+T Consensus         3 ~~~~~~~F~~qHvd~~~---~~~yCn~~M~~r~~~~~~~~~~~~CK~~NTFIh~~~~~V~~iC~~~~~-~~-~n~~~S~~   77 (126)
+T 3LJD_B            3 VKERYKNFLNQHVGPDM---SVQRCNSEIGPNNRKITLSGTDNGCKPVNTFILANKRLIKTVCGRAGS-PQ-GNMVRSNQ   77 (126)
+T ss_dssp             HHHHHHHHHHHHBCTTC---CGGGHHHHHSTTTTCCCCTTCSSBCCSEEEEECSCHHHHHGGGTTTEE-EE-TTEEEESS
+T ss_pred             cchhHHHHHHhhcCCCC---CcccHHHHHhhhccccccCCCCCCCccceEEEecCHHHHHHHHhCCCC-CC-CCcEeCCC
+Confidence            56789999999999986   3689999999998  73     67999999999999999999999754 55 89999999
+
+
+Q query            75 SFQVTTCKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIFRR  122 (123)
+Q Consensus        75 ~F~vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~~~  122 (123)
+                      +|++|+|++.+++++|+|.|+++..+++|+|+|++++||||++...+.
+T Consensus        78 ~f~vt~C~l~~~~~~~~C~Y~~~~~~~~I~I~C~~~~PVh~~~~~~~~  125 (126)
+T 3LJD_B           78 PFPVVKCVLNNGERHPYCEYRGTRSTRYIVLKCEEGWPVHYHEDEVNV  125 (126)
+T ss_dssp             CEEEEEEEEEECSBTTCCEEEEEEEEECCEEEEETTEEEEECCCCCCC
+T ss_pred             CeeeeEEEEcCCccCCCCcceEeeeecEEEEEecCCcccccccccccC
+Confidence            999999999999889999999999999999999999999999988764
+
+
+No 9
+>3LN8_A HYDROLASE; angiogenins, fish rnases, HYDROLASE; HET: SO4; 1.61A {Danio Rerio}
+Probab=100.00  E-value=5.4e-36  Score=214.53  Aligned_cols=116  Identities=35%  Similarity=0.655  Sum_probs=106.0  Template_Neff=7.000
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRG--LT-----SPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKS   74 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~--~~-----~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~   74 (123)
+                      ++++|++|++||+|+++   .+.||+.||++|+  +.     +.||+.|||||++++.|++||.+++. ++ .+|++|+.
+T Consensus         3 ~~~~~~~F~~qHvd~~~---~~~yCn~~M~~r~~~~~~~~~~~~CK~~NTFIh~~~~~V~~iC~~~~~-~~-~n~~~S~~   77 (126)
+T 3LN8_A            3 VKERYKNFLNQHVGPDM---SVQRCNSEIGPNNRKITLSGTDNGCKPVNTFILANKRLIKTVCGRAGS-PQ-GNMVRSNQ   77 (126)
+T ss_dssp             HHHHHHHHHHHHBCTTC---CGGGHHHHHSTTTTCCCCTTCSSBCCSEEEEECSCHHHHHGGGTTTEE-EE-TTEEEESS
+T ss_pred             cchhHHHHHHhhcCCCC---CcccHHHHHhhhccccccCCCCCCCccceEEEecCHHHHHHHHhCCCC-CC-CCcEeCCC
+Confidence            56789999999999986   3689999999998  73     67999999999999999999999754 55 89999999
+
+
+Q query            75 SFQVTTCKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIFRR  122 (123)
+Q Consensus        75 ~F~vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~~~  122 (123)
+                      +|++|+|++.+++++|+|.|+++..+++|+|+|++++||||++...+.
+T Consensus        78 ~f~vt~C~l~~~~~~~~C~Y~~~~~~~~I~I~C~~~~PVh~~~~~~~~  125 (126)
+T 3LN8_A           78 PFPVVKCVLNNGERHPYCEYRGTRSTRYIVLKCEEGWPVHYHEDEVNV  125 (126)
+T ss_dssp             CEEEEEEEEEECSBTTCCEEEEEEEEECCEEEEETTEEEEECCCCCCC
+T ss_pred             CeeeeEEEEcCCccCCCCcceEeeeecEEEEEecCCcccccccccccC
+Confidence            999999999999889999999999999999999999999999988764
+
+
+No 10
+>7BFK_A Angiogenin-1; RNase, auto-inhibition, Salmo salar, ancient; 1.89A {Salmo salar}
+Probab=100.00  E-value=6.9e-36  Score=213.71  Aligned_cols=117  Identities=34%  Similarity=0.625  Sum_probs=106.9  Template_Neff=7.400
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT---SPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQV   78 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~---~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~v   78 (123)
+                      ++++|++|++||||++++   +.||+.||++|++.   +.||+.|||||++++.|++||.++ +.++..+|++|..+|.+
+T Consensus         3 ~~~~~~~F~~~Hi~~~~~---~~yCn~~M~~r~~~~~~~~CK~~nTFIh~~~~~i~~iC~~~-~~~~~~n~~~S~~~f~v   78 (127)
+T 7BFK_A            3 VNQQYNHFLKQHVDGEMT---TLKCKSQMEILNLNRPDRKCKLKNTFILANPDQVQAICTGG-GTLKGNNLVQSNKPFSV   78 (127)
+T ss_dssp             CCHHHHHHHHHHBCTTCC---GGGHHHHHHHHHTTSGGGBCCSEEEEECSCHHHHHGGGTTS-EEECSTTEEEESSCEEE
+T ss_pred             cchHHHHHHHhhcCCCCC---cCcHHHHHHHhcccCCCCCCCcceEEEeCCHHHHHHHHhcC-CCccCCcceecCCCeEE
+Confidence            578999999999998864   67999999999984   579999999999999999999986 44668999999999999
+
+
+Q query            79 TTCKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIFRR  122 (123)
+Q Consensus        79 t~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~~~  122 (123)
+                      |+|++.+++++|+|.|++...+++|+|+|++++||||++...+-
+T Consensus        79 t~C~l~~g~~~~~C~Y~~~~~~~~I~v~C~~~~PVh~~~~~~~~  122 (127)
+T 7BFK_A           79 VICTHTGGESHPNCTYKGSSATKKVIIACDGKFPVHYDGDVDIG  122 (127)
+T ss_dssp             EEEEEEECSBTTSCEEEEEEEEEEEEEEEETTEEECSSSSSCCE
+T ss_pred             EEEEEcCCCCCCCceeEecccccEEEEEeCCCcccccccccccc
+Confidence            99999999889999999999999999999999999999987653
+
+
+No 11
+>1RNF_A PROTEIN (RIBONUCLEASE 4); HYDROLASE, RIBONUCLEASE, PHOSPHODIESTERASE; 2.1A {Homo sapiens} SCOP: d.5.1.1
+Probab=100.00  E-value=1.7e-35  Score=209.58  Aligned_cols=113  Identities=41%  Similarity=0.741  Sum_probs=101.5  Template_Neff=7.600
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPHR---ENLRISKSSFQ   77 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~---~n~~~S~~~F~   77 (123)
+                      ++++|++|++||||+++++.++.||+.||+.|++. +.||+.|||||+++++|++||.+++. +++   .+++.|  +|.
+T Consensus         2 ~~~~~~~F~~qHid~~~~~~~~~yCn~~M~~r~~~~~~CK~~nTFIh~~~~~I~~iC~~~~~-~~~~~~~~~~~S--~f~   78 (120)
+T 1RNF_A            2 QDGMYQRFLRQHVHPEETGGSDRYCNLMMQRRKMTLYHCKRFNTFIHEDIWNIRSICSTTNI-QCKNGKMNCHEG--VVK   78 (120)
+T ss_dssp             HHHHHHHHHHHHBCSSCCCCSHHHHHHHHHHTTSSSSSCCSEEEEECSCHHHHHGGGGSCCB-CCTTSCSCEEEE--EEE
+T ss_pred             CcchHHHHHHhcCCCCCCCCCcchHHHHHHHccCCCCCCccccEEEeCCHHHHHHHHhcCCc-ccCCCCceEeeC--Cee
+Confidence            46789999999999987666788999999999995 68999999999999999999998644 442   568888  999
+
+
+Q query            78 VTTCKLHGGSPWPPCQYRATAGFRNVVVACENG--LPVHLDQ  117 (123)
+Q Consensus        78 vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g--~PVH~d~  117 (123)
+                      +|+|+|.+++++|+|.|++....++|+|+|+++  +||||++
+T Consensus        79 vt~C~l~~~~~~p~C~Y~~~~~~~~I~v~C~~~~~~PVh~~~  120 (120)
+T 1RNF_A           79 VTDCRDTGSSRAPNCRYRAIASTRRVVIACEGNPQVPVHFDG  120 (120)
+T ss_dssp             EEEEEECSSSCTTSCCEEEEEEEEEEEEEEETTTTEEEEECC
+T ss_pred             EEEEEEcCCCCCCCceeEEeeeeeEEEEEeCCCCCccccCCC
+Confidence            999999999889999999999999999999999  9999985
+
+
+No 12
+>2RNF_A RIBONUCLEASE 4 (E.C.3.1.-); RIBONUCLEASE, HYDROLASE, PHOSPHODIESTERASE; HET: UM3; 2.4A {Homo sapiens} SCOP: d.5.1.1
+Probab=100.00  E-value=1.7e-35  Score=209.58  Aligned_cols=113  Identities=41%  Similarity=0.741  Sum_probs=101.5  Template_Neff=7.600
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPHR---ENLRISKSSFQ   77 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~---~n~~~S~~~F~   77 (123)
+                      ++++|++|++||||+++++.++.||+.||+.|++. +.||+.|||||+++++|++||.+++. +++   .+++.|  +|.
+T Consensus         2 ~~~~~~~F~~qHid~~~~~~~~~yCn~~M~~r~~~~~~CK~~nTFIh~~~~~I~~iC~~~~~-~~~~~~~~~~~S--~f~   78 (120)
+T 2RNF_A            2 QDGMYQRFLRQHVHPEETGGSDRYCNLMMQRRKMTLYHCKRFNTFIHEDIWNIRSICSTTNI-QCKNGKMNCHEG--VVK   78 (120)
+T ss_dssp             HHHHHHHHHHHHBCSSCCCCSHHHHHHHHHHTTSSSSSCCSEEEEECSCHHHHHGGGGSCCB-CCTTSCSCEEEE--EEE
+T ss_pred             CcchHHHHHHhcCCCCCCCCCcchHHHHHHHccCCCCCCccccEEEeCCHHHHHHHHhcCCc-ccCCCCceEeeC--Cee
+Confidence            46789999999999987666788999999999995 68999999999999999999998644 442   568888  999
+
+
+Q query            78 VTTCKLHGGSPWPPCQYRATAGFRNVVVACENG--LPVHLDQ  117 (123)
+Q Consensus        78 vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g--~PVH~d~  117 (123)
+                      +|+|+|.+++++|+|.|++....++|+|+|+++  +||||++
+T Consensus        79 vt~C~l~~~~~~p~C~Y~~~~~~~~I~v~C~~~~~~PVh~~~  120 (120)
+T 2RNF_A           79 VTDCRDTGSSRAPNCRYRAIASTRRVVIACEGNPQVPVHFDG  120 (120)
+T ss_dssp             EEEEEECSSSCTTSCCEEEEEEEEEEEEEEETTTTEEEEECC
+T ss_pred             EEEEEEcCCCCCCCceeEEeeeeeEEEEEeCCCCCccccCCC
+Confidence            999999999889999999999999999999999  9999985
+
+
+No 13
+>1F0V_C RIBONUCLEASE A/DNA COMPLEX; domain swapping, crystal, ribonuclease, bovine; HET: PO4, GOL; 1.7A {Bos taurus} SCOP: d.5.1.1
+Probab=100.00  E-value=1.9e-35  Score=210.37  Aligned_cols=117  Identities=33%  Similarity=0.701  Sum_probs=104.9  Template_Neff=7.600
+
+Q query             2 DNSRYTHFLTQHYDAKPQG-RDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSF   76 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~-~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F   76 (123)
+                      ++++|++|++||||+++++ .++.||+.||+.|++. +.||+.|||||++++.|++||.+++. ++   ..+|++|..+|
+T Consensus         1 ~~~~~~~F~~~Hid~~~~~~~~~~yCn~~M~~r~~~~~~CK~~nTFIh~~~~~i~~iC~~~~~-~~~~~~~~~~~S~~~f   79 (124)
+T 1F0V_C            1 KETAAAKFERQHMDSSTSAASSSNYCNQMMKSRNLTKDRCKPVNTFVHESLADVQAVCSQKNV-ACKNGQTNCYQSYSTM   79 (124)
+T ss_dssp             CCCHHHHHHHHHBCTTSSSCCSTTHHHHHHHHTTTTSSSCCSEEEEECSCHHHHHGGGGSEEE-CCTTSCSCEEECSSCE
+T ss_pred             CCcHHHHHHHHhcCCCCCCCCCcccHHHHHHhcCCCCCCCCCceeEeeCCHHHHHHHHhCCCC-cCCCCCccCeeCCCCe
+Confidence            3568999999999997653 4678999999999994 68999999999999999999998644 55   58999999999
+
+
+Q query            77 QVTTCKLHGGSPWPPCQYRATAGFRNVVVACENG--LPVHLDQSI  119 (123)
+Q Consensus        77 ~vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g--~PVH~d~~i  119 (123)
+                      ++|+|+|.+|+++|+|.|+++..+++|+|+|+++  +||||++.+
+T Consensus        80 ~vt~C~l~~g~~~p~C~Y~~~~~~~~i~v~C~~~~~~PVh~~~~~  124 (124)
+T 1F0V_C           80 SITDCRETGSSKYPNCAYKTTQANKHIIVACEGNPYVPVHFDASV  124 (124)
+T ss_dssp             EEEEEEECTTCBTTBCCEEEEEEEECEEEEEEEEEEEEEEEEEEC
+T ss_pred             eeEEEEEcCCCCCCCceeEEeeeeeEEEEEecCCCCccceeccCC
+Confidence            9999999999888999999999999999999999  999999763
+
+
+No 14
+>6ETL_A Ribonuclease pancreatic (E.C.3.1.27.5); Raman microspectroscopy, ribonuclease, atomic resolution; HET: IPA; 0.85A {Bos taurus}
+Probab=100.00  E-value=1.9e-35  Score=210.37  Aligned_cols=117  Identities=33%  Similarity=0.701  Sum_probs=104.9  Template_Neff=7.600
+
+Q query             2 DNSRYTHFLTQHYDAKPQG-RDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSF   76 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~-~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F   76 (123)
+                      ++++|++|++||||+++++ .++.||+.||+.|++. +.||+.|||||++++.|++||.+++. ++   ..+|++|..+|
+T Consensus         1 ~~~~~~~F~~~Hid~~~~~~~~~~yCn~~M~~r~~~~~~CK~~nTFIh~~~~~i~~iC~~~~~-~~~~~~~~~~~S~~~f   79 (124)
+T 6ETL_A            1 KETAAAKFERQHMDSSTSAASSSNYCNQMMKSRNLTKDRCKPVNTFVHESLADVQAVCSQKNV-ACKNGQTNCYQSYSTM   79 (124)
+T ss_dssp             CCCHHHHHHHHHBCTTCSSCCSTTHHHHHHHHTTTTSSSCCSEEEEECSCHHHHHGGGGSEEE-CCTTSCSCEEECSSCE
+T ss_pred             CCcHHHHHHHHhcCCCCCCCCCcccHHHHHHhcCCCCCCCCCceeEeeCCHHHHHHHHhCCCC-cCCCCCccCeeCCCCe
+Confidence            3568999999999997653 4678999999999994 68999999999999999999998644 55   58999999999
+
+
+Q query            77 QVTTCKLHGGSPWPPCQYRATAGFRNVVVACENG--LPVHLDQSI  119 (123)
+Q Consensus        77 ~vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g--~PVH~d~~i  119 (123)
+                      ++|+|+|.+|+++|+|.|+++..+++|+|+|+++  +||||++.+
+T Consensus        80 ~vt~C~l~~g~~~p~C~Y~~~~~~~~i~v~C~~~~~~PVh~~~~~  124 (124)
+T 6ETL_A           80 SITDCRETGSSKYPNCAYKTTQANKHIIVACEGNPYVPVHFDASV  124 (124)
+T ss_dssp             EEEEEEECTTCBTTBCCEEEEEEEECEEEEEETTTTEEEEEEEEC
+T ss_pred             eeEEEEEcCCCCCCCceeEEeeeeeEEEEEecCCCCccceeccCC
+Confidence            9999999999888999999999999999999999  999999763
+
+
+No 15
+>1DY5_A RIBONUCLEASE A (E.C.3.1.27.5); HYDROLASE, RIBONUCLEASE, DEAMIDATION; HET: ACT, SO4, IPA, IAS; 0.87A {BOS TAURUS} SCOP: d.5.1.1
+Probab=100.00  E-value=2e-35  Score=210.26  Aligned_cols=117  Identities=33%  Similarity=0.701  Sum_probs=104.8  Template_Neff=7.600
+
+Q query             2 DNSRYTHFLTQHYDAKPQG-RDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSF   76 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~-~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F   76 (123)
+                      ++++|++|++||||+++++ .++.||+.||+.|++. +.||+.|||||++++.|++||.+++. ++   ..+|++|..+|
+T Consensus         1 ~~~~~~~F~~~Hid~~~~~~~~~~yCn~~M~~r~~~~~~CK~~nTFIh~~~~~v~~iC~~~~~-~~~~~~~~~~~S~~~f   79 (124)
+T 1DY5_A            1 KETAAAKFERQHMDSSTSAASSSNYCNQMMKSRNLTKDRCKPVNTFVHESLADVQAVCSQKNV-ACKDGQTNCYQSYSTM   79 (124)
+T ss_dssp             CCCHHHHHHHHHBCTTSSSCCSTTHHHHHHHHTTSSSSSCCSEEEEECSCHHHHHHGGGSEEE-CCCCCCSCEEECSSBE
+T ss_pred             CCcHHHHHHHHhcCCCCCCCCCcccHHHHHHhcCCCCCCCCCceeEeeCCHHHHHHHHhCCCC-cCCCCCccceeCCCCe
+Confidence            3568999999999997653 4677999999999994 68999999999999999999998644 55   58999999999
+
+
+Q query            77 QVTTCKLHGGSPWPPCQYRATAGFRNVVVACENG--LPVHLDQSI  119 (123)
+Q Consensus        77 ~vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g--~PVH~d~~i  119 (123)
+                      ++|+|++.+++++|+|.|+++..+++|+|+|+++  +||||++.+
+T Consensus        80 ~vt~C~l~~~~~~p~C~Y~~~~~~~~I~v~C~~~~~~PVh~~~~~  124 (124)
+T 1DY5_A           80 SITDCRETGSSKYPNCAYKTTQANKHIIVACEGNPYVPVHFDASV  124 (124)
+T ss_dssp             EEEEEEECTTCBTTBCCEEEEEEEECEEEEEETTTTEEEEEEEEC
+T ss_pred             eEEEEEEcCCCCCCCceeEEeeeeeEEEEEecCCCCccceeccCC
+Confidence            9999999999888999999999999999999999  999999763
+
+
+No 16
+>4PER_B Gallus Ribonuclease Inhibitor, Gallus Ribonuclease; leucine-rich repeat, protein-protein complex, HYDROLASE-HYDROLASE; 1.92A {Gallus gallus}
+Probab=100.00  E-value=2.7e-35  Score=206.60  Aligned_cols=108  Identities=36%  Similarity=0.710  Sum_probs=93.5  Template_Neff=7.600
+
+Q query             5 RYTHFLTQHYDAKPQG--RDDRYCESIMRRRGLT--SPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTT   80 (123)
+Q Consensus         5 ~Y~~F~~qHvd~~~~~--~~~~yC~~mM~~r~~~--~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~   80 (123)
+                      +|++|++||||++++.  .++.||+.||+.|++.  +.||+.|||||++.+.|++||.+++.    .+|++|..+|++|+
+T Consensus         2 ~~~~F~~qHid~~~~~~~~~~~yCn~~M~~r~~~~~~~CK~~nTFIh~~~~~v~~iC~~~~~----~~~~~S~~~f~vt~   77 (113)
+T 4PER_B            2 TYQDFLRTHVDFPKTSFPNIAAYCNVMMVRRGINVHGRCKSLNTFVHTDPRNLNTLCINQPN----RALRTTQQQLPVTD   77 (113)
+T ss_dssp             CHHHHHHHHBC--CCCCSSHHHHHHHHHHHTTSSCTTCCCSEEEEECSCHHHHHC--CCCCS----SCEEECSSCEEEEE
+T ss_pred             chHHHHHhhcCCCCCCCCcchhhHHHHHHHcCccCCCCCccceeeccCCHHHHHHHHhcCCC----CCceecCCcccccE
+Confidence            6899999999988653  3678999999999984  68999999999999999999987532    68999999999999
+
+
+Q query            81 CKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQS  118 (123)
+Q Consensus        81 C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~  118 (123)
+                      |+|.++  +|+|+|++...+++|+|+|++++||||++.
+T Consensus        78 C~l~~~--~p~C~Y~~~~~~~~I~I~C~~~~PVh~~~~  113 (113)
+T 4PER_B           78 CKLIRS--HPTCSYTGNQFNHRVRVGCWGGLPVHLDGT  113 (113)
+T ss_dssp             EEEEEC--SSSCEEEEEEEEECCEEEEETTEEEEECCC
+T ss_pred             EEEcCC--CCCccccceeceeEEEEEeeCCcccCcCCC
+Confidence            999986  789999999999999999999999999863
+
+
+No 17
+>2VQ8_A RNASE ZF-1A; EVOLUTION, ZEBRAFISH, RIBONUCLEASES, HYDROLASE; 1.35A {DANIO RERIO}
+Probab=100.00  E-value=3.2e-35  Score=213.93  Aligned_cols=116  Identities=35%  Similarity=0.656  Sum_probs=103.1  Template_Neff=6.800
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRG--LT-----SPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKS   74 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~--~~-----~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~   74 (123)
+                      ++++|++|++||||+++   .+.||+.||++|+  +.     +.||+.|||||++.+.|++||.+++. + ..+|++|..
+T Consensus        16 ~~~~~~~F~~qHid~~~---~~~yCn~~M~~r~r~i~~~~~~~~CK~~NTFIh~~~~~V~~IC~~~~~-~-~~n~~~S~~   90 (139)
+T 2VQ8_A           16 VKERYKNFLNQHVGPDM---SVQRCNSEIGPNNRKITLSGTDNGCKPVNTFILANKRLIKTVCGRAGS-P-QGNMVRSNQ   90 (139)
+T ss_dssp             THHHHHHHHHHHBCTTC---CTTCHHHHHSTTTTCCCCTTSSSBCCSEEEEESSCHHHHHGGGTTTEE-E-ETTEEEESS
+T ss_pred             hhhhHHHHHHhhcCCCC---CccchHHHHhhhccceecCCCCCCCcCcceEEecCHHHHHHHHcCCCC-C-CCCCEecCC
+Confidence            45689999999999886   3679999999875  53     57999999999999999999998644 3 589999999
+
+
+Q query            75 SFQVTTCKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIFRR  122 (123)
+Q Consensus        75 ~F~vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~~~  122 (123)
+                      +|++|+|+|+++.++|+|.|++...+++|+|+|++++||||++...++
+T Consensus        91 ~f~vT~C~l~~~~~~p~C~Y~~~~~~~~I~VaC~~~~PVHf~~~~~~~  138 (139)
+T 2VQ8_A           91 PFPVVKCVLNNGERHPYCEYRGTRSTRYIVLKCEEGWPVHYHEDEVNV  138 (139)
+T ss_dssp             CEEEEEEEEEECSBTTCCEEEEEEEEECCEEEEETTEEEEECCCSCC-
+T ss_pred             CeeeeEEEEcCCccCCCCcceeeeeeeEEEEEeeCCccccccCCcccc
+Confidence            999999999998888999999999999999999999999999987664
+
+
+No 18
+>1M07_B Ribonuclease (E.C.3.1.27.5)/DNA Complex; RC-RNase-d(ACGA), ribonuclease, bullfrog, cytotoxicity, HYDROLASE-DNA; HET: PCA; 1.8A {Rana catesbeiana} SCOP: d.5.1.1
+Probab=100.00  E-value=3.3e-35  Score=205.76  Aligned_cols=107  Identities=28%  Similarity=0.463  Sum_probs=99.3  Template_Neff=7.500
+
+Q query             5 RYTHFLTQHYDAKPQGRDDRYCESIMRRRGL-T-SPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTTCK   82 (123)
+Q Consensus         5 ~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~-~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~C~   82 (123)
+                      +|++|++||+|+++    +.||+.||++|++ . +.||+.|||||++++.|++||.+++     .+|++|+.+|.+|+|+
+T Consensus         2 ~~~~F~~~Hid~~~----~~yCn~~M~~r~~~~~~~CK~~nTFIh~~~~~v~~iC~~~~-----~n~~~S~~~f~vt~C~   72 (111)
+T 1M07_B            2 NWATFQQKHIINTP----IINCNTIMDNNIYIVGGQCKRVNTFIISSATTVKAICTGVI-----NMNVLSTTRFQLNTCT   72 (111)
+T ss_dssp             CHHHHHHHHEESSC----CSCHHHHTCSGGGEETTEECSEEEEEESCHHHHHGGGTTCS-----EEEEECSSCEEEEEEE
+T ss_pred             ChHHHHHhhcCCCC----CCchHHHHHhcccccCCCCcCceEEEeCCHHHHHHHhcCCc-----cccEEcCCcEEcEEEE
+Confidence            68999999999875    6799999999999 3 6799999999999999999998863     7899999999999999
+
+
+Q query            83 LHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIFR  121 (123)
+Q Consensus        83 l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~~  121 (123)
+                      ++++ ++|+|.|++...+++|+|+|++++||||++.+..
+T Consensus        73 l~~~-~~~~C~Y~~~~~~~~I~v~C~~~~PVh~~~~~~~  110 (111)
+T 1M07_B           73 RTSI-TPRPCPYSSRTETNYICVKCENQYPVHFAGIGRC  110 (111)
+T ss_dssp             ESCC-CSSSCCEEEEEEEECEEEEEETTEEEEEEEESSC
+T ss_pred             EcCC-CCCCCceeeecceeEEEEeecCCccccccceecC
+Confidence            9998 8899999999999999999999999999998764
+
+
+No 19
+>6YMT_A RNASE 3/1 version1, HYDROLASE, PANCREATIC; HET: GOL; 1.58A {synthetic construct}
+Probab=100.00  E-value=5e-35  Score=209.21  Aligned_cols=115  Identities=33%  Similarity=0.648  Sum_probs=101.8  Template_Neff=7.600
+
+Q query             4 SRYTHFLTQHYDAKPQG-RDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQV   78 (123)
+Q Consensus         4 ~~Y~~F~~qHvd~~~~~-~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~v   78 (123)
+                      .+|++|++||+|++++. .++.||+.||++|++. +.||+.|||||++++.|++||.+++. ++   .++|++|..+|.+
+T Consensus         7 ~~~~~F~~~Hid~~~~~~~~~~yCn~~M~~r~~~~~~CK~~nTFIh~~~~~v~~iC~~~~~-~c~~~~~n~~~S~~~f~v   85 (128)
+T 6YMT_A            7 TRAQWFAIQHIDSDSSPSSSSRYCTIAMRAINNYRWRCKPVNTFVHEPLVDVQNVCFQEKV-TCKNGQGNCYRSRFRMHI   85 (128)
+T ss_dssp             CHHHHHHHHHBCTTCCSSCCTTHHHHHHHHHHTTSSSCCSEEEEECSCHHHHHGGGGSEEE-CCTTSCSEEEECSSCEEE
+T ss_pred             CHHHHHHHhhcCCCCCCCCCchHHHHHHHHhhCCCCCCCCceeEecCCHHHHHHHHhcCCc-cCCCCCCcceecCCCeeE
+Confidence            68999999999997653 4678999999999995 67999999999999999999998654 44   4889999999999
+
+
+Q query            79 TTCKLHGGSPWPPCQYRATAGFRNVVVACENG--LPVHLDQSI  119 (123)
+Q Consensus        79 t~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g--~PVH~d~~i  119 (123)
+                      |+|++.+++++|+|.|+++..+++|+|+|+++  +||||++.+
+T Consensus        86 t~C~l~~~~~~~~C~Y~~~~~~~~i~V~C~~~~~~PVh~~~~~  128 (128)
+T 6YMT_A           86 TDCRLTNGSKYPNCRYRTRPGRRHIIVACEGSPYVPVHFDASV  128 (128)
+T ss_dssp             EEEEECTTCBTTBCCEEEEEEEECCEEEEETTTTEEEEEC---
+T ss_pred             EEEEECCCCCCCCceeEecceeeEEEEEeCCCCCcccccccCC
+Confidence            99999999888999999999999999999999  999999863
+
+
+No 20
+>1H1H_A EOSINOPHIL CATIONIC PROTEIN (E.C.3.1.27.-); HYDROLASE, EOSINOPHIL CATIONIC PROTEIN, EOSINOPHIL; HET: A2P; 2.0A {HOMO SAPIENS} SCOP: d.5.1.1
+Probab=100.00  E-value=7.7e-35  Score=210.77  Aligned_cols=110  Identities=30%  Similarity=0.481  Sum_probs=99.3  Template_Neff=6.800
+
+Q query             4 SRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH-----RENLRISKSSFQ   77 (123)
+Q Consensus         4 ~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~-----~~n~~~S~~~F~   77 (123)
+                      ++|++|++||||+++     .||+.||++|++. +.||+.|||||++.+.|++||.+++. ++     ..+|++|..+|+
+T Consensus         7 ~~~~~F~~qHid~~~-----~yCn~~M~~r~~~~~~CK~~NTFIh~~~~~V~~iC~~~~~-~c~~~~~~~nc~~S~~~f~   80 (134)
+T 1H1H_A            7 TRAQWFAIQHISLNP-----PRCTIAMRAINNYRWRCKNQNTFLRTTFANVVNVCGNQSI-RCPHNRTLNNCHRSRFRVP   80 (134)
+T ss_dssp             CHHHHHHHHHBCSSC-----CCHHHHTHHHHTTSSSCCSEEEEESSCHHHHHHHHTSCCB-CBTTBTTCCCEEECSSCEE
+T ss_pred             CHHHHHHHhhcCCCC-----cccCHHHHHHhcCCCCCCCcceEEeCCHHHHHHHhcCCCC-cCCCCCCcCccEecCCcee
+Confidence            789999999999875     4999999999994 68999999999999999999998654 43     158999999999
+
+
+Q query            78 VTTCKLHGG--SPWPPCQYRATAGFRNVVVACENG----------LPVHLDQSI  119 (123)
+Q Consensus        78 vt~C~l~~~--~~~p~C~Y~g~~~~r~I~vaC~~g----------~PVH~d~~i  119 (123)
+                      +|+|+|.++  .++|+|.|++...+++|+|+|+++          +||||++.+
+T Consensus        81 vT~C~l~~~~~~~~p~C~Y~~~~~~~~I~V~C~~~~~~~~~~~~~~PVH~~~~~  134 (134)
+T 1H1H_A           81 LLHCDLINPGAQNISNCRYADRPGRRFYVVACDNRDPRDSPRYPVVPVHLDTTI  134 (134)
+T ss_dssp             EEEEEESSSSSSCTTSCCEEEEEEEECEEEEEEECCTTSCTTCSEEEEEEEEEC
+T ss_pred             eeEEEEcCCCCccCCCCccccccceeEEEEEeCCCCCCCCCCCCCcccccccCC
+Confidence            999999997  678999999999999999999998          999999863
+
+
+No 21
+>5AR6_A RIBONUCLEASE 4 (E.C.3.1.27.-); HYDROLASE, RIBONUCLEASE 4, RNA DEGRADATION; 1.25A {SUS SCROFA}
+Probab=100.00  E-value=7.7e-35  Score=206.73  Aligned_cols=113  Identities=41%  Similarity=0.748  Sum_probs=99.7  Template_Neff=7.600
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQ   77 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~   77 (123)
+                      ++++|++|++||||+++++.++.||+.||+.|++. +.||+.|||||++++.|++||.+++. ++   ..+++.|  +|+
+T Consensus         4 ~~~~~~~F~~qHid~~~~~~~~~yCn~~M~~r~~~~~~CK~~nTFIh~~~~~v~~iC~~~~~-~~~~~~~~c~~s--~f~   80 (122)
+T 5AR6_A            4 QDRMYQRFLRQHVDPDATGGNDAYCNLMMQRRKMTSHYCKRFNTFIHEDIWNIRSICSTSNI-QCKNGQMNCHEG--VVK   80 (122)
+T ss_dssp             HHHHHHHHHHHHBCTTCCSCCHHHHHHHHHHTTSSSSSCCSEEEEECSCHHHHHHHTTSCCB-CCTTSCSCEEEE--EEE
+T ss_pred             cchHHHHHHHhhcCCCCCCCCchhHHHHHHHccccCCCCCCceEEEeCCHHHHHHHHhcCCc-cCCCCCceeecC--Cee
+Confidence            46789999999999987656788999999999995 68999999999999999999998654 33   2456666  899
+
+
+Q query            78 VTTCKLHGGSPWPPCQYRATAGFRNVVVACENG--LPVHLDQ  117 (123)
+Q Consensus        78 vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g--~PVH~d~  117 (123)
+                      +|+|+|.+++++|+|.|++....++|+|+|+++  +||||++
+T Consensus        81 vt~C~l~~~~~~p~C~Y~~~~~~~~I~v~C~~~~~~PVh~~~  122 (122)
+T 5AR6_A           81 VTDCRETGSSRAPNCRYRAMASTRRVVIACEGNPEVPVHFDK  122 (122)
+T ss_dssp             EEEEEECSSCBTTBCCEEEEEEEEEEEEEEETTTTEEEEECC
+T ss_pred             eEEeEEcCCCCCCCceeEEeeeeeEEEEEeCCCCCcccccCC
+Confidence            999999999888999999999999999999995  9999985
+
+
+No 22
+>4X08_B Eosinophil cationic protein (E.C.3.1.27.5); active centre mutation, sulphate, sulphate; HET: SO4; 1.34A {Homo sapiens}
+Probab=100.00  E-value=8.8e-35  Score=210.57  Aligned_cols=112  Identities=29%  Similarity=0.460  Sum_probs=100.8  Template_Neff=6.700
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPHR-----ENLRISKSS   75 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~-----~n~~~S~~~   75 (123)
+                      +.++|++|++||+++++     .||+.||++|++. +.||+.|||||++.+.|++||.+++. +++     .+|++|..+
+T Consensus         5 ~~~~~~~F~~qHi~~~~-----~yCn~~M~~r~~~~~~CK~~NTFIh~~~~~V~~IC~~~~~-~c~~~~~~~nc~~S~~~   78 (134)
+T 4X08_B            5 QFTRAQWFAIQHISLNP-----PRCTIAMRAINNYRWRCKNQNTFLRTTFANVVNVCGNQSI-RCPHNRTLNNCHRSRFR   78 (134)
+T ss_dssp             TSCHHHHHHHHHBCSSC-----CCHHHHTHHHHTTSSSCCSEEEEECSCHHHHHHHTTSCEE-CCSSSTTCCCEEECSSC
+T ss_pred             CCCHHHHHHHHhcCCCC-----ccccHHHHHHhcCCCCCCCcceEEeCCHHHHHHHhcCCCC-cCCCCCCcCccEeCCCC
+Confidence            46789999999998763     7999999999995 68999999999999999999998744 553     789999999
+
+
+Q query            76 FQVTTCKLHGGSP--WPPCQYRATAGFRNVVVACENG----------LPVHLDQSI  119 (123)
+Q Consensus        76 F~vt~C~l~~~~~--~p~C~Y~g~~~~r~I~vaC~~g----------~PVH~d~~i  119 (123)
+                      |++|+|+|+++.+  +|+|.|++...+++|+|+|+++          +||||++.+
+T Consensus        79 f~vT~C~l~~~~~~~~p~C~Y~~~~~~~~I~V~C~~~~~~~~~~~~~~PVh~~~~~  134 (134)
+T 4X08_B           79 VPLLHCDLINPGAQNISNCRYADRPGRRFYVVACDNRDPRDSPRYPVVPVNLDTTI  134 (134)
+T ss_dssp             EEEEEEEESCTTCSSGGGCCEEEEEEEECEEEEEEECCTTSCTTCSEEEEEEEEEC
+T ss_pred             eeceEEEeCCCCCCCCCCCccccccceeEEEEEeCCCCCCCCCCCCCCccccccCC
+Confidence            9999999999977  8899999999999999999997          699999863
+
+
+No 23
+>2LVZ_A Eosinophil cationic protein (E.C.3.1.27.-); heparin, molecular recognition, HYDROLASE; HET: SGN, IDS, LVZ; NMR {Homo sapiens}
+Probab=100.00  E-value=1.2e-34  Score=209.61  Aligned_cols=112  Identities=29%  Similarity=0.474  Sum_probs=100.5  Template_Neff=6.800
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPHR-----ENLRISKSS   75 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~-----~n~~~S~~~   75 (123)
+                      +.++|++|++|||++++     .||+.||++|++. +.||+.|||||++.+.|++||.+++. +++     .+|++|..+
+T Consensus         4 ~~~~~~~F~~qHi~~~~-----~yCn~~M~~r~~~~~~CK~~NTFIh~~~~~V~~iC~~~~~-~c~~~~~~~nc~~S~~~   77 (133)
+T 2LVZ_A            4 QFTRAQWFAIQHISLNP-----PRCTIAMRAINNYRWRCKNQNTFLRTTFANVVNVCGNQSI-RCPHNRTLNNCHRSRFR   77 (133)
+T ss_dssp             SSCHHHHHHHHHBCSSC-----CCHHHHGGGTTTTSSSCCSEEEEESSCHHHHHHHTTSCCB-CCTTCTTTCCBEECSSC
+T ss_pred             CCCHHHHHHHHhcCCCC-----ccccHHHHHHhcCCCCCCCcceEEeCCHHHHHHHhcCCCC-cCCCCCCcCccEeCCCC
+Confidence            56789999999997753     7999999999994 68999999999999999999998644 553     789999999
+
+
+Q query            76 FQVTTCKLHGGSP--WPPCQYRATAGFRNVVVACENG----------LPVHLDQSI  119 (123)
+Q Consensus        76 F~vt~C~l~~~~~--~p~C~Y~g~~~~r~I~vaC~~g----------~PVH~d~~i  119 (123)
+                      |++|+|+|+++.+  +|+|.|++...+++|+|+|+++          +||||++.+
+T Consensus        78 f~vT~C~l~~~~~~~~p~C~Y~~~~~~~~I~VaC~~~~~~~~~~~~~~PVH~~~~~  133 (133)
+T 2LVZ_A           78 VPLLHCDLINPGAQNISNCRYADRPGRRFYVVACDNRDPRDSPRYPVVPVHLDTTI  133 (133)
+T ss_dssp             EEEEEEEESCTTCCSTTTCCEEEEEEEECEEEEEEECBTTBCTTCSEEEEEEEEEC
+T ss_pred             eeceEEEeCCCCCCCCCCCccccccceeEEEEEeCCCCCCCCCCCCCcccccccCC
+Confidence            9999999999877  8899999999999999999987          699999863
+
+
+No 24
+>1HI5_A EOSINOPHIL-DERIVED NEUROTOXIN (E.C.3.1.27.5); HYDROLASE, RNASE-2, RNASE US, RIBONUCLEASE; HET: ADP; 1.8A {HOMO SAPIENS} SCOP: d.5.1.1
+Probab=100.00  E-value=1.3e-34  Score=209.84  Aligned_cols=112  Identities=29%  Similarity=0.458  Sum_probs=100.6  Template_Neff=6.700
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPHR-----ENLRISKSS   75 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~-----~n~~~S~~~   75 (123)
+                      +.++|++|++||+++++     .||+.||++|++. +.||+.|||||++.+.|++||.+++. +++     .+|++|..+
+T Consensus         5 ~~~~~~~F~~qHi~~~~-----~yCn~mM~~r~~~~~~CK~~NTFIh~~~~~V~~IC~~~~~-~c~~~~~~~nc~~S~~~   78 (135)
+T 1HI5_A            5 QFTWAQWFETQHINMTS-----QQCTNAMQVINNYQRRCKNQNTFLLTTFANVVNVCGNPNM-TCPSNKTRKNCHHSGSQ   78 (135)
+T ss_dssp             TSCHHHHHHHHHTCCSS-----SSHHHHHHHHHHHHTSCCSEEEEESSCHHHHHHHTTSCEE-CBTTBTTCCCEEECSSC
+T ss_pred             CCCHHHHHHHHhCCCCc-----cchhHHHHHHhcCCCCCCCccEEEeCCHHHHHHHhcCCCC-CCCCCCCcCccEeCCCC
+Confidence            46789999999997763     7999999999994 68999999999999999999998644 553     789999999
+
+
+Q query            76 FQVTTCKLHGGSP--WPPCQYRATAGFRNVVVACENG-----------LPVHLDQSI  119 (123)
+Q Consensus        76 F~vt~C~l~~~~~--~p~C~Y~g~~~~r~I~vaC~~g-----------~PVH~d~~i  119 (123)
+                      |++|+|+|+++++  +|+|.|++...+++|+|+|+++           +||||++.+
+T Consensus        79 f~vT~C~l~~~~~~~~p~C~Y~~~~~~~~I~V~C~~~~~~~~~~~~~~~PVH~~~~~  135 (135)
+T 1HI5_A           79 VPLIHCNLTTPSPQNISNCRYAQTPANMFYIVACDNRDQRRDPPQYPVVPVHLDRII  135 (135)
+T ss_dssp             EEEEEEEEEECCTTCGGGCEEEEEEEEECEEEEEEECCTTTSCTTCSEEEEEEEEEC
+T ss_pred             eeceEEEeCCCCCCCCCCCccccccceeEEEEEecCCCcCCCCCCCCCCcccccccC
+Confidence            9999999999977  8999999999999999999997           699999863
+
+
+No 25
+>2BZZ_A NONSECRETORY RIBONUCLEASE (E.C.3.1.27.5); ENDONUCLEASE, EOSINOPHIL, HYDROLASE, NUCLEASE, RIBONUCLEASE; HET: AP5; 0.98A {HOMO SAPIENS} SCOP: d.5.1.1
+Probab=100.00  E-value=1.3e-34  Score=209.84  Aligned_cols=112  Identities=29%  Similarity=0.458  Sum_probs=100.6  Template_Neff=6.700
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPHR-----ENLRISKSS   75 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~-----~n~~~S~~~   75 (123)
+                      +.++|++|++||+++++     .||+.||++|++. +.||+.|||||++.+.|++||.+++. +++     .+|++|..+
+T Consensus         5 ~~~~~~~F~~qHi~~~~-----~yCn~mM~~r~~~~~~CK~~NTFIh~~~~~V~~IC~~~~~-~c~~~~~~~nc~~S~~~   78 (135)
+T 2BZZ_A            5 QFTWAQWFETQHINMTS-----QQCTNAMQVINNYQRRCKNQNTFLLTTFANVVNVCGNPNM-TCPSNKTRKNCHHSGSQ   78 (135)
+T ss_dssp             TCCHHHHHHHHHTCCSS-----SSHHHHHHHHHHHHTSCCSEEEEESSCHHHHHHHTTSCEE-CBTTBTTCCCEEECSSC
+T ss_pred             CCCHHHHHHHHhCCCCc-----cchhHHHHHHhcCCCCCCCccEEEeCCHHHHHHHhcCCCC-CCCCCCCcCccEeCCCC
+Confidence            46789999999997763     7999999999994 68999999999999999999998644 553     789999999
+
+
+Q query            76 FQVTTCKLHGGSP--WPPCQYRATAGFRNVVVACENG-----------LPVHLDQSI  119 (123)
+Q Consensus        76 F~vt~C~l~~~~~--~p~C~Y~g~~~~r~I~vaC~~g-----------~PVH~d~~i  119 (123)
+                      |++|+|+|+++++  +|+|.|++...+++|+|+|+++           +||||++.+
+T Consensus        79 f~vT~C~l~~~~~~~~p~C~Y~~~~~~~~I~V~C~~~~~~~~~~~~~~~PVH~~~~~  135 (135)
+T 2BZZ_A           79 VPLIHCNLTTPSPQNISNCRYAQTPANMFYIVACDNRDQRRDPPQYPVVPVHLDRII  135 (135)
+T ss_dssp             EEEEEEEEEECCTTCGGGCEEEEEEEEECEEEEEEECCTTTSCTTCSEEEEEEEEEC
+T ss_pred             eeceEEEeCCCCCCCCCCCccccccceeEEEEEecCCCcCCCCCCCCCCcccccccC
+Confidence            9999999999977  8999999999999999999997           699999863
+
+
+No 26
+>6YBE_A RNASE 3/1 version2, HYDROLASE, PANCREATIC; 1.14A {synthetic construct}
+Probab=100.00  E-value=1.4e-34  Score=209.22  Aligned_cols=115  Identities=34%  Similarity=0.656  Sum_probs=102.8  Template_Neff=7.300
+
+Q query             4 SRYTHFLTQHYDAKPQG-RDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQV   78 (123)
+Q Consensus         4 ~~Y~~F~~qHvd~~~~~-~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~v   78 (123)
+                      ++|++|++||||+++.. .++.||+.||++|++. +.||+.|||||++++.|++||.+++ .++   ..+|++|..+|.+
+T Consensus         7 ~~~~~F~~qHid~p~~~~~~~~yCn~mM~~r~~~~~~CK~~NTFIh~~~~~v~~iC~~~~-~~c~~~~~nc~~S~~~f~v   85 (136)
+T 6YBE_A            7 TRAQWFAIQHIDSDSSPSSSSRYCTIAMRAINNYRWRCKPVNTFVHEPLVDVQNVCFQEK-VTCKNGQGNCYRSRFRMHI   85 (136)
+T ss_dssp             CHHHHHHHHHBCSSCSGGGSTTHHHHHTHHHHTTCSSCCSEEEEECSCHHHHHHGGGSEE-ECCTTSCSEEEECSSCEEE
+T ss_pred             chHHHHHHhhcCCCCCCCCCchhHHHHHHHhhcCCCCCCCcceEEeCCHHHHHHHHhcCC-cccCCCCCccEEcCCCeeE
+Confidence            68999999999998652 4678999999999995 6899999999999999999999864 355   5899999999999
+
+
+Q query            79 TTCKLHGGSPWPPCQYRATAGFRNVVVACENG----------LPVHLDQSI  119 (123)
+Q Consensus        79 t~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g----------~PVH~d~~i  119 (123)
+                      |+|+|.+++++|+|.|++...+++|+|+|+++          +||||++.+
+T Consensus        86 t~C~l~~~~~~p~C~Y~~~~~~~~I~I~C~~~~~~~~~~~~~~PVh~~~~~  136 (136)
+T 6YBE_A           86 TDCRLTNGSRYPNCRYRTRPGRRHIIVACENRDPRDSPRYPYVPVHFDASV  136 (136)
+T ss_dssp             EEEEECTTCBTTBCCEEEEEEEECCEEEEEECCTTSCTTCSEEEEEECC--
+T ss_pred             EEEEEcCCCCCCCCeeEEcceeeEEEEEeCCCCCCCCCCCCCCccccccCC
+Confidence            99999999888999999999999999999999          999999863
+
+
+No 27
+>1YV6_A P-30 protein (E.C.3.1.27.-); small conformational changes, onconase thermal; 1.78A {Rana pipiens}
+Probab=100.00  E-value=1.9e-34  Score=200.27  Aligned_cols=101  Identities=28%  Similarity=0.545  Sum_probs=93.9  Template_Neff=7.200
+
+Q query             5 RYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTTCKLH   84 (123)
+Q Consensus         5 ~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~C~l~   84 (123)
+                      +|++|++||+|++.    +.||+.||++|++  .||+.|||||++.+.|++||.+++.    +++++|..+|++|+|++.
+T Consensus         2 ~~~~F~~qHvd~~~----~~yCn~~M~~r~~--~CK~~NTFIh~~~~~v~~iC~~~~~----~~~~~S~~~f~vt~C~l~   71 (104)
+T 1YV6_A            2 DWLTFQKKHITNTR----DVDCDNILSTNLF--HCKDKNTFIYSRPEPVKAICKGIIA----SKNVLTTSEFYLSDCNVT   71 (104)
+T ss_dssp             CHHHHHHHHEESCS----SCCHHHHTTSTTT--TTCSEEEEEESCHHHHHGGGTTCCS----CEEEECSSCEEEEEEEEC
+T ss_pred             ChHHHHHHhcCCCC----ccCHHHHHHHccc--cccCcCeEEeCCHHHHHHHhcCCCC----CCcEEcCCCeEeeEEEEc
+Confidence            68999999999873    6799999999999  9999999999999999999998643    899999999999999998
+
+
+Q query            85 GGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSI  119 (123)
+Q Consensus        85 ~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i  119 (123)
+                      +    |+|.|+++..+++|+|+|++++||||++.+
+T Consensus        72 ~----~~C~Y~~~~~~~~I~v~C~~~~PVh~~~~~  102 (104)
+T 1YV6_A           72 S----RPCKYKLKKSTNKFCVTCENQAPVHFVGVG  102 (104)
+T ss_dssp             S----STTCEEEEEEEECEEEEEETTEEEEEEEES
+T ss_pred             C----CCCeeeeeeeeeeEEEEecCCcccccccee
+Confidence            6    779999999999999999999999999875
+
+
+No 28
+>2P6Z_B Recombinant Amphinase-2 (E.C.3.1.27.-); Amphinase, cytotoxic RNase, enzyme efficiency; HET: CIT; 1.93A {Rana pipiens}
+Probab=100.00  E-value=2.3e-34  Score=202.64  Aligned_cols=108  Identities=27%  Similarity=0.527  Sum_probs=97.4  Template_Neff=7.500
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGL-T-SPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVT   79 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~-~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt   79 (123)
+                      ++++|++|++||+|++++  ++.||+.||++|++ . +.||+.|||||++++.|++||.+++.    ++|++|..+|.+|
+T Consensus         5 ~~~~~~~F~~~Hi~~~~~--~~~yCn~~M~~r~~~~~~~CK~~nTFIh~~~~~v~~iC~~~~~----~n~~~S~~~~~vt   78 (115)
+T 2P6Z_B            5 EDREWEKFKTKHITSQSV--ADFNCNRTMNDPAYTPDGQCKPINTFIHSTTGPVKEICRRATG----RVNKSSTQQFTLT   78 (115)
+T ss_dssp             --CHHHHHHHHHEECSCT--TTCCHHHHTTCGGGCTTCSSCSEEEEEESCHHHHHGGGTTCCS----EEEEECSSCEEEE
+T ss_pred             ccchHHHHHHHhcCCCcC--CCCchHHHHcCccCCCCCCCCCceEEEeCCchhHHHHHhCCCC----CCCEecCCceEee
+Confidence            577899999999999865  67899999999988 3 68999999999999999999998643    8999999999999
+
+
+Q query            80 TCKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIF  120 (123)
+Q Consensus        80 ~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~  120 (123)
+                      +|++     +|+|+|+++..+++|+|+|++++||||++.+.
+T Consensus        79 ~C~l-----~~~C~Y~~~~~~~~I~v~C~~~~PVh~~~~~~  114 (115)
+T 2P6Z_B           79 TCKN-----PIRCKYSQSNTTNFICITCRDNYPVHFVKTGK  114 (115)
+T ss_dssp             EEEE-----EETTEEEEEEEEECEEEEEETTEEEEEEEESC
+T ss_pred             EeeC-----CCCceeEeccceeeEEEEecCCceecccceee
+Confidence            9999     67899999999999999999999999998763
+
+
+No 29
+>2VQ9_A RNASE 1; NUCLEASE, EVOLUTION, HYDROLASE, ZEBRAFISH, ENDONUCLEASE; 1.85A {DANIO RERIO}
+Probab=99.96  E-value=3.2e-34  Score=210.50  Aligned_cols=113  Identities=35%  Similarity=0.764  Sum_probs=102.6  Template_Neff=6.900
+
+Q query             4 SRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-----SPCIDINTFIHGNKRSIKAICENKNGNPH--RENLRISKSSF   76 (123)
+Q Consensus         4 ~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-----~~CK~~NTFIh~~~~~v~~vC~~~~g~~~--~~n~~~S~~~F   76 (123)
+                      ++|++|++||||++.   ++.|||.||+.|++.     +.||+.|||||+++++|++||.+++. ++  .++|++|+.+|
+T Consensus        28 ~~~~~F~~qHid~~~---~~~yCn~mM~~r~i~~~~~~~~CK~~NTFIh~~~~~V~~IC~~~~~-~~~~~~nc~~S~~~f  103 (148)
+T 2VQ9_A           28 RRYEHFLTQHVYGGI---TEQTCDRVMRQRRITRFPTGNDCKEVNTFIQANGNHVRTVCTGGGT-RQTDNRDLYMSNDQF  103 (148)
+T ss_dssp             HHHHHHHHHHBCTTC---CTTCHHHHHHHTTCBSSSSSCBBCSEEEEESSCHHHHHGGGTTSEE-ECSSSTTEEEESSCE
+T ss_pred             hhHHHHHHhhcCCCC---CcccHHHHHHHhcccCCCCCCCCccccEEEeCCHHHHHHHHhcCCC-CCCCCCceEEcCCCe
+Confidence            689999999999875   467999999999883     57999999999999999999998644 55  58999999999
+
+
+Q query            77 QVTTCKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIF  120 (123)
+Q Consensus        77 ~vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~  120 (123)
+                      ++|+|+|+++.++|+|.|++...+++|+|+|++++||||++.+.
+T Consensus       104 ~lT~C~l~~g~~~p~C~Y~~~~~~~~I~VaC~~~~PVHf~~~~~  147 (148)
+T 2VQ9_A          104 TVITCTLRSGERHPNCRYRGKESSRKIVVACEGEWPAHYERGVI  147 (148)
+T ss_dssp             EEEEEEEEECSBTTCCEEEEEEEEEEEEEEEETTEEEEEEEEEC
+T ss_pred             EEEEEEEcCCCCCCCCccEEeeeecEEEEEecCCcCcceeccee
+Confidence            99999999998899999999999999999999999999998764
+
+
+No 30
+>1GQV_A EOSINOPHIL-DERIVED NEUROTOXIN (E.C.3.1.27.5); RNASE-2, RNASE US, RIBONUCLEASE; 0.98A {HOMO SAPIENS} SCOP: d.5.1.1
+Probab=99.96  E-value=3.4e-34  Score=207.56  Aligned_cols=110  Identities=29%  Similarity=0.458  Sum_probs=98.3  Template_Neff=6.900
+
+Q query             4 SRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH-----RENLRISKSSFQ   77 (123)
+Q Consensus         4 ~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~-----~~n~~~S~~~F~   77 (123)
+                      ++|++|++|||+++     ..||+.||+.|++. +.||+.|||||++.+.|++||.+++. ++     ..+|++|..+|+
+T Consensus         7 ~~~~~F~~qHi~~~-----~~yCn~~M~~r~~~~~~CK~~NTFIh~~~~~V~~iC~~~~~-~c~~~~~~~nc~~S~~~f~   80 (135)
+T 1GQV_A            7 TWAQWFETQHINMT-----SQQCTNAMQVINNYQRRCKNQNTFLLTTFANVVNVCGNPNM-TCPSNKTRKNCHHSGSQVP   80 (135)
+T ss_dssp             CHHHHHHHHHTCCS-----SSSHHHHHHHHHHHHTSCCSEEEEESSCHHHHHHHHTSCEE-CBTTBTTCCCEEECSSCEE
+T ss_pred             CHHHHHHHhhcCCC-----CcchHHHHHHHhccCCCCcCccEEEeCCHHHHHHHhcCCCC-CCCCCCCCCccEeCCCcee
+Confidence            68999999999763     27999999999994 68999999999999999999998644 43     478999999999
+
+
+Q query            78 VTTCKLHGG--SPWPPCQYRATAGFRNVVVACENG-----------LPVHLDQSI  119 (123)
+Q Consensus        78 vt~C~l~~~--~~~p~C~Y~g~~~~r~I~vaC~~g-----------~PVH~d~~i  119 (123)
+                      +|+|+|.++  +++|+|.|++...+++|+|+|+++           +||||++.+
+T Consensus        81 vT~C~l~~g~~~~~p~C~Y~~~~~~~~I~I~C~~~~~~~~~~~~~~~PVH~~~~~  135 (135)
+T 1GQV_A           81 LIHCNLTTPSPQNISNCRYAQTPANMFYIVACDNRDQRRDPPQYPVVPVHLDRII  135 (135)
+T ss_dssp             EEEEEEEECCTTCGGGCEEEEEEEEECEEEEEEECCTTTSCTTCSEEEEEEEEEC
+T ss_pred             ceEEEeCCCCCCCCCCCccceecceeEEEEEecCCCcCCCCCCCCCccccccccC
+Confidence            999999998  458899999999999999999997           999999863
+
+
+No 31
+>5OAB_A Ribonuclease K6 (E.C.3.1.27.-); RNASE K6, HYDROLASE, PANCREATIC RIBONUCLEASE; HET: PO4; 1.111A {Homo sapiens}
+Probab=99.96  E-value=3.6e-34  Score=205.28  Aligned_cols=111  Identities=30%  Similarity=0.572  Sum_probs=100.2  Template_Neff=7.300
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQ   77 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~   77 (123)
+                      +.++|++|++||||++.     .||+.||++|++. +.||+.|||||++.+.|++||.+++. .+   ..+|++|..+|+
+T Consensus         5 ~~~~~~~F~~~Hi~~~~-----~yCn~~M~~r~~~~~~CK~~NTFIh~~~~~I~~iC~~~~~-~c~~~~~~~~~S~~~f~   78 (128)
+T 5OAB_A            5 RLTKAHWFEIQHIQPSP-----LQCNRAMSGINNYTQHCKHQNTFLHDSFQNVAAVCDLLSI-VCKNRRHNCHQSSKPVN   78 (128)
+T ss_dssp             TSCHHHHHHHHHBCSSC-----CCHHHHHHHHHHHHTSCCSEEEEECSCHHHHHHHTTSCCB-CCTTSCSCEEECSSCEE
+T ss_pred             CCcHHHHHHHHhCCCCC-----ccchHHHhhhcCCCCCCCCcceEEeCCHHHHHHHhhcCCC-ccCCCCCCCEeCCCCee
+Confidence            46789999999999852     7999999999994 68999999999999999999998753 43   589999999999
+
+
+Q query            78 VTTCKLHGGSPWPPCQYRATAGFRNVVVACENG---------LPVHLDQSI  119 (123)
+Q Consensus        78 vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g---------~PVH~d~~i  119 (123)
+                      +|+|+|.++ ++|+|.|+++..+++|+|+|+++         +||||++++
+T Consensus        79 vT~C~l~~g-~~~~C~Y~~~~~~~~I~VaC~~~~~~~~~~~~~PVh~~~~~  128 (128)
+T 5OAB_A           79 MTDCRLTSG-KYPQCRYSAAAQYKFFIVACDPPQKSDPPYKLVPVHLDSIL  128 (128)
+T ss_dssp             EEEEEEEEC-CTTSCEEEEEEEEECEEEEEECCCTTSCCCSCEEEEEEEEC
+T ss_pred             eeEEEEcCC-CCCCCceeeeeeecEEEEEeCCCCCCCCCcccCcccccccC
+Confidence            999999998 78999999999999999999997         999999863
+
+
+No 32
+>6ENP_A Ribonuclease K6 (E.C.3.1.27.-); RNASE K6, HYDROLASE, PANCREATIC RIBONUCLEASE; HET: PO4; 1.042A {Homo sapiens}
+Probab=99.96  E-value=3.6e-34  Score=205.28  Aligned_cols=111  Identities=30%  Similarity=0.572  Sum_probs=100.2  Template_Neff=7.300
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQ   77 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~   77 (123)
+                      +.++|++|++||||++.     .||+.||++|++. +.||+.|||||++.+.|++||.+++. .+   ..+|++|..+|+
+T Consensus         5 ~~~~~~~F~~~Hi~~~~-----~yCn~~M~~r~~~~~~CK~~NTFIh~~~~~I~~iC~~~~~-~c~~~~~~~~~S~~~f~   78 (128)
+T 6ENP_A            5 RLTKAHWFEIQHIQPSP-----LQCNRAMSGINNYTQHCKHQNTFLHDSFQNVAAVCDLLSI-VCKNRRHNCHQSSKPVN   78 (128)
+T ss_dssp             SCCHHHHHHHHHBCCSS-----CCHHHHHHHHHHHHTSCCSEEEEECSCHHHHHHHTTSCEE-CCTTSCSCEEECSSCEE
+T ss_pred             CCcHHHHHHHHhCCCCC-----ccchHHHhhhcCCCCCCCCcceEEeCCHHHHHHHhhcCCC-ccCCCCCCCEeCCCCee
+Confidence            46789999999999852     7999999999994 68999999999999999999998753 43   589999999999
+
+
+Q query            78 VTTCKLHGGSPWPPCQYRATAGFRNVVVACENG---------LPVHLDQSI  119 (123)
+Q Consensus        78 vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g---------~PVH~d~~i  119 (123)
+                      +|+|+|.++ ++|+|.|+++..+++|+|+|+++         +||||++++
+T Consensus        79 vT~C~l~~g-~~~~C~Y~~~~~~~~I~VaC~~~~~~~~~~~~~PVh~~~~~  128 (128)
+T 6ENP_A           79 MTDCRLTSG-KYPQCRYSAAAQYKFFIVACDPPQKSDPPYKLVPVHLDSIL  128 (128)
+T ss_dssp             EEEEEEEEC-CTTSCEEEEEEEEECEEEEEECCCTTSCCCSCEEEEEEEEC
+T ss_pred             eeEEEEcCC-CCCCCceeeeeeecEEEEEeCCCCCCCCCcccCcccccccC
+Confidence            999999998 78999999999999999999997         999999863
+
+
+No 33
+>1KM8_A RIBONUCLEASE, OOCYTES (E.C.3.1.27.5); RC-RNase, HYDROLASE; 1.9A {Rana catesbeiana} SCOP: d.5.1.1
+Probab=99.96  E-value=4.6e-34  Score=200.15  Aligned_cols=106  Identities=28%  Similarity=0.464  Sum_probs=94.1  Template_Neff=7.400
+
+Q query             5 RYTHFLTQHYDAKPQGRDDRYCESIMRRRGL--TSPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTTCK   82 (123)
+Q Consensus         5 ~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~--~~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~C~   82 (123)
+                      +|++|++||+|+++    ..||+.||++|++  .+.||+.|||||++.+.|++||.++ .   .. +++|..+|++|+|+
+T Consensus         2 ~~~~F~~qHvd~~~----~~yCn~~M~~r~~~~~~~CK~~NTFIh~~~~~v~~iC~~~-~---~~-~~~S~~~f~vt~C~   72 (111)
+T 1KM8_A            2 NWATFQQKHIINTP----IINCNTIMDNNIYIVGGQCKRVNTFIISSATTVKAICTGV-I---NM-NVLSTTRFQLNTCT   72 (111)
+T ss_dssp             CHHHHHHHHEESSC----CCCHHHHSCSGGGEETTEECSEEEEEESCHHHHHGGGTTC-S---EE-EEECSSCEEEEEEE
+T ss_pred             ChHHHHHhhcCCCC----CCCHHHHHHHhhhhcCCCcccceEEEECCHHHHHHHhcCC-c---Cc-ceecCCcEEcEEEE
+Confidence            68999999999875    3799999999976  3679999999999999999999883 3   23 47999999999999
+
+
+Q query            83 LHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIF  120 (123)
+Q Consensus        83 l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~  120 (123)
+                      ++++ ++|+|.|+++..+++|+|+|++++||||++.+.
+T Consensus        73 l~~~-~~~~C~Y~~~~~~~~I~V~C~~~~PVh~~~~~~  109 (111)
+T 1KM8_A           73 RTSI-TPRPCPYSSRTETNYICVKCENQYPVHFAGIGR  109 (111)
+T ss_dssp             ECSC-CSSSCCEEEEEEEECEEEEEETTEEEEEEEESS
+T ss_pred             EcCC-CCCCCcceeeeceeeEEEEeCCCcccccccccc
+Confidence            9998 456899999999999999999999999998763
+
+
+No 34
+>2P7S_A Amphinase-2 (E.C.3.1.27.-); Amphinase, cytotoxic RNase, enzyme efficiency; HET: NAG; 1.8A {Rana pipiens}
+Probab=99.96  E-value=5.6e-34  Score=200.57  Aligned_cols=107  Identities=28%  Similarity=0.545  Sum_probs=95.3  Template_Neff=7.400
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT--SPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVT   79 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~--~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt   79 (123)
+                      ++.+|++|++|||++++  .++.||+.||++|++.  +.||+.|||||++.+.|++||.+++. ++   +++|..+|.+|
+T Consensus         4 ~~~~~~~F~~qHi~~~~--~~~~yCn~~M~~r~~~~~~~CK~~NTFIh~~~~~v~~iC~~~~~-~~---~~~S~~~f~vt   77 (114)
+T 2P7S_A            4 EDREWEKFKTKHITSQS--VADFNCNRTMNDPAYTPDGQCKPINTFIHSTTGPVKEICRRATG-RV---NKSSTQQFTLT   77 (114)
+T ss_dssp             -CHHHHHHHHHHEECSC--TTTCCHHHHTTCTTSCTTCSSCSCEEEEESCHHHHHGGGTTCCS-EE---EEECSSCEEEE
+T ss_pred             ccchHHHHHHHhcCCCc--CCCchHHHHHcccccCCCCCCCCceeEeeCCchHHHHHHhCCCC-cc---CEecCCcEEee
+Confidence            57789999999999875  4678999999999984  68999999999999999999998644 22   78999999999
+
+
+Q query            80 TCKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSI  119 (123)
+Q Consensus        80 ~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i  119 (123)
+                      +|++     .|+|.|+++..+++|+|+|++++||||++..
+T Consensus        78 ~C~l-----~p~C~Y~~~~~~~~I~v~C~~~~PVh~~~~~  112 (114)
+T 2P7S_A           78 TCKN-----PIRCKYSQSNTTNFICITCRDNYPVHFVKTG  112 (114)
+T ss_dssp             EEEE-----EETTEEEEEEEEECEEEEEETTEEEEEEEES
+T ss_pred             EeeC-----CCCccceeccccceEEEEecCCCcccccccc
+Confidence            9998     3779999999999999999999999999864
+
+
+No 35
+>2HKY_A Ribonuclease 7 (E.C.3.1.27.-); RNase, antimicrobial activity, HYDROLASE; NMR {Homo sapiens}
+Probab=99.96  E-value=8.3e-34  Score=203.77  Aligned_cols=109  Identities=32%  Similarity=0.615  Sum_probs=98.5  Template_Neff=7.200
+
+Q query             4 SRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQVT   79 (123)
+Q Consensus         4 ~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~vt   79 (123)
+                      ++|++|++||||.+.     .||+.||++|++. +.||+.|||||++.+.|++||.+++. ++   ..+|++|..+|++|
+T Consensus         7 ~~~~~F~~qHi~~~~-----~yCn~~M~~r~~~~~~CK~~NTFIh~~~~~v~~iC~~~~~-~c~~~~~nc~~S~~~f~vt   80 (129)
+T 2HKY_A            7 TSSQWFKIQHMQPSP-----QACNSAMKNINKHTKRCKDLNTFLHEPFSSVAATCQTPKI-ACKNGDKNCHQSHGPVSLT   80 (129)
+T ss_dssp             CHHHHHHHHHBCSSC-----SHHHHHHHHHHHHHSSCCSEEEEECSCHHHHHHHTTSCCC-CSSSSCCCEEECSSCEEEE
+T ss_pred             ChHHHHHHHhCCCCC-----ccchHHHHHcccCCCCCCCcceEeeCCHHHHHHHccCCCC-CCCCCCCCcEecCCCeEee
+Confidence            689999999999842     7999999999994 68999999999999999999998644 54   38999999999999
+
+
+Q query            80 TCKLHGGSPWPPCQYRATAGFRNVVVACENG----------LPVHLDQSI  119 (123)
+Q Consensus        80 ~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g----------~PVH~d~~i  119 (123)
+                      +|+|+++ ++|+|.|++...+++|+|+|+++          +||||++.+
+T Consensus        81 ~C~l~~~-~~p~C~Y~~~~~~~~I~VaC~~~~~~~~~~~~~~PVH~~~~~  129 (129)
+T 2HKY_A           81 MCKLTSG-KYPNCRYKEKRQNKSYVVACKPPQKKDSQQFHLVPVHLDRVL  129 (129)
+T ss_dssp             EEEEEES-CSTTCEEEEEEEEECEEEEEECCCSSCSSCCSSEEEEEEEEC
+T ss_pred             EEEECCC-CCCCCeeeeeeeeeEEEEEeCCCCCCcccccccceecccccC
+Confidence            9999998 78899999999999999999987          999999863
+
+
+No 36
+>6MV7_A Ribonuclease K6 (E.C.3.1.27.-); rnase, nuclease, HYDROLASE; HET: AMP; 2.59A {Homo sapiens}
+Probab=99.95  E-value=8.9e-34  Score=203.25  Aligned_cols=111  Identities=30%  Similarity=0.574  Sum_probs=99.4  Template_Neff=7.300
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQ   77 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~   77 (123)
+                      ..++|++|++||++++.     .||+.||++|++. +.||+.|||||++.+.|++||.+++. ++   ..+|++|+.+|+
+T Consensus         5 ~~~~~~~F~~qHi~~~~-----~yCn~~M~~r~~~~~~CK~~NTFIh~~~~~v~~iC~~~~~-~c~~~~~n~~~S~~~f~   78 (128)
+T 6MV7_A            5 RLTKAHWFEIQHIQPSP-----LQCNRAMSGINNYTQHCKHQNTFLHDSFQNVAAVCDLLSI-VCKNRRHNCHQSSKPVN   78 (128)
+T ss_dssp             CCCHHHHHHHHHBCSSC-----CCHHHHHHHHHHHHTSCCSEEEEECSCHHHHHHHTTSCEE-CCTTSCSCEEECSSCEE
+T ss_pred             CCcHHHHHHHHhCCCCc-----ccchHHHhhhccCCCCCCCccEEEecCHHHHHHHHhcCCc-ccCCCCCccEEcCCCee
+Confidence            46789999999998763     7999999999995 68999999999999999999998644 43   489999999999
+
+
+Q query            78 VTTCKLHGGSPWPPCQYRATAGFRNVVVACENG---------LPVHLDQSI  119 (123)
+Q Consensus        78 vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g---------~PVH~d~~i  119 (123)
+                      +|+|++.++. +|+|.|+++..+++|+|+|+++         +||||++.+
+T Consensus        79 vt~C~l~~~~-~p~C~Y~~~~~~~~I~V~C~~~~~~~~~~~~~PVh~~~~~  128 (128)
+T 6MV7_A           79 MTDCRLTSGK-YPQCRYSAAAQYKFFIVACDPPQKSDPPYKLVPVHLDSIL  128 (128)
+T ss_dssp             EEEEEEEECC-TTSCEEEEEEEEECEEEEEECCCTTSCCCSCEEEEEEEEC
+T ss_pred             eEEEEEcCCC-CCCCeeEeeeeeceEEEEcCCCCCCCCCcccCcccccccC
+Confidence            9999999987 8899999999999999999987         599999863
+
+
+No 37
+>2P6Z_A Recombinant Amphinase-2 (E.C.3.1.27.-); Amphinase, cytotoxic RNase, enzyme efficiency; HET: CIT; 1.93A {Rana pipiens}
+Probab=99.95  E-value=1.2e-33  Score=198.94  Aligned_cols=107  Identities=28%  Similarity=0.545  Sum_probs=95.6  Template_Neff=7.500
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT--SPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVT   79 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~--~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt   79 (123)
+                      ++++|++|++|||++++  .++.||+.||++|++.  +.||+.|||||+++++|++||.++++ ++   +++|..+|.+|
+T Consensus         5 ~~~~~~~F~~qHi~~~~--~~~~yCn~~M~~r~~~~~~~CK~~NTFIh~~~~~v~~iC~~~~~-~~---~~~S~~~f~vt   78 (115)
+T 2P6Z_A            5 EDREWEKFKTKHITSQS--VADFNCNRTMNDPAYTPDGQCKPINTFIHSTTGPVKEICRRATG-RV---NKSSTQQFTLT   78 (115)
+T ss_dssp             HHHHHHHHHHHHEECSC--TTTCCHHHHTTCGGGCTTCSSCSEEEEEESCHHHHHGGGTTCCS-EE---EEECSSCEEEE
+T ss_pred             ccchHHHHHHhhCCCCc--CCccchHHHHcCccCCCCCCCCCceeEEeCChhHHHHHHhCCCC-cc---CEecCCcEEee
+Confidence            57789999999999865  3677999999999984  67999999999999999999998644 32   78999999999
+
+
+Q query            80 TCKLHGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSI  119 (123)
+Q Consensus        80 ~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i  119 (123)
+                      +|++     .|+|.|++...+++|+|+|++++||||++..
+T Consensus        79 ~C~~-----~~~C~Y~~~~~~~~I~V~C~~~~PVh~~~~~  113 (115)
+T 2P6Z_A           79 TCKN-----PIRCKYSQSNTTNFICITCRDNYPVHFVKTG  113 (115)
+T ss_dssp             EEEE-----EETTEEEEEEEEECEEEEEETTEEEEEEEES
+T ss_pred             EeeC-----CCCceeEcccCeeEEEEEecCCccccccccc
+Confidence            9998     4679999999999999999999999999864
+
+
+No 38
+>1OJ8_A RC-RNASE6 RIBONUCLEASE; CYTOTOXIC RIBONUCLEASES, ANTI-TUMOR ACTIVITY, SIALIC; HET: SO4; 1.7A {RANA CATESBEIANA} SCOP: d.5.1.1
+Probab=99.95  E-value=2.2e-33  Score=195.47  Aligned_cols=102  Identities=23%  Similarity=0.506  Sum_probs=91.9  Template_Neff=7.100
+
+Q query             5 RYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTTCKLH   84 (123)
+Q Consensus         5 ~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~C~l~   84 (123)
+                      +|++|++||+|+++    ..||+.||++|++  .||+.|||||++++.|++||.+++. .   ++++|..+|++|+|++.
+T Consensus         2 ~~~~F~~qHvd~~~----~~yCn~~M~~r~~--~CK~~NTFIh~~~~~v~~iC~~~~~-~---~~~~S~~~f~vt~C~l~   71 (105)
+T 1OJ8_A            2 DWDTFQKKHLTDTK----KVKCDVEMKKALF--DCKKTNTFIFARPPRVQALCKNIKN-N---TNVLSRDVFYLPQCNRK   71 (105)
+T ss_dssp             CHHHHHHHHEESCS----SCCHHHHTTSTTT--TTCSEEECEESCHHHHHHTTTTCCT-T---EEEECSSCEECCEEEEE
+T ss_pred             ChHHHHHHhcCCCC----CCCHHHHHHHhcC--CCcCcCeEEecCHHHHHHHHhCCCC-C---CCcccCCCeecCEEEEC
+Confidence            68999999999885    4799999999975  8999999999999999999998643 2   44789999999999998
+
+
+Q query            85 GGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIF  120 (123)
+Q Consensus        85 ~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~  120 (123)
+                      +    |+|.|++...+++|+|+|++++||||++.+.
+T Consensus        72 ~----~~C~Y~~~~~~~~I~v~C~~~~PVh~~~~~~  103 (105)
+T 1OJ8_A           72 K----LPCHYRLDGSTNTICLTCMKELPIHFAGVGK  103 (105)
+T ss_dssp             E----TTTEEEEECCEECEEEEEETTEEEEEEEESS
+T ss_pred             C----CCCcceeeccccEEEEEecCCcccccceeee
+Confidence            5    7899999999999999999999999998753
+
+
+No 39
+>1KVZ_A RC-RNase4; antitumor, bullfrog, cytotoxicity,ribonuclease, Structure from; NMR {Rana catesbeiana} SCOP: d.5.1.1
+Probab=99.95  E-value=6.9e-33  Score=193.27  Aligned_cols=104  Identities=26%  Similarity=0.509  Sum_probs=93.3  Template_Neff=7.300
+
+Q query             4 SRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTTCKL   83 (123)
+Q Consensus         4 ~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~C~l   83 (123)
+                      ++|++|++||++++    ++.||+.||++|++  .||+.|||||++.++|++||.+.   .+ .++++|..+|++|+|++
+T Consensus         2 ~~~~~F~~~Hi~~~----~~~yCn~~M~~r~~--~CK~~NTFIh~~~~~i~~iC~~~---~~-~~~~~S~~~f~vt~C~l   71 (107)
+T 1KVZ_A            2 QDWATFKKKHLTDT----WDVDCDNLMPTSLF--DCKDKNTFIYSLPGPVKALCRGV---IF-SADVLSNSEFYLAECNV   71 (107)
+T ss_pred             CcHHHHHHhhCCCC----CccchHHHHHHcCC--CCCCCCeeeeCCHHHHHHHHhCC---CC-CCCeecCCCceeeEEEE
+Confidence            57999999999875    35699999999954  89999999999999999999984   23 77889999999999999
+
+
+Q query            84 HGGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIF  120 (123)
+Q Consensus        84 ~~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~  120 (123)
+                      .+   .|+|.|++...+++|+|+|++++||||++.+.
+T Consensus        72 ~~---~p~C~Y~~~~~~~~I~v~C~~~~PVh~~~~~~  105 (107)
+T 1KVZ_A           72 KP---RKPCKYKLKKSSNRICIRCEHELPVHFAGVGI  105 (107)
+T ss_pred             CC---CCCccceeeeeeceEEEEecCCccccccceee
+Confidence            96   57899999999999999999999999998764
+
+
+No 40
+>5E13_A Non-secretory ribonuclease (E.C.3.1.27.5); hydrolase, nuclease; HET: 5J9; 1.34A {Homo sapiens}
+Probab=99.95  E-value=7.9e-33  Score=205.89  Aligned_cols=111  Identities=29%  Similarity=0.445  Sum_probs=98.6  Template_Neff=6.600
+
+Q query             3 NSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH-----RENLRISKSSF   76 (123)
+Q Consensus         3 ~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~-----~~n~~~S~~~F   76 (123)
+                      +++|++|++||+++++     .||+.||+.|++. +.||+.|||||++.+.|++||.+++. ++     ..+|++|..+|
+T Consensus        32 ~~~~~~F~~qHi~~~~-----~yCn~~M~~r~~~~~~CK~~NTFIh~s~~~V~~IC~~~~~-~c~~~~~~~nc~~S~~~f  105 (161)
+T 5E13_A           32 FTWAQWFETQHINMTS-----QQCTNAMQVINNYQRRCKNQNTFLLTTFANVVNVCGNPNM-TCPSNKTRKNCHHSGSQV  105 (161)
+T ss_pred             CChHHHHHHHhCCCCc-----ccchHHHHHccccCCCCCCcceEEeCCHHHHHHHhcCCCC-CCCCCCCCCCcEecCCCc
+Confidence            3688999999997642     7999999999994 68999999999999999999998644 44     37899999999
+
+
+Q query            77 QVTTCKLHGG--SPWPPCQYRATAGFRNVVVACENG-----------LPVHLDQSI  119 (123)
+Q Consensus        77 ~vt~C~l~~~--~~~p~C~Y~g~~~~r~I~vaC~~g-----------~PVH~d~~i  119 (123)
+                      ++|+|+++++  +++|+|+|+++..+++|+|+|+++           +||||++.+
+T Consensus       106 ~vT~C~l~~g~~~~~p~C~Y~~~~~~~~I~VaC~~~~~~~~~~~~~~~PVH~~~~~  161 (161)
+T 5E13_A          106 PLIHCNLTTPSPQNISNCRYAQTPANMFYIVACDNRDQRRDPPQYPVVPVHLDRII  161 (161)
+T ss_pred             cceEEEEeCCCCCCCCCCcceeeeeccEEEEEecCCCCCCCCCCCCCCcccccCCC
+Confidence            9999999998  468899999999999999999997           899999863
+
+
+No 41
+>1OJ1_A RC-RNASE6 RIBONUCLEASE; CYTOTOXIC RIBONUCLEASES, ANTI-TUMOR ACTIVITY, SIALIC; HET: CG2; 2.1A {RANA CATESBEIANA} SCOP: d.5.1.1
+Probab=99.95  E-value=1.6e-32  Score=190.87  Aligned_cols=102  Identities=23%  Similarity=0.506  Sum_probs=91.8  Template_Neff=7.300
+
+Q query             5 RYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTTCKLH   84 (123)
+Q Consensus         5 ~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~C~l~   84 (123)
+                      +|++|++||+|+++    ..||+.||++|++  .||+.|||||++.+.|++||.+++. .   ++++|..+|++|+|++.
+T Consensus         2 ~~~~F~~~Hvd~~~----~~yCn~~M~~r~~--~CK~~NTFIh~~~~~v~~iC~~~~~-~---~~~~S~~~f~vt~C~l~   71 (105)
+T 1OJ1_A            2 DWDTFQKKHLTDTK----KVKCDVEMKKALF--DCKKTNTFIFARPPRVQALCKNIKN-N---TNVLSRDVFYLPQCNRK   71 (105)
+T ss_pred             chHHHHHhhcCCCC----CcChHHHHHHhCC--CCCCCCeEEecCHHHHHHHhhCCCC-C---CCeecCCCcceeEEEEc
+Confidence            68999999999885    4799999999975  8999999999999999999998643 2   44789999999999998
+
+
+Q query            85 GGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSIF  120 (123)
+Q Consensus        85 ~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~  120 (123)
+                      +    |+|.|++...+++|+|+|++++||||++...
+T Consensus        72 ~----~~C~Y~~~~~~~~i~v~C~~~~PVh~~~~~~  103 (105)
+T 1OJ1_A           72 K----LPCHYRLDGSTNTICLTCMKELPIHFAGVGK  103 (105)
+T ss_pred             C----CCCcceeeeeeceEEEEeeCCceecccceee
+Confidence            5    7799999999999999999999999998753
+
+
+No 42
+>3U01_A Protein P-30 (E.C.3.1.27.-); alpha/beta protein, ranpirnase, endonuclease, nuclease; HET: SO4; 1.12A {Rana pipiens}
+Probab=99.95  E-value=1.7e-32  Score=190.43  Aligned_cols=101  Identities=27%  Similarity=0.476  Sum_probs=89.8  Template_Neff=7.300
+
+Q query             5 RYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTTCKLH   84 (123)
+Q Consensus         5 ~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~C~l~   84 (123)
+                      +|++|++||+|+++    +.||+.||++|++  .||+.|||||++++.|++||.++ + +++  .++|..+|++|+|++.
+T Consensus         2 ~~~~F~~~Hid~p~----~~yCn~~M~~r~~--~CK~~NTFIh~~~~~v~~iC~~~-~-~~~--~~~S~~~f~vt~C~l~   71 (104)
+T 3U01_A            2 DWLTFQKKHITNTR----DVDCDNIMSTNLF--HAKDKNTFIYSRPEPVKAICKGI-I-ASK--NVLTTSEFYLSDCNVT   71 (104)
+T ss_dssp             CHHHHHHHHEESCS----SCCHHHHTTSTTT--TTCSEEEEEESCHHHHHGGGTTC-C-SCE--EEECSSCEEEEEEEEC
+T ss_pred             ChHHHHHHhcCCCC----CcCHHHHHHhcCC--CccccCeEEeCChHHHHHHhcCC-C-ccc--CEEeCCcEEEeEEEEc
+Confidence            68999999999985    4599999999976  89999999999999999999853 3 332  2679999999999999
+
+
+Q query            85 GGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSI  119 (123)
+Q Consensus        85 ~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i  119 (123)
+                      +    ++|.|+++..+++|+|+|++++||||++.+
+T Consensus        72 ~----~~C~Y~~~~~~~~i~v~C~~~~PVh~~~~~  102 (104)
+T 3U01_A           72 S----RPAKYKLKKSTNKFCVTCENQAPVHFVGVG  102 (104)
+T ss_dssp             S----STTCEEEEEEEECEEEEEETTEEEEEEEES
+T ss_pred             C----CCCeeeeeeeeeeEEEEecCCCccccccee
+Confidence            6    479999999999999999999999999865
+
+
+No 43
+>3SNF_A Protein P-30 (E.C.3.1.27.-); ribonuclease, alpha/beta, Hydrolase; HET: SO4; 1.1A {Rana pipiens}
+Probab=99.94  E-value=4e-32  Score=188.58  Aligned_cols=101  Identities=29%  Similarity=0.562  Sum_probs=89.3  Template_Neff=7.300
+
+Q query             5 RYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTTCKLH   84 (123)
+Q Consensus         5 ~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~C~l~   84 (123)
+                      +|++|++||+|+++    +.||+.||++|++  .||+.|||||++++.|++||.++ + .++.  ++|..+|++|+|++.
+T Consensus         2 ~~~~F~~~Hid~p~----~~yCn~~M~~r~~--~CK~~NTFIh~~~~~v~~iC~~~-~-~~~~--~~S~~~f~vt~C~l~   71 (104)
+T 3SNF_A            2 DWLTFQKKHITNTR----DVDCDNIMSTNLF--HCKDKNTFIYSRPEPVKAICKGI-I-ASKN--VLTTSEFYLSDCNVT   71 (104)
+T ss_dssp             CHHHHHHHHEESSS----SCCHHHHTTSTTT--TTCSEEEEEESCHHHHHGGGTTC-C-SCEE--EECSSCEEEEEEEEC
+T ss_pred             ChHHHHHHhcCCCC----CcCHHHHHHhcCC--cccCcCeEEecCHHHHHHHhcCC-C-cccC--eeeCCcEEEEEEEEc
+Confidence            68999999999875    4599999999954  89999999999999999999953 3 3322  679999999999998
+
+
+Q query            85 GGSPWPPCQYRATAGFRNVVVACENGLPVHLDQSI  119 (123)
+Q Consensus        85 ~~~~~p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i  119 (123)
+                      +    |+|.|+++..+++|+|+|++++||||++.+
+T Consensus        72 ~----~~C~Y~~~~~~~~i~v~C~~~~PVh~~~~~  102 (104)
+T 3SNF_A           72 S----RPCKYKLKKSTNKFCVTCENQAPVHFVGVG  102 (104)
+T ss_dssp             S----STTCEEEEEEEECEEEEEETTEEEEEEEES
+T ss_pred             C----CCCceeeeeeeeeEEEEecCCCccccccee
+Confidence            5    579999999999999999999999999875
+
+
+No 44
+>3MWQ_A Ribonuclease pancreatic, LINKER, Ribonuclease pancreatic; ribonuclease A tandem enzyme, SGRSGRSG-linker; HET: GOL, SO4; 1.68A {Bos taurus, synthetic, Bos taurus}
+Probab=99.94  E-value=6.5e-32  Score=212.70  Aligned_cols=115  Identities=33%  Similarity=0.702  Sum_probs=102.4  Template_Neff=7.500
+
+Q query             4 SRYTHFLTQHYDAKPQ-GRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQV   78 (123)
+Q Consensus         4 ~~Y~~F~~qHvd~~~~-~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~v   78 (123)
+                      ++|++|++||||+++. ..++.||+.||+.|++. +.||+.|||||++++.|++||.++ +.++   ..+|++|..+|++
+T Consensus       135 ~~~~~F~~~Hi~~~~~~~~~~~yCn~~M~~r~~~~~~CK~~NTFIh~~~~~v~~iC~~~-~~~~~~~~~~c~~S~~~f~l  213 (256)
+T 3MWQ_A          135 TAAAKFERQHMDSSTSAASSSNYCNQMMKSRNLTKDRCKPVNTFVHESLADVQAVCSQK-NVACKNGQTNCYQSYSTMSI  213 (256)
+T ss_dssp             CHHHHHHHHHBCTTCSSCCSTTHHHHHHHHTTSSSSSCCCEEEEECSCHHHHHHGGEEE-C--CTTSCSCEEECSSCEEE
+T ss_pred             ChHHHHHHhcCCCCCCCCCCcchHHHHHHHccCCCCCCCCcceEeeCCHHHHHHHHhCC-CCCCCCCCCcceeCCCCCCc
+Confidence            6899999999998864 34678999999999994 689999999999999999999886 4355   4889999999999
+
+
+Q query            79 TTCKLHGGSPWPPCQYRATAGFRNVVVACENG--LPVHLDQSI  119 (123)
+Q Consensus        79 t~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g--~PVH~d~~i  119 (123)
+                      |+|+|+++.++|+|.|++...+++|+|+|+++  +||||++.+
+T Consensus       214 t~C~l~~~~~~p~C~Y~~~~~~~~i~v~C~~~~~~PVh~~~~~  256 (256)
+T 3MWQ_A          214 TDCRETGSSKYPNCAYKTTQANKHIIVACEGNPYVPVHFDASV  256 (256)
+T ss_dssp             EEEEECTTCBTTBCCEEEEEEEECEEEEEETTTTEEEEEEEEC
+T ss_pred             eEEEEcCCCCCCCceeEEeeeeeEEEEEecCCCCcccccccCC
+Confidence            99999998888999999999999999999999  999999863
+
+
+No 45
+>3MX8_A Ribonuclease pancreatic, LINKER, Ribonuclease pancreatic; ribonuclease A tandem enzyme, GPPG-linker; HET: SO4; 2.1A {Bos taurus}
+Probab=99.94  E-value=1e-31  Score=210.72  Aligned_cols=115  Identities=34%  Similarity=0.709  Sum_probs=103.5  Template_Neff=7.800
+
+Q query             4 SRYTHFLTQHYDAKPQG-RDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQV   78 (123)
+Q Consensus         4 ~~Y~~F~~qHvd~~~~~-~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~v   78 (123)
+                      ++|++|++||||+++.. .++.||+.||++|++. +.||+.|||||++++.|++||.+++. ++   ..+|++|..+|++
+T Consensus       131 ~~~~~F~~qHi~~~~~~~~~~~yCn~~M~~r~~~~~~CK~~ntFIh~~~~~v~~iC~~~~~-~c~~~~~~~~~S~~~f~v  209 (252)
+T 3MX8_A          131 TAAAKFERQHMDSSTSAASSSNYCNQMMKSRNLTKDRCKPVNTFVHESLADVQAVCSQKNV-ACKNGQTNCYQSYSTMSI  209 (252)
+T ss_dssp             CHHHHHHHHHBCCSSSSCSSSCHHHHHHHHTTTTSSSCCSEEEEECSCHHHHHHGGGSEEE-CCTTSCSCEEECSSCEEE
+T ss_pred             cHHHHHHHhhcCCCCCCCCCcchHHHHHHhcCCCCCCCCCceeEecCCHHHHHHHHhCCCC-cCCCCCccceeCCCCeee
+Confidence            68999999999997653 3678999999999995 67999999999999999999998644 55   4889999999999
+
+
+Q query            79 TTCKLHGGSPWPPCQYRATAGFRNVVVACENG--LPVHLDQSI  119 (123)
+Q Consensus        79 t~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g--~PVH~d~~i  119 (123)
+                      |+|++.+++++|+|.|+++..+++|+|+|+++  +||||++.+
+T Consensus       210 t~C~l~~~~~~p~C~Y~~~~~~~~I~v~C~~~~~~PVh~~~~~  252 (252)
+T 3MX8_A          210 TDCRETGSSKYPNCAYKTTQANKHIIVACEGNPYVPVHFDASV  252 (252)
+T ss_dssp             EEEEECTTCBTTBCCEEEEEEEECEEEEEETTTTEEEEEEEEC
+T ss_pred             EEEEEcCCCCCCCCeeeeeceeeEEEEEecCCCCcccccccCC
+Confidence            99999998888999999999999999999999  999999763
+
+
+No 46
+>4O36_B S-peptide (E.C.3.1.27.5), Ribonuclease pancreatic (E.C.3.1.27.5); RNase S, artificial imine reductase; 1.22A {Bos taurus}
+Probab=99.94  E-value=2.3e-31  Score=184.65  Aligned_cols=97  Identities=36%  Similarity=0.775  Sum_probs=88.5  Template_Neff=7.400
+
+Q query            22 DDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQVTTCKLHGGSPWPPCQYRAT   97 (123)
+Q Consensus        22 ~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~vt~C~l~~~~~~p~C~Y~g~   97 (123)
+                      ++.||+.||++|++. +.||+.|||||++.+.|++||.+++. ++   ..+|++|..+|++|+|+|.++.++|+|.|++.
+T Consensus         2 ~~~yCn~~M~~r~~~~~~CK~~NTFIh~~~~~v~~iC~~~~~-~~~n~~~~~~~S~~~f~vt~C~l~~~~~~p~C~Y~~~   80 (104)
+T 4O36_B            2 SSNYCNQMMKSRNLTKDRCKPVNTFVHESLADVQAVCSQKNV-ACKNGQTNCYQSYSTMSITDCRETGSSKYPNCAYKTT   80 (104)
+T ss_pred             CccchHHHHHHhcCCCCCCCCceEEecCCHHHHHHHhcCCCC-CCCCCCCcCEecCCCeeCeEEEEcCCCCCCCCcceee
+Confidence            467999999999995 68999999999999999999998644 44   58899999999999999999988999999999
+
+
+Q query            98 AGFRNVVVACENG--LPVHLDQSI  119 (123)
+Q Consensus        98 ~~~r~I~vaC~~g--~PVH~d~~i  119 (123)
+                      ..+++|+|+|+++  +||||++.+
+T Consensus        81 ~~~~~I~v~C~~~~~~PVh~~~~~  104 (104)
+T 4O36_B           81 QANKHIIVACEGNPYVPVHFDASV  104 (104)
+T ss_pred             eeeeEEEEEeCCCCCcccccccCC
+Confidence            9999999999999  999999863
+
+
+No 47
+>4K7L_B Ribonuclease pancreatic (E.C.3.1.27.5); HYDROLASE, S-peptide; HET: SO4; 1.38A {Bos taurus}
+Probab=99.94  E-value=2.4e-31  Score=184.57  Aligned_cols=97  Identities=36%  Similarity=0.775  Sum_probs=87.9  Template_Neff=7.400
+
+Q query            22 DDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQVTTCKLHGGSPWPPCQYRAT   97 (123)
+Q Consensus        22 ~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~vt~C~l~~~~~~p~C~Y~g~   97 (123)
+                      ++.||+.||++|++. +.||+.|||||++.+.|++||.+++. ++   ..+|++|..+|++|+|+|.++.++|+|.|++.
+T Consensus         2 ~~~yCn~~M~~r~~~~~~CK~~NTFIh~~~~~v~~iC~~~~~-~~~~~~~~~~~S~~~f~vt~C~l~~~~~~p~C~Y~~~   80 (104)
+T 4K7L_B            2 SSNYCNQMMKSRNLTKDRCKPVNTFVHESLADVQAVCSQKNV-ACKNGQTNCYQSYSTMSITDCRETGSSKYPNCAYKTT   80 (104)
+T ss_dssp             -CCHHHHHHHHTTSSSSSCCSEEEEECSCHHHHHGGGGSEEE-CCTTSCSCEEECSSCEEEEEEEECTTCBTTBCCEEEE
+T ss_pred             CcchHHHHHHHhcCCCCCCCCceeEeeCCHHHHHHHHcCCCC-cCCCCCCcCEecCCCeeceEEEEcCCCCCCCCcceee
+Confidence            467999999999995 68999999999999999999998644 44   58899999999999999999988999999999
+
+
+Q query            98 AGFRNVVVACENG--LPVHLDQSI  119 (123)
+Q Consensus        98 ~~~r~I~vaC~~g--~PVH~d~~i  119 (123)
+                      ..+++|+|+|+++  +||||++.+
+T Consensus        81 ~~~~~i~i~C~~~~~~PVh~~~~~  104 (104)
+T 4K7L_B           81 QANKHIIVACEGNPYVPVHFDASV  104 (104)
+T ss_dssp             EEEECEEEEEETTTTEEEEEEEEC
+T ss_pred             eeceEEEEEeCCCCCcccccccCC
+Confidence            9999999999999  999999863
+
+
+No 48
+>3MWR_A Ribonuclease pancreatic, LINKER, Ribonuclease pancreatic; ribonuclease A tandem enzyme, SGSGSG-linker; HET: SO4; 1.85A {Bos taurus, synthetic, Bos taurus}
+Probab=99.93  E-value=3e-31  Score=208.44  Aligned_cols=115  Identities=33%  Similarity=0.702  Sum_probs=103.5  Template_Neff=7.700
+
+Q query             4 SRYTHFLTQHYDAKPQ-GRDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQV   78 (123)
+Q Consensus         4 ~~Y~~F~~qHvd~~~~-~~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~v   78 (123)
+                      .+|++|++||||+++. ..++.||+.||++|++. +.||+.|||||++++.|++||.++ +.++   ..+|++|..+|++
+T Consensus       133 ~~~~~F~~~Hi~~p~~~~~~~~yCn~~M~~r~~~~~~CK~~nTFIh~~~~~i~~iC~~~-~~~c~~~~~n~~~S~~~~~~  211 (254)
+T 3MWR_A          133 TAAAKFERQHMDSSTSAASSSNYCNQMMKSRNLTKDRCKPVNTFVHESLADVQAVCSQK-NVACKNGQTNCYQSYSTMSI  211 (254)
+T ss_dssp             CHHHHHHHHHBCTTCSSCCSTTHHHHHHHHTTTTSSSCCSEEEEECSCHHHHHGGGGSE-EECCTTSCSCEEECSSCEEE
+T ss_pred             hHHHHHHHhhcCCCCCCCCCcchHHHHHHhcCCCCCCCCCceeEeeCCHHHHHHHHhCC-CCCCCCCCCcCeeCCCCcee
+Confidence            6789999999998864 34678999999999994 689999999999999999999986 4355   5889999999999
+
+
+Q query            79 TTCKLHGGSPWPPCQYRATAGFRNVVVACENG--LPVHLDQSI  119 (123)
+Q Consensus        79 t~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g--~PVH~d~~i  119 (123)
+                      |+|+|.++.++|+|.|++...+++|+|+|+++  +||||++.+
+T Consensus       212 t~C~l~~~~~~p~C~Y~~~~~~~~I~vaC~~~~~~PVh~~~~~  254 (254)
+T 3MWR_A          212 TDCRETGSSKYPNCAYKTTQANKHIIVACEGNPYVPVHFDASV  254 (254)
+T ss_dssp             EEEEECTTCBTTBCCEEEEEEEECEEEEEETTTTEEEEEEEEC
+T ss_pred             EEEEEcCCCCCCCCeeeeeeeeeEEEEEecCCCCcccccccCC
+Confidence            99999999889999999999999999999999  999999863
+
+
+No 49
+>1RBF_A RIBONUCLEASE S (E.C.3.1.27.5) MUTANT WITH; HYDROLASE(PHOSPHORIC DIESTER, RNA); 1.8A {Bos taurus} SCOP: d.5.1.1
+Probab=99.93  E-value=3e-31  Score=183.91  Aligned_cols=97  Identities=36%  Similarity=0.775  Sum_probs=88.4  Template_Neff=7.500
+
+Q query            22 DDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQVTTCKLHGGSPWPPCQYRAT   97 (123)
+Q Consensus        22 ~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~vt~C~l~~~~~~p~C~Y~g~   97 (123)
+                      ++.||+.||++|++. +.||+.|||||++.+.|++||.+++. ++   ..+|++|..+|++|+|+|.+++++|+|.|++.
+T Consensus         2 ~~~yCn~~M~~r~~~~~~CK~~NTFIh~~~~~i~~iC~~~~~-~c~~~~~~~~~S~~~f~vt~C~l~~~~~~p~C~Y~~~   80 (104)
+T 1RBF_A            2 SSNYCNQMMKSRNLTKDRCKPVNTFVHESLADVQAVCSQKNV-ACKNGQTNCYQSYSTMSITDCRETGSSKYPNCAYKTT   80 (104)
+T ss_dssp             CSSHHHHHHHHTTSSSSSCCSEEEEECSCHHHHHGGGGSEEE-CCTTSCSCEEECSSCEEEEEEEECTTCBTTBCCEEEE
+T ss_pred             CcchHHHHHHHhcCCCCCCCCceeEeeCCHHHHHHHHhCCCC-cCCCCCCcCEecCCCeeeeEEEEcCCCCCCCCcceee
+Confidence            457999999999994 68999999999999999999998644 44   58899999999999999999988999999999
+
+
+Q query            98 AGFRNVVVACENG--LPVHLDQSI  119 (123)
+Q Consensus        98 ~~~r~I~vaC~~g--~PVH~d~~i  119 (123)
+                      ...++|+|+|+++  +||||++.+
+T Consensus        81 ~~~~~i~v~C~~~~~~PVh~~~~~  104 (104)
+T 1RBF_A           81 QANKHIIVACEGNPYVPVHFDASV  104 (104)
+T ss_dssp             EEEECEEEEEETTTTEEEEEEEEC
+T ss_pred             eeceEEEEEeCCCCCccccccccC
+Confidence            9999999999999  999999863
+
+
+No 50
+>3MWR_A Ribonuclease pancreatic, LINKER, Ribonuclease pancreatic; ribonuclease A tandem enzyme, SGSGSG-linker; HET: SO4; 1.85A {Bos taurus, synthetic, Bos taurus}
+Probab=99.93  E-value=3.2e-31  Score=208.30  Aligned_cols=118  Identities=33%  Similarity=0.683  Sum_probs=105.8  Template_Neff=7.700
+
+Q query             3 NSRYTHFLTQHYDAKPQG-RDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQ   77 (123)
+Q Consensus         3 ~~~Y~~F~~qHvd~~~~~-~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~   77 (123)
+                      +++|++|++||||++++. .++.||+.||++|++. +.||+.|||||++++.|++||.+++. ++   ..+|++|..+|.
+T Consensus         2 ~~~~~~F~~~Hi~~~~~~~~~~~yCn~~M~~r~~~~~~CK~~NTFIh~~~~~v~~iC~~~~~-~c~~~~~n~~~S~~~f~   80 (254)
+T 3MWR_A            2 ETAAAKFERQHMDSSTSAASSSNYCNQMMKSRNLTKDRCKPVNTFVHESLADVQAVCSQKNV-ACKNGQTNCYQSYSTMS   80 (254)
+T ss_dssp             CCHHHHHHHHHBCTTCSSCCSTTHHHHHHHHTTTTSSSCCSEEEEECSCHHHHHHGGGSEEE-CCTTSCSCEEECSSCEE
+T ss_pred             CcHHHHHHHhhcCCCCCCCCCCccHHHHHHHcCCCCCCCCCCeeEeeCCHHHHHHHHhCCCC-ccCCCCCcCeeCCCCee
+Confidence            468999999999998652 4678999999999994 68999999999999999999998644 44   588999999999
+
+
+Q query            78 VTTCKLHGGSPWPPCQYRATAGFRNVVVACENG--LPVHLDQSIFR  121 (123)
+Q Consensus        78 vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g--~PVH~d~~i~~  121 (123)
+                      +|+|+|.+++++|.|.|++....++|+|+|+++  +||||++.+..
+T Consensus        81 lt~C~l~~~~~~p~C~Y~~~~~~~~I~v~C~~~~~~Pvh~~~~~~~  126 (254)
+T 3MWR_A           81 ITDCRETGSSKYPNCAYKTTQANKHIIVACEGNPYVPVHFDASVSG  126 (254)
+T ss_dssp             EEEEEECSSCBTTBCCEEEEEEEEEEEEEEETTTTEEEEEEEEECC
+T ss_pred             eEEEEEcCCCCCCCceeEecccceEEEEecCCCCCcceeccccccC
+Confidence            999999999888999999999899999999999  99999997754
+
+
+No 51
+>3MX8_A Ribonuclease pancreatic, LINKER, Ribonuclease pancreatic; ribonuclease A tandem enzyme, GPPG-linker; HET: SO4; 2.1A {Bos taurus}
+Probab=99.93  E-value=9.2e-31  Score=205.34  Aligned_cols=118  Identities=33%  Similarity=0.676  Sum_probs=105.2  Template_Neff=7.800
+
+Q query             3 NSRYTHFLTQHYDAKPQG-RDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQ   77 (123)
+Q Consensus         3 ~~~Y~~F~~qHvd~~~~~-~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~   77 (123)
+                      +++|++|++||||++... .+..||+.||++|++. +.||+.|||||++++.|++||.+++. ++   ..+|++|..+|.
+T Consensus         2 ~~~~~~F~~~Hi~~~~~~~~~~~yCn~~M~~r~~~~~~CK~~ntFIh~~~~~v~~IC~~~~~-~c~n~~~~c~~S~~~f~   80 (252)
+T 3MX8_A            2 ETAAAKFERQHMDSSTSAASSSNYCNQMMKSRNLTKDRCKPVNTFVHESLADVQAVCSQKNV-ACKNGQTNCYQSYSTMS   80 (252)
+T ss_dssp             CCHHHHHHHHHBCCSSSSCCSTTHHHHHHHHTTTTSSSCCSEEEEECSCHHHHHHGGGSEEE-CCTTSCSCEEECSSCEE
+T ss_pred             CcHHHHHHHhhcCCCCCCCCCCccHHHHHHHccCCCCCCCCcceEEeCCHHHHHHHHhCCCC-cCCCCCCcCeeCCCCee
+Confidence            468999999999997642 4678999999999994 68999999999999999999999644 54   378999999999
+
+
+Q query            78 VTTCKLHGGSPWPPCQYRATAGFRNVVVACENG--LPVHLDQSIFR  121 (123)
+Q Consensus        78 vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g--~PVH~d~~i~~  121 (123)
+                      +|+|+|.++.++|+|.|++....++|+|+|+++  +||||++....
+T Consensus        81 vt~C~l~~~~~~p~C~Y~~~~~~~~i~v~C~~~~~~Pvh~~~~~~~  126 (252)
+T 3MX8_A           81 ITDCRETGSSKYPNCAYKTTQANKHIIVACEGNPYVPVHFDASVGP  126 (252)
+T ss_dssp             EEEEEECTTCBTTBCCEEEEEEEEEEEEEEETTTTEEEEEEEEECS
+T ss_pred             eEEEEecCCCCCCCceEEEeeeeeEEEEecCCCCceeeEecCCCCC
+Confidence            999999999889999999999999999999998  99999987643
+
+
+No 52
+>3MWQ_A Ribonuclease pancreatic, LINKER, Ribonuclease pancreatic; ribonuclease A tandem enzyme, SGRSGRSG-linker; HET: GOL, SO4; 1.68A {Bos taurus, synthetic, Bos taurus}
+Probab=99.93  E-value=9.3e-31  Score=206.20  Aligned_cols=117  Identities=33%  Similarity=0.692  Sum_probs=104.4  Template_Neff=7.500
+
+Q query             3 NSRYTHFLTQHYDAKPQG-RDDRYCESIMRRRGLT-SPCIDINTFIHGNKRSIKAICENKNGNPH---RENLRISKSSFQ   77 (123)
+Q Consensus         3 ~~~Y~~F~~qHvd~~~~~-~~~~yC~~mM~~r~~~-~~CK~~NTFIh~~~~~v~~vC~~~~g~~~---~~n~~~S~~~F~   77 (123)
+                      +++|++|++||||+++.+ .++.||+.||++|++. +.||+.|||||++++.|++||.+++. .+   ..+|++|..+|.
+T Consensus         2 ~~~~~~F~~~Hi~~~~~~~~~~~yCn~~M~~r~i~~~~CK~~ntFIh~~~~~i~~iC~~~~~-~~~~~~~n~~~S~~~f~   80 (256)
+T 3MWQ_A            2 ETAAAKFERQHMDSSTSAASSSNYCNQMMKSRNLTKDRCKPVNTFVHESLADVQAVCSQKNV-ACKNGQTNCYQSYSTMS   80 (256)
+T ss_dssp             CCHHHHHHHHHBCTTCSSCCSTTHHHHHHHHTTTTSSSCCSEEEEECSCHHHHHHGGEEEC---CTTSCSCEEECSSCEE
+T ss_pred             CcHHHHHHHhhCCCCCCCCCCCcchHHHHHhccCCCCCCCCCceEEeCCHHHHHHHHhCCCC-CCCCCCCcceeCCCCCC
+Confidence            468999999999998643 4678999999999995 68999999999999999999998644 44   489999999999
+
+
+Q query            78 VTTCKLHGGSPWPPCQYRATAGFRNVVVACENG--LPVHLDQSIF  120 (123)
+Q Consensus        78 vt~C~l~~~~~~p~C~Y~g~~~~r~I~vaC~~g--~PVH~d~~i~  120 (123)
+                      +|+|+|+++.+.|+|.|++...+++|+|+|+++  +||||++.+.
+T Consensus        81 vt~C~l~~~~~~p~C~Y~~~~~~~~i~v~C~~~~~~PVh~~~~~~  125 (256)
+T 3MWQ_A           81 ITDCRETGSSKYPNCAYKTTQANKHIIVACEGNPYVPVHFDASVS  125 (256)
+T ss_dssp             EEEEEECTTCBTTBCCEEEEEEEEEEEEEEETTTTEEEEEEEEEC
+T ss_pred             eeEEEEcCCCCCCCceeEEcceeeEEEEeecCCCceeeccCcccc
+Confidence            999999999888999999999999999999999  9999999874
+
+
+No 53
+>2LT5_A Protein P-30 (E.C.3.1.27.-); ribonuclease, HYDROLASE; NMR {Rana pipiens}
+Probab=99.65  E-value=4.7e-20  Score=132.11  Aligned_cols=74  Identities=27%  Similarity=0.503  Sum_probs=63.1  Template_Neff=6.200
+
+Q query             2 DNSRYTHFLTQHYDAKPQGRDDRYCESIMRRRGLTSPCIDINTFIHGNKRSIKAICENKNGNPHRENLRISKSSFQVTTC   81 (123)
+Q Consensus         2 ~~~~Y~~F~~qHvd~~~~~~~~~yC~~mM~~r~~~~~CK~~NTFIh~~~~~v~~vC~~~~g~~~~~n~~~S~~~F~vt~C   81 (123)
+                      .+.+|++|++||+|+++    +.|||.||+.|++  .||+.|||||+++++|++||. +++ +++..  +|+.+|++|+|
+T Consensus        47 ~~~~~~~F~~qHid~~~----~~yCn~mM~~r~~--~CK~~NTFIh~~~~~V~~IC~-~~~-~~kn~--~S~~~f~vt~C  116 (120)
+T 2LT5_A           47 AGSDWLTFQKKHITNTR----DVDCDNIMSTNLF--HCKDKNTFIYSRPEPVKAICK-GII-ASKNV--LTTSEFYLSDC  116 (120)
+T ss_dssp             TTCCHHHHHHHHEESSC----CCCSSSTTSSTTT--TCCSEEEEEECCSHHHHTTCS-SCC-SSCCC--CCCSCEEEEEE
+T ss_pred             CCccHHHHHHHhccCCC----CccHHHHHHhcCC--cccCCCeEEeCCHHHHHHHhc-CCC-ccCCC--cCCCcEEceEE
+Confidence            35689999999999885    4599999999977  999999999999999999999 434 44332  69999999999
+
+
+Q query            82 KLHG   85 (123)
+Q Consensus        82 ~l~~   85 (123)
+                      +|++
+T Consensus       117 ~l~~  120 (120)
+T 2LT5_A          117 NVTS  120 (120)
+T ss_dssp             EECC
+T ss_pred             EEcC
+Confidence            9863
+
+
+No 54
+>2LT5_A Protein P-30 (E.C.3.1.27.-); ribonuclease, HYDROLASE; NMR {Rana pipiens}
+Probab=97.84  E-value=6.3e-08  Score=70.03  Aligned_cols=31  Identities=32%  Similarity=0.598  Sum_probs=28.3  Template_Neff=6.200
+
+Q query            90 PPCQYRATAGFRNVVVACENGLPVHLDQSIF  120 (123)
+Q Consensus        90 p~C~Y~g~~~~r~I~vaC~~g~PVH~d~~i~  120 (123)
+                      |+|+|++...+++|+|+|++++||||++...
+T Consensus         1 p~C~Y~~~~~~~~i~v~C~~~~PVhf~~~~~   31 (120)
+T 2LT5_A            1 RPCKYKLKKSTNKFCVTCENQAPVHFVGVGS   31 (120)
+T ss_dssp             CCSCEEEEEEEECEEEEESSSSEEEEEEESS
+T ss_pred             CCCcceeeccccEEEEeeCCCcceeEeeEee
+Confidence            5799999998899999999999999998753
+
+
+No 55
+>2MVO_A Putative lipoprotein; lipoprotein, lantibiotic resistance, LIPID BINDING; NMR {Microbispora sp. ATCC PTA-5024}
+Probab=21.51  E-value=91  Score=24.42  Aligned_cols=24  Identities=29%  Similarity=0.364  Sum_probs=17.9  Template_Neff=4.500
+
+Q query             3 NSRYTHFLTQHYDAKPQGRDDRYC   26 (123)
+Q Consensus         3 ~~~Y~~F~~qHvd~~~~~~~~~yC   26 (123)
+                      ++...+|.+||+|.+..+..+..|
+T Consensus        19 ~~~~~~~~~~~~~~~~~g~~d~~~   42 (147)
+T 2MVO_A           19 ETAAAKFERQHMDSPDLGTDDDDK   42 (147)
+T ss_dssp             SSCCSCCCCCCCCCCSCCCSSSSS
+T ss_pred             HHHHHHHHHhhcCCcccCCCCCcC
+Confidence            346678999999988766555555
+
+
