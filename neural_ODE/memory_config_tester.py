@@ -551,9 +551,8 @@ def print_configuration_summary(results: List[Dict[str, Any]], cpu_only=False):
     # Return the text for file writing
     return summary_text
 
-
 def generate_config_report(results: List[Dict[str, Any]], output_file: str = "memory_optimization_report.txt",
-                           cpu_only=False):
+                           cpu_only=False, test_protein=None, use_fast_ode=False):
     """Generate a detailed report of configuration test results"""
     with open(output_file, 'w') as f:
         if cpu_only:
@@ -561,6 +560,13 @@ def generate_config_report(results: List[Dict[str, Any]], output_file: str = "me
         else:
             f.write("EVOFORMER ODE MEMORY OPTIMIZATION REPORT\n")
         f.write("=" * 40 + "\n\n")
+
+        # Configuration Settings Section
+        f.write("Configuration Settings:\n")
+        f.write(f"  CPU_ONLY: {str(cpu_only).lower()}\n")
+        f.write(f"  TEST_PROTEIN: {test_protein if test_protein else 'first protein only'}\n")
+        f.write(f"  USE_FAST_ODE: {str(use_fast_ode).lower()}\n")
+        f.write("\n")
 
         # System information
         f.write("System Information:\n")
@@ -630,6 +636,7 @@ def generate_config_report(results: List[Dict[str, Any]], output_file: str = "me
                 "4. Alternatively, you can continue using CPU-only mode by adding the --cpu-only flag to the run scripts\n\n")
 
     print(f"Report saved to: {output_file}")
+
 
 
 def main():
@@ -705,7 +712,7 @@ def main():
 
     # Generate report
     report_path = os.path.join(args.output_dir, "memory_optimization_report.txt")
-    generate_config_report(results, report_path, args.cpu_only)
+    generate_config_report(results, report_path, args.cpu_only, args.test_protein, use_fast_ode)
 
 
 if __name__ == "__main__":

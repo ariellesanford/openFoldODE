@@ -8,7 +8,7 @@ import torch.optim as optim
 from evoformer_ode import EvoformerODEFunc  # Import from existing module
 from torch.cuda.amp import autocast, GradScaler
 from torch.utils.checkpoint import checkpoint
-
+import torch.nn.functional as F
 
 # Function to get project root directory
 def get_project_root():
@@ -49,6 +49,8 @@ parser.add_argument('--reduced_cluster_size', type=int, default=64,
                     help='Maximum cluster size (original is 128)')
 parser.add_argument('--reduced_hidden_dim', type=int, default=128,
                     help='Hidden dimension size (default is 128 from EvoformerODEFunc)')
+parser.add_argument('--learning_rate', type=float, default=1e-3,
+                    help='Learning rate for the optimizer')
 parser.add_argument('--num_time_points', type=int, default=25,
                     help='Number of integration time points (original is 49)')
 parser.add_argument('--integrator', choices=['dopri5', 'rk4', 'euler'], default='dopri5',
@@ -63,8 +65,12 @@ parser.add_argument('--monitor_memory', action='store_true', default=False,
                     help='Print memory usage statistics')
 parser.add_argument('--no-monitor_memory', dest='monitor_memory', action='store_false',
                     help='Disable memory usage statistics')
+
+
 parser.add_argument('--cpu-only', action='store_true', default=False,
                     help='Force CPU-only mode regardless of CUDA availability')
+parser.add_argument('--no-cpu-only', dest='cpu_only', action='store_false',
+                    help='Disable CPU-only mode (use CUDA if available)')
 
 # Data and output directory options
 parser.add_argument('--data_dir', type=str, default=None,
@@ -185,7 +191,7 @@ clear_memory()
 c_m = 256  # MSA (M) channels
 c_z = 128  # Pair (Z) channels
 hidden_dim = args.reduced_hidden_dim  # Configurable hidden dimension
-learning_rate = 1e-3
+learning_rate = args.learning_rate
 
 # Use command line data directory if provided, otherwise use default
 if args.data_dir is None:
@@ -223,6 +229,7 @@ print(f"Aggressive Memory Cleaning: {'Enabled' if args.clean_memory else 'Disabl
 print(f"Memory Usage Monitoring: {'Enabled' if args.monitor_memory else 'Disabled'}")
 print(f"Reduced Cluster Size: {args.reduced_cluster_size} (original: 128)")
 print(f"Reduced Hidden Dimension: {args.reduced_hidden_dim} (default: 128)")
+print(f"Learning Rate: {learning_rate}")
 print(f"Number of Time Points: {args.num_time_points} (original: 49)")
 print(f"ODE Integrator: {args.integrator}")
 print(f"Time Step Batch Size: {args.batch_size}")
@@ -230,20 +237,31 @@ print("=" * 30)
 
 
 def get_dataset(input_dir):
-    """ Get all protein folder names. """
-    return [name for name in os.listdir(input_dir) if os.path.isdir(os.path.join(input_dir, name))]
+    """ Get all protein folder names that contain evoformer blocks data. """
+    datasets = []
+    for name in os.listdir(input_dir):
+        full_path = os.path.join(input_dir, name)
+        # Only include directories that end with '_evoformer_blocks' and contain recycle_0 subdirectory
+        if (os.path.isdir(full_path) and
+            name.endswith('_evoformer_blocks') and
+            os.path.isdir(os.path.join(full_path, 'recycle_0'))):
+            # Extract the protein ID (remove '_evoformer_blocks' suffix)
+            protein_id = name.replace('_evoformer_blocks', '')
+            datasets.append(protein_id)
+    return datasets
 
 
 def load_initial_input(protein_id):
     """
     Load the initial M and Z tensors for block 0.
     """
-    protein_dir = os.path.join(DATA_DIR, protein_id, "recycle_0")
+    # Updated to match the actual directory structure
+    protein_dir = os.path.join(DATA_DIR, f"{protein_id}_evoformer_blocks", "recycle_0")
     m_path = os.path.join(protein_dir, "m_block_0.pt")
     z_path = os.path.join(protein_dir, "z_block_0.pt")
 
     if not os.path.exists(m_path) or not os.path.exists(z_path):
-        raise FileNotFoundError(f"Initial block not found for {protein_id}")
+        raise FileNotFoundError(f"Initial block not found for {protein_id}. Expected paths:\n  {m_path}\n  {z_path}")
 
     # Load tensors
     m_init = torch.load(m_path, map_location=device)  # (s_c, r, c_m)
@@ -258,7 +276,6 @@ def load_initial_input(protein_id):
     # Reduce cluster size if enabled
     max_clusters = args.reduced_cluster_size
     m_init = m_init[:max_clusters]
-
     return m_init, z_init
 
 
@@ -267,12 +284,13 @@ def load_block(protein_id, block_index):
     Load M and Z tensors for a specific block index.
     Adjusts dimensions to ensure compatibility.
     """
-    protein_dir = os.path.join(DATA_DIR, protein_id, "recycle_0")
+    # Updated to match the actual directory structure
+    protein_dir = os.path.join(DATA_DIR, f"{protein_id}_evoformer_blocks", "recycle_0")
     m_path = os.path.join(protein_dir, f"m_block_{block_index}.pt")
     z_path = os.path.join(protein_dir, f"z_block_{block_index}.pt")
 
     if not os.path.exists(m_path) or not os.path.exists(z_path):
-        raise FileNotFoundError(f"Block {block_index} not found for {protein_id}")
+        raise FileNotFoundError(f"Block {block_index} not found for {protein_id}. Expected paths:\n  {m_path}\n  {z_path}")
 
     # Load tensors
     m = torch.load(m_path, map_location=device)  # (1, s_c, r, c_m)
@@ -288,9 +306,17 @@ def load_block(protein_id, block_index):
     return m, z
 
 
-def loss_fn(pred, target):
-    """ MSE Loss function. """
-    return torch.nn.functional.mse_loss(pred, target)
+def balanced_loss_fn(pred_m, target_m, pred_z, target_z, msa_weight=1.0, pair_weight=0.1):
+    """
+    Balanced loss function that accounts for different data scales
+    """
+    msa_loss = F.mse_loss(pred_m, target_m)
+    pair_loss = F.mse_loss(pred_z, target_z)
+
+    # Weight the losses to balance their contributions
+    weighted_loss = msa_weight * msa_loss + pair_weight * pair_loss
+
+    return weighted_loss, msa_loss.item(), pair_loss.item()
 
 
 # === Neural ODE with Configurable Memory Optimizations ===
@@ -453,9 +479,9 @@ def train_step(protein_id, step_idx):
                     active_ode_func,
                     current_state,  # Use current state, not initial state
                     t_grid_batch,
-                    method=args.integrator,
-                    rtol=1e-3 if args.reduced_precision_integration else 1e-4,
-                    atol=1e-4 if args.reduced_precision_integration else 1e-5
+                    method='euler',  # CHANGED: use stable integration
+                    rtol=1e-2,  # CHANGED: relaxed tolerances
+                    atol=1e-2
                 )
 
             # Update current state to the final state of this trajectory
@@ -497,23 +523,32 @@ def train_step(protein_id, step_idx):
                               f"{pred_trajectory[0].shape[0]}, {pred_trajectory[1].shape[0]}. Skipping...")
                         continue
 
-                # Compute loss
-                loss = loss_fn(pred_m, gt_m) + loss_fn(pred_z, gt_z)
-                batch_loss += loss
+                # FIXED: Compute balanced loss
+                step_loss, msa_loss, pair_loss = balanced_loss_fn(pred_m, gt_m, pred_z, gt_z)
+                batch_loss += step_loss  # FIXED: use step_loss instead of undefined 'loss'
+
+                # # Optional: Print component losses for monitoring
+                # if i % 3 == 0:  # Every 3rd time step
+                #     print(f"    Time {time_idx}: Total={step_loss:.1f}, MSA={msa_loss:.1f}, Pair={pair_loss:.1f}")
 
             # Adjust loss based on batch size for consistency
             if batch_loss > 0:
                 batch_loss = batch_loss / (len(t_grid_batch) - start_i)
                 total_loss += batch_loss.item()
 
-        # Scale gradients and backpropagate
+        # FIXED: Scale gradients and backpropagate with gradient clipping
         if USE_AMP:
             scaler.scale(batch_loss).backward()
+            # ADD gradient clipping
+            scaler.unscale_(optimizer)
+            torch.nn.utils.clip_grad_norm_(ode_func.parameters(), max_norm=1.0)
             if args.gradient_accumulation <= 1 or (step_idx + 1) % args.gradient_accumulation == 0:
                 scaler.step(optimizer)
                 scaler.update()
         else:
             batch_loss.backward()
+            # ADD gradient clipping
+            torch.nn.utils.clip_grad_norm_(ode_func.parameters(), max_norm=1.0)
             if args.gradient_accumulation <= 1 or (step_idx + 1) % args.gradient_accumulation == 0:
                 optimizer.step()
 
@@ -578,7 +613,7 @@ def train(input_dir):
                     max_mem_allocated = max(max_mem_allocated, curr_mem_allocated)
                     max_mem_reserved = max(max_mem_reserved, curr_mem_reserved)
 
-                print_memory_stats(f"After protein {protein_id}")
+                #print_memory_stats(f"After protein {protein_id}")
 
             except RuntimeError as e:
                 if device == "cuda" and "CUDA out of memory" in str(e):

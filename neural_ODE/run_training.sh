@@ -15,63 +15,74 @@ TEST_PROTEIN=""
 USE_FAST_ODE=true
 
 # Number of training epochs
-EPOCHS=5
+EPOCHS=25
 
-# Memory optimizations
-MEMORY_SPLIT_SIZE=128      # Memory split size (MB) to avoid fragmentation
-REDUCED_CLUSTER_SIZE=96    # Maximum number of MSA clusters to process (original=128)
-REDUCED_HIDDEN_DIM=96      # Hidden dimension size for neural networks (original=128)
-NUM_TIME_POINTS=25         # Number of integration time points (original=49)
-BATCH_SIZE=1               # Number of sequential time steps to process together
-INTEGRATOR="rk4"           # ODE solver method (options: rk4, dopri5, euler)
-GRADIENT_ACCUMULATION=1    # Number of steps to accumulate gradients over
-CHUNK_SIZE=0               # Size of chunks for numerical integration (0 = disable)
+# Learning rate setting
+LEARNING_RATE=1e-3  # Start with 1e-5 for stability, can increase to 1e-4 or 1e-3 if stable
+
+# Memory optimizations (keep your existing settings)
+MEMORY_SPLIT_SIZE=128
+REDUCED_CLUSTER_SIZE=32  # Start small for stability
+REDUCED_HIDDEN_DIM=32    # Start small for stability
+NUM_TIME_POINTS=5        # Start small for stability
+BATCH_SIZE=1
+INTEGRATOR="euler"       # Most stable
+GRADIENT_ACCUMULATION=1
+CHUNK_SIZE=0
 
 # Enable/disable features
-USE_AMP=true               # Automatic Mixed Precision (16-bit) for faster training with CUDA
-USE_CHECKPOINT=true        # Gradient checkpointing to save memory during backprop
-MONITOR_MEMORY=true        # Print memory usage statistics
-CLEAN_MEMORY=false         # Aggressively clean GPU memory between steps
-REDUCED_PRECISION=false    # Use reduced precision for ODE integration (faster but less accurate)
+USE_AMP=true
+USE_CHECKPOINT=true
+MONITOR_MEMORY=true
+CLEAN_MEMORY=false
+REDUCED_PRECISION=true   # For stability
 
 # =======================================================================================
-# END OF CONFIGURATION SETTINGS - No need to modify below this line
+# AUTO-SAVE OUTPUT SETUP
 # =======================================================================================
 
 # Get the actual directory where the script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 # === Define variables based on project root ===
-DATA_DIR="${SCRIPT_DIR}/quick_inference_data"
+DATA_DIR="${SCRIPT_DIR}/data/quick_inference_data"
 OUTPUT_DIR="${SCRIPT_DIR}/outputs"
 
 # Create output directory if it doesn't exist
 mkdir -p "${OUTPUT_DIR}"
 
-# Get path to python interpreter (use the system's python if not in specific environment)
+# Create timestamped output filename
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+OUTPUT_FILE="${OUTPUT_DIR}/training_output_${TIMESTAMP}.txt"
+
+# Get path to python interpreter
 if [ -n "${CONDA_PREFIX}" ]; then
-    # Use conda environment's python if available
     PYTHON_PATH="${CONDA_PREFIX}/bin/python"
 else
-    # Otherwise use system python
     PYTHON_PATH=$(which python)
 fi
 
 # Print configuration settings
-echo "=== CONFIGURATION SETTINGS ==="
-echo "Data directory: ${DATA_DIR}"
-echo "Output directory: ${OUTPUT_DIR}"
-echo "Python path: ${PYTHON_PATH}"
-echo "CPU-only mode: ${CPU_ONLY}"
-echo "Test protein: ${TEST_PROTEIN}"
-echo "Fast ODE: ${USE_FAST_ODE}"
-echo "Epochs: ${EPOCHS}"
-echo "============================="
+echo "=== TRAINING CONFIGURATION ===" | tee "${OUTPUT_FILE}"
+echo "Data directory: ${DATA_DIR}" | tee -a "${OUTPUT_FILE}"
+echo "Output directory: ${OUTPUT_DIR}" | tee -a "${OUTPUT_FILE}"
+echo "Python path: ${PYTHON_PATH}" | tee -a "${OUTPUT_FILE}"
+echo "CPU-only mode: ${CPU_ONLY}" | tee -a "${OUTPUT_FILE}"
+echo "Test protein: ${TEST_PROTEIN}" | tee -a "${OUTPUT_FILE}"
+echo "Fast ODE: ${USE_FAST_ODE}" | tee -a "${OUTPUT_FILE}"
+echo "Epochs: ${EPOCHS}" | tee -a "${OUTPUT_FILE}"
+echo "Learning rate: ${LEARNING_RATE}" | tee -a "${OUTPUT_FILE}"
+echo "Time points: ${NUM_TIME_POINTS}" | tee -a "${OUTPUT_FILE}"
+echo "Integrator: ${INTEGRATOR}" | tee -a "${OUTPUT_FILE}"
+echo "Output will be saved to: ${OUTPUT_FILE}" | tee -a "${OUTPUT_FILE}"
+echo "=============================" | tee -a "${OUTPUT_FILE}"
+echo "" | tee -a "${OUTPUT_FILE}"
 
 # Build command with all options
 CMD="${PYTHON_PATH} ${SCRIPT_DIR}/train_evoformer_ode.py \
   --data_dir ${DATA_DIR} \
   --output_dir ${OUTPUT_DIR} \
+  --learning_rate ${LEARNING_RATE} \
   --memory_split_size ${MEMORY_SPLIT_SIZE} \
   --reduced_cluster_size ${REDUCED_CLUSTER_SIZE} \
   --reduced_hidden_dim ${REDUCED_HIDDEN_DIM} \
@@ -85,16 +96,13 @@ CMD="${PYTHON_PATH} ${SCRIPT_DIR}/train_evoformer_ode.py \
 # Add test protein flag if specified
 if [ -n "${TEST_PROTEIN}" ]; then
     CMD="${CMD} --test-protein ${TEST_PROTEIN}"
-    echo "Testing protein: ${TEST_PROTEIN}"
 fi
 
 # Add boolean flags based on settings
 if [ "${CPU_ONLY}" = true ]; then
     CMD="${CMD} --cpu-only"
-    echo "Running in CPU-only mode"
 else
     CMD="${CMD} --no-cpu-only"
-    echo "Running in auto mode (will use CUDA if available)"
 fi
 
 if [ "${USE_FAST_ODE}" = true ]; then
@@ -134,9 +142,19 @@ else
 fi
 
 # Print the final command
-echo "Running command:"
-echo "${CMD}"
-echo
+echo "Running command:" | tee -a "${OUTPUT_FILE}"
+echo "${CMD}" | tee -a "${OUTPUT_FILE}"
+echo "" | tee -a "${OUTPUT_FILE}"
 
-# Execute the command
-eval "${CMD}"
+# Execute the command and save ALL output to file
+echo "Training started at: $(date)" | tee -a "${OUTPUT_FILE}"
+echo "======================================" | tee -a "${OUTPUT_FILE}"
+
+# Run the command and capture ALL output
+eval "${CMD}" 2>&1 | tee -a "${OUTPUT_FILE}"
+
+# Add completion timestamp
+echo "" | tee -a "${OUTPUT_FILE}"
+echo "======================================" | tee -a "${OUTPUT_FILE}"
+echo "Training completed at: $(date)" | tee -a "${OUTPUT_FILE}"
+echo "Full output saved to: ${OUTPUT_FILE}" | tee -a "${OUTPUT_FILE}"

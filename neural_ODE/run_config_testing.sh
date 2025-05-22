@@ -12,7 +12,7 @@ CPU_ONLY=false
 TEST_PROTEIN="all"
 
 # Use fast ODE implementation
-USE_FAST_ODE=true
+USE_FAST_ODE=false
 
 # =======================================================================================
 # END OF CONFIGURATION SETTINGS - No need to modify below this line
@@ -22,7 +22,7 @@ USE_FAST_ODE=true
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 # === Define variables based on project root ===
-DATA_DIR="${SCRIPT_DIR}/quick_inference_data"
+DATA_DIR="${SCRIPT_DIR}/data/quick_inference_data"
 OUTPUT_DIR="${SCRIPT_DIR}/config_test_outputs"
 
 # Create output directory if it doesn't exist

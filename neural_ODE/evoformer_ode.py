@@ -1,9 +1,193 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import math
 
 class EvoformerODEFunc(nn.Module):
+    """
+    A simplified but more faithful implementation of Evoformer operations for Neural ODE.
+    This version maintains the key architectural ideas while being computationally tractable.
+    """
+
+    def __init__(self, c_m, c_z, hidden_dim=64, num_heads=4):
+        super().__init__()
+        self.c_m = c_m
+        self.c_z = c_z
+        self.hidden_dim = hidden_dim
+        self.num_heads = num_heads
+        self.head_dim = hidden_dim // num_heads
+
+        # MSA Row Attention with Pair Bias (simplified)
+        self.msa_row_norm = nn.LayerNorm(c_m)
+        self.msa_row_qkv = nn.Linear(c_m, hidden_dim * 3)
+        self.msa_row_gate = nn.Linear(c_m, hidden_dim)
+        self.msa_row_out = nn.Linear(hidden_dim, c_m)
+
+        # Pair bias for attention
+        self.pair_bias_norm = nn.LayerNorm(c_z)
+        self.pair_bias_proj = nn.Linear(c_z, num_heads)
+
+        # MSA Column Attention (simplified)
+        self.msa_col_norm = nn.LayerNorm(c_m)
+        self.msa_col_proj = nn.Linear(c_m, hidden_dim)
+        self.msa_col_gate = nn.Linear(c_m, hidden_dim)
+        self.msa_col_out = nn.Linear(hidden_dim, c_m)
+
+        # MSA Transition
+        self.msa_trans_norm = nn.LayerNorm(c_m)
+        self.msa_trans = nn.Sequential(
+            nn.Linear(c_m, 4 * c_m),
+            nn.ReLU(),
+            nn.Linear(4 * c_m, c_m)
+        )
+
+        # Outer Product Mean (simplified)
+        self.outer_norm = nn.LayerNorm(c_m)
+        self.outer_proj_a = nn.Linear(c_m, 32)
+        self.outer_proj_b = nn.Linear(c_m, 32)
+        self.outer_out = nn.Linear(32, c_z)  # Simplified: no full outer product
+
+        # Triangle Operations (simplified but maintains geometric reasoning)
+        self.tri_norm = nn.LayerNorm(c_z)
+        self.tri_proj_a = nn.Linear(c_z, hidden_dim)
+        self.tri_proj_b = nn.Linear(c_z, hidden_dim)
+        self.tri_gate = nn.Linear(c_z, c_z)
+        self.tri_out = nn.Linear(hidden_dim, c_z)
+
+        # Pair Transition
+        self.pair_trans_norm = nn.LayerNorm(c_z)
+        self.pair_trans = nn.Sequential(
+            nn.Linear(c_z, 4 * c_z),
+            nn.ReLU(),
+            nn.Linear(4 * c_z, c_z)
+        )
+
+        # Time embedding
+        self.time_mlp = nn.Sequential(
+            nn.Linear(1, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, 2)
+        )
+
+    def simplified_msa_row_attention(self, m, z):
+        """Simplified MSA row attention with pair bias"""
+        n_seq, n_res, c_m = m.shape
+
+        # Normalize and project to Q, K, V
+        m_norm = self.msa_row_norm(m)
+        qkv = self.msa_row_qkv(m_norm)
+        q, k, v = qkv.chunk(3, dim=-1)
+
+        # Reshape for multi-head attention
+        q = q.view(n_seq, n_res, self.num_heads, self.head_dim)
+        k = k.view(n_seq, n_res, self.num_heads, self.head_dim)
+        v = v.view(n_seq, n_res, self.num_heads, self.head_dim)
+
+        # Compute attention scores
+        scale = 1.0 / math.sqrt(self.head_dim)
+        attn_scores = torch.einsum('srhd,skhd->srhk', q, k) * scale
+
+        # Add pair bias (simplified)
+        z_norm = self.pair_bias_norm(z)
+        pair_bias = self.pair_bias_proj(z_norm)  # [n_res, n_res, num_heads]
+        # Average pair bias across sequences and add
+        pair_bias_expanded = pair_bias.unsqueeze(0).expand(n_seq, -1, -1, -1)
+        pair_bias_expanded = pair_bias_expanded.permute(0, 1, 3, 2)  # [n_seq, n_res, num_heads, n_res]
+        attn_scores = attn_scores + pair_bias_expanded
+
+        # Apply softmax and compute output
+        attn_weights = F.softmax(attn_scores, dim=-1)
+        attn_out = torch.einsum('srhk,skhd->srhd', attn_weights, v)
+        attn_out = attn_out.contiguous().view(n_seq, n_res, -1)
+
+        # Apply gating
+        gate = torch.sigmoid(self.msa_row_gate(m_norm))
+        out = gate * attn_out
+
+        return self.msa_row_out(out)
+
+    def simplified_column_attention(self, m):
+        """Simplified MSA column attention"""
+        m_norm = self.msa_col_norm(m)
+
+        # Simple column-wise processing
+        m_proj = self.msa_col_proj(m_norm)
+        gate = torch.sigmoid(self.msa_col_gate(m_norm))
+
+        # Column-wise attention (simplified as weighted average)
+        # Transpose to work on columns, then transpose back
+        m_t = m_proj.transpose(0, 1)  # [n_res, n_seq, hidden_dim]
+        attn_weights = F.softmax(m_t @ m_t.transpose(-2, -1) / math.sqrt(self.hidden_dim), dim=-1)
+        m_out = attn_weights @ m_t
+        m_out = m_out.transpose(0, 1)  # Back to [n_seq, n_res, hidden_dim]
+
+        return self.msa_col_out(gate * m_out)
+
+    def simplified_outer_product(self, m):
+        """Simplified outer product mean"""
+        m_norm = self.outer_norm(m)
+        a = self.outer_proj_a(m_norm)  # [n_seq, n_res, 32]
+        b = self.outer_proj_b(m_norm)  # [n_seq, n_res, 32]
+
+        # Simplified: element-wise product instead of full outer product
+        outer = a.unsqueeze(2) * b.unsqueeze(1)  # [n_seq, n_res, n_res, 32]
+        outer_mean = outer.mean(dim=0)  # Average over sequences
+
+        return self.outer_out(outer_mean)
+
+    def simplified_triangle_update(self, z):
+        """Simplified triangle multiplication that maintains geometric reasoning"""
+        z_norm = self.tri_norm(z)
+
+        a = torch.sigmoid(self.tri_proj_a(z_norm))  # [n_res, n_res, hidden_dim]
+        b = torch.sigmoid(self.tri_proj_b(z_norm))  # [n_res, n_res, hidden_dim]
+        gate = torch.sigmoid(self.tri_gate(z_norm))
+
+        # Simplified triangle operation: for each edge (i,j), aggregate from triangles
+        # This is a simplified version of the full triangle multiplication
+        triangle_update = torch.einsum('ikd,kjd->ijd', a, b)  # Sum over k
+        triangle_update = F.layer_norm(triangle_update, [triangle_update.size(-1)])
+
+        out = gate * self.tri_out(triangle_update)
+        return out
+
+    def forward(self, t, state):
+        """Forward pass with simplified but proper Evoformer operations"""
+        m, z = state
+
+        # Time embedding
+        t_scalar = torch.tensor([t], device=m.device, dtype=m.dtype)
+        t_emb = self.time_mlp(t_scalar.view(1, 1))
+        mix_msa, mix_pair = torch.sigmoid(t_emb).chunk(2, dim=-1)
+
+        # MSA Stack
+        m_row = self.simplified_msa_row_attention(m, z)
+        m = m + m_row
+
+        m_col = self.simplified_column_attention(m)
+        m = m + m_col
+
+        m_trans = self.msa_trans(self.msa_trans_norm(m))
+        m = m + m_trans
+
+        # Communication
+        z_outer = self.simplified_outer_product(m)
+        z = z + z_outer
+
+        # Pair Stack
+        z_tri = self.simplified_triangle_update(z)
+        z = z + z_tri
+
+        z_trans = self.pair_trans(self.pair_trans_norm(z))
+        z = z + z_trans
+
+        # Compute derivatives
+        dm_dt = (m - state[0]) * mix_msa.view(1, 1, 1)
+        dz_dt = (z - state[1]) * mix_pair.view(1, 1, 1)
+
+        return (dm_dt, dz_dt)
+
+class EvoformerODEFunc2(nn.Module):
     """
     Neural ODE dynamics function based on the Evoformer architecture from AlphaFold 2.
     Simplified version with proper dimension handling.
