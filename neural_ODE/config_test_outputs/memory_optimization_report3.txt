@@ -1,0 +1,280 @@
+EVOFORMER ODE MEMORY OPTIMIZATION REPORT
+========================================
+
+System Information:
+  CUDA Available: True
+  GPU: Quadro P4000
+  CUDA Version: 12.1
+  PyTorch Version: 2.1.2
+
+
+============================================================
+CONFIGURATION TEST SUMMARY
+============================================================
+
+Name                      Status     Memory (MB)  Time (ms)    Loss      
+--------------------------------------------------------------------------------
+True Baseline (Original   SUCCESS    612.87       2486.78      54.3130   
+AMP Only                  SUCCESS    526.50       2323.57      54.5566   
+Checkpoint Only           SUCCESS    464.62       2361.83      54.1919   
+Memory Optimized Baselin  SUCCESS    463.13       2256.18      54.3404   
+Previous Best Balanced    SUCCESS    160.00       3942.31      73.8174   
+Balanced with Full Clust  SUCCESS    171.76       3801.57      74.8666   
+Balanced with More Time   SUCCESS    160.00       3641.14      73.8049   
+Balanced with Larger Bat  SUCCESS    180.66       4058.71      91.5461   
+Balanced with Grad Accum  SUCCESS    160.00       3686.95      74.3965   
+Balanced with Larger Chu  SUCCESS    160.00       3946.17      74.8793   
+Balanced with Larger Hid  SUCCESS    160.19       3965.96      74.7042   
+Optimal Full Configurati  SUCCESS    171.95       3849.01      74.4293   
+
+============================================================
+BEST CONFIGURATIONS
+============================================================
+
+🏆 Best Memory Efficiency:
+   Name: Previous Best Balanced
+   Memory: 160.00 MB
+   Time: 3942.31 ms
+   Loss: 73.8174
+
+🏆 Best Speed:
+   Name: Memory Optimized Baseline
+   Memory: 463.13 MB
+   Time: 2256.18 ms
+   Loss: 54.3404
+
+🏆 Best Loss Performance:
+   Name: Checkpoint Only
+   Memory: 464.62 MB
+   Time: 2361.83 ms
+   Loss: 54.1919
+
+🏆 Best Balance (Memory + Speed):
+   Name: Memory Optimized Baseline
+   Memory: 463.13 MB
+   Time: 2256.18 ms
+   Loss: 54.3404
+
+============================================================
+
+Detailed Configuration Results:
+----------------------------------------
+
+Configuration 1: True Baseline (Original values, no optimizations)
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 128
+    reduced_hidden_dim: 128
+    num_time_points: 49
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: monitor_memory, test-single-step
+    disabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory
+  Results:
+    Loss: 54.313049
+    Max Memory: 612.87 MB
+    Time: 2486.78 ms
+
+Configuration 2: AMP Only
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 128
+    reduced_hidden_dim: 128
+    num_time_points: 49
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_amp, monitor_memory, test-single-step
+    disabled flags: use_checkpoint, reduced_precision_integration, clean_memory
+  Results:
+    Loss: 54.556568
+    Max Memory: 526.50 MB
+    Time: 2323.57 ms
+
+Configuration 3: Checkpoint Only
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 128
+    reduced_hidden_dim: 128
+    num_time_points: 49
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_checkpoint, monitor_memory, test-single-step
+    disabled flags: use_amp, reduced_precision_integration, clean_memory
+  Results:
+    Loss: 54.191895
+    Max Memory: 464.62 MB
+    Time: 2361.83 ms
+
+Configuration 4: Memory Optimized Baseline
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 128
+    reduced_hidden_dim: 128
+    num_time_points: 49
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_amp, use_checkpoint, monitor_memory, test-single-step
+    disabled flags: reduced_precision_integration, clean_memory
+  Results:
+    Loss: 54.340416
+    Max Memory: 463.13 MB
+    Time: 2256.18 ms
+
+Configuration 5: Previous Best Balanced
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 128
+    num_time_points: 35
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 2
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Results:
+    Loss: 73.817429
+    Max Memory: 160.00 MB
+    Time: 3942.31 ms
+
+Configuration 6: Balanced with Full Cluster Size
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 128
+    reduced_hidden_dim: 128
+    num_time_points: 35
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 2
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Results:
+    Loss: 74.866623
+    Max Memory: 171.76 MB
+    Time: 3801.57 ms
+
+Configuration 7: Balanced with More Time Points
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 128
+    num_time_points: 45
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 2
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Results:
+    Loss: 73.804947
+    Max Memory: 160.00 MB
+    Time: 3641.14 ms
+
+Configuration 8: Balanced with Larger Batch
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 128
+    num_time_points: 35
+    batch_size: 3
+    integrator: dopri5
+    gradient_accumulation: 2
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Results:
+    Loss: 91.546104
+    Max Memory: 180.66 MB
+    Time: 4058.71 ms
+
+Configuration 9: Balanced with Grad Accum = 1
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 128
+    num_time_points: 35
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 1
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Results:
+    Loss: 74.396523
+    Max Memory: 160.00 MB
+    Time: 3686.95 ms
+
+Configuration 10: Balanced with Larger Chunks
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 128
+    num_time_points: 35
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 2
+    chunk_size: 10
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Results:
+    Loss: 74.879265
+    Max Memory: 160.00 MB
+    Time: 3946.17 ms
+
+Configuration 11: Balanced with Larger Hidden Dim
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 160
+    num_time_points: 35
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 2
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Results:
+    Loss: 74.704224
+    Max Memory: 160.19 MB
+    Time: 3965.96 ms
+
+Configuration 12: Optimal Full Configuration
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 128
+    reduced_hidden_dim: 160
+    num_time_points: 45
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 1
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Results:
+    Loss: 74.429260
+    Max Memory: 171.95 MB
+    Time: 3849.01 ms
+
+========================================
+Report generated at: 2025-05-19 10:15:03

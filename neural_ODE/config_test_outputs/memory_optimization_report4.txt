@@ -1,0 +1,250 @@
+EVOFORMER ODE MEMORY OPTIMIZATION REPORT
+========================================
+
+System Information:
+  CUDA Available: True
+  GPU: Quadro P4000
+  CUDA Version: 12.1
+  PyTorch Version: 2.1.2
+
+
+============================================================
+CONFIGURATION TEST SUMMARY
+============================================================
+
+Name                      Status     Memory (MB)  Time (ms)    Loss      
+--------------------------------------------------------------------------------
+True Baseline (Original   SUCCESS    0.00         11597.45     0.0000    
+AMP Only                  SUCCESS    0.00         24900.16     0.0000    
+Checkpoint Only           FAILED (Timeout) N/A          N/A          N/A       
+Memory Optimized Baselin  FAILED (Timeout) N/A          N/A          N/A       
+Previous Best Balanced    FAILED (Timeout) N/A          N/A          N/A       
+Balanced with Full Clust  FAILED (Timeout) N/A          N/A          N/A       
+Balanced with More Time   FAILED (Timeout) N/A          N/A          N/A       
+Balanced with Larger Bat  FAILED (Timeout) N/A          N/A          N/A       
+Balanced with Grad Accum  FAILED (Timeout) N/A          N/A          N/A       
+Balanced with Larger Chu  FAILED (Timeout) N/A          N/A          N/A       
+Balanced with Larger Hid  FAILED (Timeout) N/A          N/A          N/A       
+Optimal Full Configurati  FAILED (Timeout) N/A          N/A          N/A       
+
+============================================================
+BEST CONFIGURATIONS
+============================================================
+
+🏆 Best Memory Efficiency:
+   Name: True Baseline (Original values, no optimizations)
+   Memory: 0.00 MB
+   Time: 11597.45 ms
+   Loss: 0.0000
+
+🏆 Best Speed:
+   Name: True Baseline (Original values, no optimizations)
+   Memory: 0.00 MB
+   Time: 11597.45 ms
+   Loss: 0.0000
+
+🏆 Best Loss Performance:
+   Name: True Baseline (Original values, no optimizations)
+   Memory: 0.00 MB
+   Time: 11597.45 ms
+   Loss: 0.0000
+
+🏆 Best Balance (Memory + Speed):
+   Name: True Baseline (Original values, no optimizations)
+   Memory: 0.00 MB
+   Time: 11597.45 ms
+   Loss: 0.0000
+
+============================================================
+
+Detailed Configuration Results:
+----------------------------------------
+
+Configuration 1: True Baseline (Original values, no optimizations)
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 128
+    reduced_hidden_dim: 128
+    num_time_points: 49
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: monitor_memory, test-single-step
+    disabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory
+  Results:
+    Loss: 0.000000
+    Max Memory: 0.00 MB
+    Time: 11597.45 ms
+
+Configuration 2: AMP Only
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 128
+    reduced_hidden_dim: 128
+    num_time_points: 49
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_amp, monitor_memory, test-single-step
+    disabled flags: use_checkpoint, reduced_precision_integration, clean_memory
+  Results:
+    Loss: 0.000000
+    Max Memory: 0.00 MB
+    Time: 24900.16 ms
+
+Configuration 3: Checkpoint Only
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 128
+    reduced_hidden_dim: 128
+    num_time_points: 49
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_checkpoint, monitor_memory, test-single-step
+    disabled flags: use_amp, reduced_precision_integration, clean_memory
+  Error: Timeout
+
+Configuration 4: Memory Optimized Baseline
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 128
+    reduced_hidden_dim: 128
+    num_time_points: 49
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_amp, use_checkpoint, monitor_memory, test-single-step
+    disabled flags: reduced_precision_integration, clean_memory
+  Error: Timeout
+
+Configuration 5: Previous Best Balanced
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 128
+    num_time_points: 35
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 2
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Error: Timeout
+
+Configuration 6: Balanced with Full Cluster Size
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 128
+    reduced_hidden_dim: 128
+    num_time_points: 35
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 2
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Error: Timeout
+
+Configuration 7: Balanced with More Time Points
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 128
+    num_time_points: 45
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 2
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Error: Timeout
+
+Configuration 8: Balanced with Larger Batch
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 128
+    num_time_points: 35
+    batch_size: 3
+    integrator: dopri5
+    gradient_accumulation: 2
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Error: Timeout
+
+Configuration 9: Balanced with Grad Accum = 1
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 128
+    num_time_points: 35
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 1
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Error: Timeout
+
+Configuration 10: Balanced with Larger Chunks
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 128
+    num_time_points: 35
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 2
+    chunk_size: 10
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Error: Timeout
+
+Configuration 11: Balanced with Larger Hidden Dim
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 160
+    num_time_points: 35
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 2
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Error: Timeout
+
+Configuration 12: Optimal Full Configuration
+  Status: FAILED
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 128
+    reduced_hidden_dim: 160
+    num_time_points: 45
+    batch_size: 2
+    integrator: dopri5
+    gradient_accumulation: 1
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, monitor_memory, test-single-step
+    disabled flags: 
+  Error: Timeout
+
+========================================
+Report generated at: 2025-05-19 13:20:01
