@@ -1,0 +1,159 @@
+{
+  "benchmark_info": {
+    "proteins": [
+      "1fme_A",
+      "4cue_A",
+      "5fr6_A"
+    ],
+    "max_timesteps": 49,
+    "data_dir": "/home/visitor/PycharmProjects/openFold/neural_ODE/data/quick_inference_data",
+    "temp_dir": "/home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp"
+  },
+  "strategy_1_per_protein": [
+    {
+      "test_name": "Strategy1_Protein_1fme_A",
+      "success": true,
+      "total_time": 3.262519598007202,
+      "loss": 32.14348602294922,
+      "max_memory_mb": null,
+      "num_proteins": 1,
+      "proteins": [
+        "1fme_A"
+      ],
+      "stdout": "PYTORCH_CUDA_ALLOC_CONF: None\nPYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:128\nCUDA initialized successfully\nUsing data directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nUsing output directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/training_output\n\n=== ACTIVE CONFIGURATION ===\nDevice: CUDA\nMemory Split Size: 128 MB\nMixed Precision (AMP): Disabled\nGradient Checkpointing: Disabled\nGradient Accumulation: 4 steps\nIntegration Chunking: Enabled\nReduced Precision Integration: Disabled\nAggressive Memory Cleaning: Disabled\nMemory Usage Monitoring: Enabled\nReduced Cluster Size: 32 (original: 128)\nReduced Hidden Dimension: 32 (default: 128)\nLearning Rate: 0.0001\nNumber of Time Points: 5 (original: 49)\nODE Integrator: dopri5\nTime Step Batch Size: 5\n==============================\nUsing standard EvoformerODEFunc implementation\npytorch_memlab not available, detailed memory monitoring disabled\nTraining on 1 proteins from /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nTesting single protein: 1fme_A\nProcessing protein 1fme_A - Step 1/1\n  - Loss: 32.14348602294922\nEpoch 1 - Average Loss: 32.14348602294922\n",
+      "stderr": null,
+      "data_copy_time": 1.6859819889068604
+    },
+    {
+      "test_name": "Strategy1_Protein_4cue_A",
+      "success": true,
+      "total_time": 5.700086832046509,
+      "loss": 51.78323745727539,
+      "max_memory_mb": null,
+      "num_proteins": 1,
+      "proteins": [
+        "4cue_A"
+      ],
+      "stdout": "PYTORCH_CUDA_ALLOC_CONF: None\nPYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:128\nCUDA initialized successfully\nUsing data directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nUsing output directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/training_output\n\n=== ACTIVE CONFIGURATION ===\nDevice: CUDA\nMemory Split Size: 128 MB\nMixed Precision (AMP): Disabled\nGradient Checkpointing: Disabled\nGradient Accumulation: 4 steps\nIntegration Chunking: Enabled\nReduced Precision Integration: Disabled\nAggressive Memory Cleaning: Disabled\nMemory Usage Monitoring: Enabled\nReduced Cluster Size: 32 (original: 128)\nReduced Hidden Dimension: 32 (default: 128)\nLearning Rate: 0.0001\nNumber of Time Points: 5 (original: 49)\nODE Integrator: dopri5\nTime Step Batch Size: 5\n==============================\nUsing standard EvoformerODEFunc implementation\npytorch_memlab not available, detailed memory monitoring disabled\nTraining on 1 proteins from /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nTesting single protein: 4cue_A\nProcessing protein 4cue_A - Step 1/1\n  - Loss: 51.78323745727539\nEpoch 1 - Average Loss: 51.78323745727539\n",
+      "stderr": null,
+      "data_copy_time": 13.673769474029541
+    },
+    {
+      "test_name": "Strategy1_Protein_5fr6_A",
+      "success": true,
+      "total_time": 3.2810897827148438,
+      "loss": 51.06723403930664,
+      "max_memory_mb": null,
+      "num_proteins": 1,
+      "proteins": [
+        "5fr6_A"
+      ],
+      "stdout": "PYTORCH_CUDA_ALLOC_CONF: None\nPYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:128\nCUDA initialized successfully\nUsing data directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nUsing output directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/training_output\n\n=== ACTIVE CONFIGURATION ===\nDevice: CUDA\nMemory Split Size: 128 MB\nMixed Precision (AMP): Disabled\nGradient Checkpointing: Disabled\nGradient Accumulation: 4 steps\nIntegration Chunking: Enabled\nReduced Precision Integration: Disabled\nAggressive Memory Cleaning: Disabled\nMemory Usage Monitoring: Enabled\nReduced Cluster Size: 32 (original: 128)\nReduced Hidden Dimension: 32 (default: 128)\nLearning Rate: 0.0001\nNumber of Time Points: 5 (original: 49)\nODE Integrator: dopri5\nTime Step Batch Size: 5\n==============================\nUsing standard EvoformerODEFunc implementation\npytorch_memlab not available, detailed memory monitoring disabled\nTraining on 1 proteins from /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nTesting single protein: 5fr6_A\nProcessing protein 5fr6_A - Step 1/1\n  - Loss: 51.06723403930664\nEpoch 1 - Average Loss: 51.06723403930664\n",
+      "stderr": null,
+      "data_copy_time": 9.185308933258057
+    }
+  ],
+  "strategy_2_all_at_once": {
+    "test_name": "Strategy2_AllProteins",
+    "success": true,
+    "total_time": 6.1246232986450195,
+    "loss": 32.108917236328125,
+    "max_memory_mb": null,
+    "num_proteins": 3,
+    "proteins": [
+      "1fme_A",
+      "4cue_A",
+      "5fr6_A"
+    ],
+    "stdout": "PYTORCH_CUDA_ALLOC_CONF: None\nPYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:128\nCUDA initialized successfully\nUsing data directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nUsing output directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/training_output\n\n=== ACTIVE CONFIGURATION ===\nDevice: CUDA\nMemory Split Size: 128 MB\nMixed Precision (AMP): Disabled\nGradient Checkpointing: Disabled\nGradient Accumulation: 4 steps\nIntegration Chunking: Enabled\nReduced Precision Integration: Disabled\nAggressive Memory Cleaning: Disabled\nMemory Usage Monitoring: Enabled\nReduced Cluster Size: 32 (original: 128)\nReduced Hidden Dimension: 32 (default: 128)\nLearning Rate: 0.0001\nNumber of Time Points: 5 (original: 49)\nODE Integrator: dopri5\nTime Step Batch Size: 5\n==============================\nUsing standard EvoformerODEFunc implementation\npytorch_memlab not available, detailed memory monitoring disabled\nTraining on 3 proteins from /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nTesting all 3 proteins in dataset\nProcessing protein 1fme_A - Step 1/3\n  - Loss: 32.108917236328125\nProcessing protein 5fr6_A - Step 2/3\n  - Loss: 51.000511169433594\nProcessing protein 4cue_A - Step 3/3\n  - Loss: 51.718910217285156\nEpoch 1 - Average Loss: 44.942779541015625\nMaximum Memory Usage Across All Proteins:\n  Max Memory Allocated: 6114.28 MiB\n  Max Memory Reserved: 6592.00 MiB\n",
+    "stderr": null,
+    "data_copy_time": 43.31882071495056
+  },
+  "strategy_3_per_timestep": [
+    {
+      "test_name": "Strategy3_Timestep_0",
+      "success": true,
+      "total_time": 2.165865659713745,
+      "loss": null,
+      "max_memory_mb": 520.75,
+      "num_proteins": 3,
+      "proteins": [
+        "1fme_A",
+        "4cue_A",
+        "5fr6_A"
+      ],
+      "stdout": "PYTORCH_CUDA_ALLOC_CONF: None\nPYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:128\nCUDA initialized successfully\nUsing data directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nUsing output directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/training_output\n\n=== ACTIVE CONFIGURATION ===\nDevice: CUDA\nMemory Split Size: 128 MB\nMixed Precision (AMP): Disabled\nGradient Checkpointing: Disabled\nGradient Accumulation: 4 steps\nIntegration Chunking: Enabled\nReduced Precision Integration: Disabled\nAggressive Memory Cleaning: Disabled\nMemory Usage Monitoring: Enabled\nReduced Cluster Size: 32 (original: 128)\nReduced Hidden Dimension: 32 (default: 128)\nLearning Rate: 0.0001\nNumber of Time Points: 5 (original: 49)\nODE Integrator: dopri5\nTime Step Batch Size: 5\n==============================\nUsing standard EvoformerODEFunc implementation\npytorch_memlab not available, detailed memory monitoring disabled\nTraining on 3 proteins from /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nTesting all 3 proteins in dataset\nProcessing protein 1fme_A - Step 1/3\nSkipping block 1 for 1fme_A (not found)\nSkipping block 2 for 1fme_A (not found)\nSkipping block 3 for 1fme_A (not found)\nSkipping block 4 for 1fme_A (not found)\nError during training: 'int' object has no attribute 'backward'\n=== Memory Stats Error state ===\nAllocated Memory: 490.40 MiB\nReserved Memory: 538.00 MiB\nMax Memory Allocated: 520.75 MiB\nMax Memory Reserved: 538.00 MiB\n==============================\n",
+      "stderr": null,
+      "timestep": 0,
+      "data_copy_time": 0.31528162956237793
+    },
+    {
+      "test_name": "Strategy3_Timestep_1",
+      "success": true,
+      "total_time": 1.785963535308838,
+      "loss": null,
+      "max_memory_mb": 2.97,
+      "num_proteins": 3,
+      "proteins": [
+        "1fme_A",
+        "4cue_A",
+        "5fr6_A"
+      ],
+      "stdout": "PYTORCH_CUDA_ALLOC_CONF: None\nPYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:128\nCUDA initialized successfully\nUsing data directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nUsing output directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/training_output\n\n=== ACTIVE CONFIGURATION ===\nDevice: CUDA\nMemory Split Size: 128 MB\nMixed Precision (AMP): Disabled\nGradient Checkpointing: Disabled\nGradient Accumulation: 4 steps\nIntegration Chunking: Enabled\nReduced Precision Integration: Disabled\nAggressive Memory Cleaning: Disabled\nMemory Usage Monitoring: Enabled\nReduced Cluster Size: 32 (original: 128)\nReduced Hidden Dimension: 32 (default: 128)\nLearning Rate: 0.0001\nNumber of Time Points: 5 (original: 49)\nODE Integrator: dopri5\nTime Step Batch Size: 5\n==============================\nUsing standard EvoformerODEFunc implementation\npytorch_memlab not available, detailed memory monitoring disabled\nTraining on 3 proteins from /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nTesting all 3 proteins in dataset\nProcessing protein 1fme_A - Step 1/3\nError during training: Initial block not found for 1fme_A. Expected paths:\n  /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/1fme_A_evoformer_blocks/recycle_0/m_block_0.pt\n  /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/1fme_A_evoformer_blocks/recycle_0/z_block_0.pt\n=== Memory Stats Error state ===\nAllocated Memory: 2.97 MiB\nReserved Memory: 4.00 MiB\nMax Memory Allocated: 2.97 MiB\nMax Memory Reserved: 4.00 MiB\n==============================\n",
+      "stderr": null,
+      "timestep": 1,
+      "data_copy_time": 0.26190900802612305
+    },
+    {
+      "test_name": "Strategy3_Timestep_2",
+      "success": true,
+      "total_time": 1.7848422527313232,
+      "loss": null,
+      "max_memory_mb": 2.97,
+      "num_proteins": 3,
+      "proteins": [
+        "1fme_A",
+        "4cue_A",
+        "5fr6_A"
+      ],
+      "stdout": "PYTORCH_CUDA_ALLOC_CONF: None\nPYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:128\nCUDA initialized successfully\nUsing data directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nUsing output directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/training_output\n\n=== ACTIVE CONFIGURATION ===\nDevice: CUDA\nMemory Split Size: 128 MB\nMixed Precision (AMP): Disabled\nGradient Checkpointing: Disabled\nGradient Accumulation: 4 steps\nIntegration Chunking: Enabled\nReduced Precision Integration: Disabled\nAggressive Memory Cleaning: Disabled\nMemory Usage Monitoring: Enabled\nReduced Cluster Size: 32 (original: 128)\nReduced Hidden Dimension: 32 (default: 128)\nLearning Rate: 0.0001\nNumber of Time Points: 5 (original: 49)\nODE Integrator: dopri5\nTime Step Batch Size: 5\n==============================\nUsing standard EvoformerODEFunc implementation\npytorch_memlab not available, detailed memory monitoring disabled\nTraining on 3 proteins from /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nTesting all 3 proteins in dataset\nProcessing protein 1fme_A - Step 1/3\nError during training: Initial block not found for 1fme_A. Expected paths:\n  /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/1fme_A_evoformer_blocks/recycle_0/m_block_0.pt\n  /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/1fme_A_evoformer_blocks/recycle_0/z_block_0.pt\n=== Memory Stats Error state ===\nAllocated Memory: 2.97 MiB\nReserved Memory: 4.00 MiB\nMax Memory Allocated: 2.97 MiB\nMax Memory Reserved: 4.00 MiB\n==============================\n",
+      "stderr": null,
+      "timestep": 2,
+      "data_copy_time": 0.2598080635070801
+    },
+    {
+      "test_name": "Strategy3_Timestep_3",
+      "success": true,
+      "total_time": 1.804760456085205,
+      "loss": null,
+      "max_memory_mb": 2.97,
+      "num_proteins": 3,
+      "proteins": [
+        "1fme_A",
+        "4cue_A",
+        "5fr6_A"
+      ],
+      "stdout": "PYTORCH_CUDA_ALLOC_CONF: None\nPYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:128\nCUDA initialized successfully\nUsing data directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nUsing output directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/training_output\n\n=== ACTIVE CONFIGURATION ===\nDevice: CUDA\nMemory Split Size: 128 MB\nMixed Precision (AMP): Disabled\nGradient Checkpointing: Disabled\nGradient Accumulation: 4 steps\nIntegration Chunking: Enabled\nReduced Precision Integration: Disabled\nAggressive Memory Cleaning: Disabled\nMemory Usage Monitoring: Enabled\nReduced Cluster Size: 32 (original: 128)\nReduced Hidden Dimension: 32 (default: 128)\nLearning Rate: 0.0001\nNumber of Time Points: 5 (original: 49)\nODE Integrator: dopri5\nTime Step Batch Size: 5\n==============================\nUsing standard EvoformerODEFunc implementation\npytorch_memlab not available, detailed memory monitoring disabled\nTraining on 3 proteins from /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nTesting all 3 proteins in dataset\nProcessing protein 1fme_A - Step 1/3\nError during training: Initial block not found for 1fme_A. Expected paths:\n  /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/1fme_A_evoformer_blocks/recycle_0/m_block_0.pt\n  /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/1fme_A_evoformer_blocks/recycle_0/z_block_0.pt\n=== Memory Stats Error state ===\nAllocated Memory: 2.97 MiB\nReserved Memory: 4.00 MiB\nMax Memory Allocated: 2.97 MiB\nMax Memory Reserved: 4.00 MiB\n==============================\n",
+      "stderr": null,
+      "timestep": 3,
+      "data_copy_time": 0.27050352096557617
+    },
+    {
+      "test_name": "Strategy3_Timestep_4",
+      "success": true,
+      "total_time": 1.7749357223510742,
+      "loss": null,
+      "max_memory_mb": 2.97,
+      "num_proteins": 3,
+      "proteins": [
+        "1fme_A",
+        "4cue_A",
+        "5fr6_A"
+      ],
+      "stdout": "PYTORCH_CUDA_ALLOC_CONF: None\nPYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:128\nCUDA initialized successfully\nUsing data directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nUsing output directory: /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/training_output\n\n=== ACTIVE CONFIGURATION ===\nDevice: CUDA\nMemory Split Size: 128 MB\nMixed Precision (AMP): Disabled\nGradient Checkpointing: Disabled\nGradient Accumulation: 4 steps\nIntegration Chunking: Enabled\nReduced Precision Integration: Disabled\nAggressive Memory Cleaning: Disabled\nMemory Usage Monitoring: Enabled\nReduced Cluster Size: 32 (original: 128)\nReduced Hidden Dimension: 32 (default: 128)\nLearning Rate: 0.0001\nNumber of Time Points: 5 (original: 49)\nODE Integrator: dopri5\nTime Step Batch Size: 5\n==============================\nUsing standard EvoformerODEFunc implementation\npytorch_memlab not available, detailed memory monitoring disabled\nTraining on 3 proteins from /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp\nTesting all 3 proteins in dataset\nProcessing protein 1fme_A - Step 1/3\nError during training: Initial block not found for 1fme_A. Expected paths:\n  /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/1fme_A_evoformer_blocks/recycle_0/m_block_0.pt\n  /home/visitor/PycharmProjects/openFold/neural_ODE/benchmark_temp/1fme_A_evoformer_blocks/recycle_0/z_block_0.pt\n=== Memory Stats Error state ===\nAllocated Memory: 2.97 MiB\nReserved Memory: 4.00 MiB\nMax Memory Allocated: 2.97 MiB\nMax Memory Reserved: 4.00 MiB\n==============================\n",
+      "stderr": null,
+      "timestep": 4,
+      "data_copy_time": 0.2496047019958496
+    }
+  ]
+}

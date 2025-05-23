@@ -1,0 +1,172 @@
+EVOFORMER ODE MEMORY OPTIMIZATION REPORT
+========================================
+#used updated ode
+
+Configuration Settings:
+  CPU_ONLY: false
+  TEST_PROTEIN: all
+  USE_FAST_ODE: false
+
+System Information:
+  CUDA Available: True
+  GPU: Quadro P4000
+  CUDA Version: 12.1
+  PyTorch Version: 2.1.2
+
+
+============================================================
+CONFIGURATION TEST SUMMARY
+============================================================
+
+Name                      Status     Memory (MB)  Time (ms)    Loss      
+--------------------------------------------------------------------------------
+True Baseline (Original   SUCCESS    2257.59      5799.98      43.0210   
+AMP Only                  SUCCESS    1550.93      4894.34      43.0244   
+Checkpoint Only           SUCCESS    945.40       4645.25      43.0113   
+Memory Optimized Baselin  SUCCESS    900.65       5063.62      43.1115   
+Speed-Optimized           SUCCESS    382.99       4371.56      47.2409   
+Balanced Speed-Quality    SUCCESS    792.45       4572.53      43.0507   
+
+============================================================
+BEST CONFIGURATIONS
+============================================================
+
+🏆 Best Memory Efficiency:
+   Name: Speed-Optimized
+   Memory: 382.99 MB
+   Time: 4371.56 ms
+   Loss: 47.2409
+
+🏆 Best Speed:
+   Name: Speed-Optimized
+   Memory: 382.99 MB
+   Time: 4371.56 ms
+   Loss: 47.2409
+
+🏆 Best Loss Performance:
+   Name: Checkpoint Only
+   Memory: 945.40 MB
+   Time: 4645.25 ms
+   Loss: 43.0113
+
+🏆 Best Balance (Memory + Speed):
+   Name: Speed-Optimized
+   Memory: 382.99 MB
+   Time: 4371.56 ms
+   Loss: 47.2409
+
+============================================================
+
+Detailed Configuration Results:
+----------------------------------------
+
+Configuration 1: True Baseline (Original values, no optimizations)
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 64
+    reduced_hidden_dim: 64
+    num_time_points: 25
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: monitor_memory, test-single-step
+    disabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, cpu-only
+  Results:
+    Loss: 43.021030
+    Max Memory: 2257.59 MB
+    Time: 5799.98 ms
+
+Configuration 2: AMP Only
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 64
+    reduced_hidden_dim: 64
+    num_time_points: 25
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_amp, monitor_memory, test-single-step
+    disabled flags: use_checkpoint, reduced_precision_integration, clean_memory, cpu-only
+  Results:
+    Loss: 43.024412
+    Max Memory: 1550.93 MB
+    Time: 4894.34 ms
+
+Configuration 3: Checkpoint Only
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 64
+    reduced_hidden_dim: 64
+    num_time_points: 25
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_checkpoint, monitor_memory, test-single-step
+    disabled flags: use_amp, reduced_precision_integration, clean_memory, cpu-only
+  Results:
+    Loss: 43.011295
+    Max Memory: 945.40 MB
+    Time: 4645.25 ms
+
+Configuration 4: Memory Optimized Baseline
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 96
+    reduced_hidden_dim: 96
+    num_time_points: 25
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_amp, use_checkpoint, monitor_memory, test-single-step
+    disabled flags: reduced_precision_integration, clean_memory, cpu-only
+  Results:
+    Loss: 43.111537
+    Max Memory: 900.65 MB
+    Time: 5063.62 ms
+
+Configuration 5: Speed-Optimized
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 64
+    reduced_hidden_dim: 64
+    num_time_points: 15
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_amp, use_checkpoint, reduced_precision_integration, monitor_memory, test-single-step, use_fast_ode
+    disabled flags: clean_memory, cpu-only
+  Results:
+    Loss: 47.240851
+    Max Memory: 382.99 MB
+    Time: 4371.56 ms
+
+Configuration 6: Balanced Speed-Quality
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 80
+    reduced_hidden_dim: 80
+    num_time_points: 20
+    batch_size: 1
+    integrator: rk4
+    gradient_accumulation: 1
+    chunk_size: 5
+    enabled flags: use_amp, use_checkpoint, monitor_memory, test-single-step
+    disabled flags: reduced_precision_integration, clean_memory, cpu-only
+  Results:
+    Loss: 43.050677
+    Max Memory: 792.45 MB
+    Time: 4572.53 ms
+
+========================================
+Report generated at: 2025-05-22 14:45:30

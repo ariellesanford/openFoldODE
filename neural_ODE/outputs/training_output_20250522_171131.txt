@@ -1,0 +1,809 @@
+=== TRAINING CONFIGURATION ===
+Data directory: /home/visitor/PycharmProjects/openFold/neural_ODE/data/quick_inference_data
+Output directory: /home/visitor/PycharmProjects/openFold/neural_ODE/outputs
+Python path: /home/visitor/anaconda3/envs/openfold_env/bin/python
+CPU-only mode: false
+Test protein: 
+Fast ODE: true
+Epochs: 20
+Learning rate: 1e-3
+Time points: 5
+Integrator: euler
+Output will be saved to: /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/training_output_20250522_171131.txt
+=============================
+
+Running command:
+/home/visitor/anaconda3/envs/openfold_env/bin/python /home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py   --data_dir /home/visitor/PycharmProjects/openFold/neural_ODE/data/quick_inference_data   --output_dir /home/visitor/PycharmProjects/openFold/neural_ODE/outputs   --learning_rate 1e-3   --memory_split_size 128   --reduced_cluster_size 32   --reduced_hidden_dim 32   --num_time_points 5   --batch_size 1   --integrator euler   --gradient_accumulation 1   --chunk_size 0   --epochs 20 --no-cpu-only --use_fast_ode --use_amp --use_checkpoint --monitor_memory --no-clean_memory --reduced_precision_integration
+
+Training started at: Thu May 22 05:11:31 PM CEST 2025
+======================================
+PYTORCH_CUDA_ALLOC_CONF: None
+PYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:128
+CUDA initialized successfully
+Using data directory: /home/visitor/PycharmProjects/openFold/neural_ODE/data/quick_inference_data
+Using output directory: /home/visitor/PycharmProjects/openFold/neural_ODE/outputs
+
+=== ACTIVE CONFIGURATION ===
+Device: CUDA
+Memory Split Size: 128 MB
+Mixed Precision (AMP): Enabled
+Gradient Checkpointing: Enabled
+Gradient Accumulation: 1 steps
+Integration Chunking: Disabled
+Reduced Precision Integration: Enabled
+Aggressive Memory Cleaning: Disabled
+Memory Usage Monitoring: Enabled
+Reduced Cluster Size: 32 (original: 128)
+Reduced Hidden Dimension: 32 (default: 128)
+Learning Rate: 0.001
+Number of Time Points: 5 (original: 49)
+ODE Integrator: euler
+Time Step Batch Size: 1
+==============================
+Using FAST EvoformerODEFunc implementation
+pytorch_memlab not available, detailed memory monitoring disabled
+Training on 3 proteins from /home/visitor/PycharmProjects/openFold/neural_ODE/data/quick_inference_data
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=17.1, MSA=10.1, Pair=69.9
+    Time 2: Total=34.1, MSA=19.9, Pair=141.8
+    Time 3: Total=51.7, MSA=30.8, Pair=209.3
+  - Loss: 145.67592430114746
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 96.00 MiB
+Max Memory Allocated: 68.02 MiB
+Max Memory Reserved: 96.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=19.4, MSA=16.0, Pair=34.2
+    Time 2: Total=47.5, MSA=39.8, Pair=77.4
+    Time 3: Total=71.7, MSA=60.6, Pair=110.8
+  - Loss: 196.14944648742676
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 336.00 MiB
+Max Memory Allocated: 267.41 MiB
+Max Memory Reserved: 336.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=21.2, MSA=17.8, Pair=34.0
+    Time 2: Total=48.6, MSA=41.2, Pair=74.1
+    Time 3: Total=71.2, MSA=61.0, Pair=102.1
+  - Loss: 197.7217082977295
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 1 - Average Loss: 179.84902636210123
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_1.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=16.7, MSA=9.9, Pair=68.3
+    Time 2: Total=33.1, MSA=19.4, Pair=136.7
+    Time 3: Total=49.9, MSA=29.9, Pair=199.8
+  - Loss: 140.96319770812988
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=19.0, MSA=15.7, Pair=32.8
+    Time 2: Total=46.3, MSA=39.0, Pair=72.8
+    Time 3: Total=69.6, MSA=59.3, Pair=103.0
+  - Loss: 190.81004524230957
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=20.8, MSA=17.5, Pair=32.7
+    Time 2: Total=47.4, MSA=40.4, Pair=69.8
+    Time 3: Total=69.2, MSA=59.7, Pair=94.8
+  - Loss: 192.43284797668457
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 2 - Average Loss: 174.73536364237467
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_2.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=16.3, MSA=9.6, Pair=66.1
+    Time 2: Total=31.9, MSA=18.8, Pair=130.5
+    Time 3: Total=47.7, MSA=28.9, Pair=188.7
+  - Loss: 135.38405990600586
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=18.6, MSA=15.4, Pair=31.4
+    Time 2: Total=44.9, MSA=38.1, Pair=68.5
+    Time 3: Total=67.3, MSA=57.8, Pair=95.6
+  - Loss: 184.8600025177002
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=20.3, MSA=17.1, Pair=31.4
+    Time 2: Total=45.9, MSA=39.3, Pair=65.8
+    Time 3: Total=66.8, MSA=58.0, Pair=87.8
+  - Loss: 186.17487716674805
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 3 - Average Loss: 168.80631319681802
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_3.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=15.7, MSA=9.3, Pair=64.0
+    Time 2: Total=30.4, MSA=18.0, Pair=124.4
+    Time 3: Total=45.3, MSA=27.5, Pair=177.9
+  - Loss: 128.99145698547363
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=18.0, MSA=15.0, Pair=30.1
+    Time 2: Total=43.3, MSA=36.9, Pair=64.4
+    Time 3: Total=64.6, MSA=55.7, Pair=88.3
+  - Loss: 177.79226875305176
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=19.7, MSA=16.7, Pair=30.2
+    Time 2: Total=44.2, MSA=38.0, Pair=61.8
+    Time 3: Total=63.9, MSA=55.8, Pair=81.0
+  - Loss: 178.59694862365723
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 4 - Average Loss: 161.79355812072754
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_4.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=15.1, MSA=8.9, Pair=61.8
+    Time 2: Total=28.8, MSA=16.9, Pair=118.5
+    Time 3: Total=42.3, MSA=25.6, Pair=167.3
+  - Loss: 121.38279151916504
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=17.4, MSA=14.5, Pair=28.8
+    Time 2: Total=41.3, MSA=35.3, Pair=60.4
+    Time 3: Total=61.2, MSA=53.0, Pair=81.4
+  - Loss: 168.9917507171631
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=18.9, MSA=16.0, Pair=29.0
+    Time 2: Total=42.0, MSA=36.2, Pair=58.1
+    Time 3: Total=60.2, MSA=52.7, Pair=74.6
+  - Loss: 169.00934410095215
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 5 - Average Loss: 153.12796211242676
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_5.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=14.4, MSA=8.4, Pair=59.8
+    Time 2: Total=26.8, MSA=15.5, Pair=112.8
+    Time 3: Total=38.8, MSA=23.0, Pair=157.3
+  - Loss: 112.3050594329834
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=16.5, MSA=13.7, Pair=27.6
+    Time 2: Total=38.8, MSA=33.1, Pair=56.8
+    Time 3: Total=56.9, MSA=49.4, Pair=75.0
+  - Loss: 157.8310489654541
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=17.9, MSA=15.2, Pair=27.9
+    Time 2: Total=39.2, MSA=33.8, Pair=54.7
+    Time 3: Total=55.6, MSA=48.7, Pair=68.8
+  - Loss: 156.96654510498047
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 6 - Average Loss: 142.367551167806
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_6.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=13.5, MSA=7.7, Pair=57.7
+    Time 2: Total=24.5, MSA=13.7, Pair=107.5
+    Time 3: Total=34.8, MSA=19.9, Pair=148.2
+  - Loss: 101.87206935882568
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=15.4, MSA=12.7, Pair=26.5
+    Time 2: Total=35.7, MSA=30.3, Pair=53.6
+    Time 3: Total=51.7, MSA=44.7, Pair=69.5
+  - Loss: 144.25423622131348
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=16.7, MSA=14.0, Pair=26.8
+    Time 2: Total=35.9, MSA=30.7, Pair=51.8
+    Time 3: Total=50.1, MSA=43.7, Pair=63.9
+  - Loss: 142.64300727844238
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 7 - Average Loss: 129.5897709528605
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_7.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=12.4, MSA=6.8, Pair=55.7
+    Time 2: Total=21.9, MSA=11.6, Pair=102.5
+    Time 3: Total=30.5, MSA=16.5, Pair=140.0
+  - Loss: 90.67108535766602
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=14.1, MSA=11.6, Pair=25.5
+    Time 2: Total=32.1, MSA=27.0, Pair=50.8
+    Time 3: Total=45.8, MSA=39.3, Pair=64.8
+  - Loss: 128.78676509857178
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=15.3, MSA=12.7, Pair=25.9
+    Time 2: Total=32.1, MSA=27.2, Pair=49.2
+    Time 3: Total=44.1, MSA=38.1, Pair=59.7
+  - Loss: 126.70247840881348
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 8 - Average Loss: 115.38677628835042
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_8.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=11.2, MSA=5.9, Pair=53.8
+    Time 2: Total=19.2, MSA=9.4, Pair=98.0
+    Time 3: Total=26.4, MSA=13.1, Pair=132.5
+  - Loss: 79.3668212890625
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=12.7, MSA=10.2, Pair=24.6
+    Time 2: Total=28.1, MSA=23.3, Pair=48.5
+    Time 3: Total=39.5, MSA=33.4, Pair=61.0
+  - Loss: 112.14822578430176
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=13.7, MSA=11.2, Pair=25.0
+    Time 2: Total=28.1, MSA=23.4, Pair=47.1
+    Time 3: Total=37.8, MSA=32.1, Pair=56.4
+  - Loss: 109.82952785491943
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 9 - Average Loss: 100.44819164276123
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_9.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=10.0, MSA=4.8, Pair=51.9
+    Time 2: Total=16.4, MSA=7.1, Pair=93.7
+    Time 3: Total=22.4, MSA=9.9, Pair=125.7
+  - Loss: 68.46489238739014
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=11.1, MSA=8.7, Pair=23.7
+    Time 2: Total=24.1, MSA=19.4, Pair=46.5
+    Time 3: Total=33.1, MSA=27.3, Pair=57.8
+  - Loss: 95.13864040374756
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=12.1, MSA=9.6, Pair=24.3
+    Time 2: Total=24.1, MSA=19.6, Pair=45.5
+    Time 3: Total=31.8, MSA=26.5, Pair=53.8
+  - Loss: 93.66521167755127
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 10 - Average Loss: 85.75624815622966
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_10.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=8.8, MSA=3.8, Pair=50.2
+    Time 2: Total=14.1, MSA=5.1, Pair=89.9
+    Time 3: Total=19.1, MSA=7.1, Pair=119.8
+  - Loss: 59.02183151245117
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=9.7, MSA=7.4, Pair=23.1
+    Time 2: Total=20.4, MSA=15.9, Pair=45.0
+    Time 3: Total=27.5, MSA=22.0, Pair=55.5
+  - Loss: 80.06245231628418
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=10.6, MSA=8.2, Pair=23.7
+    Time 2: Total=20.2, MSA=15.8, Pair=44.1
+    Time 3: Total=26.0, MSA=20.8, Pair=51.8
+  - Loss: 77.84626483917236
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 11 - Average Loss: 72.31018288930257
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_11.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=7.6, MSA=2.8, Pair=48.4
+    Time 2: Total=11.8, MSA=3.2, Pair=86.0
+    Time 3: Total=16.3, MSA=4.9, Pair=113.9
+  - Loss: 50.493616580963135
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=8.1, MSA=5.9, Pair=22.4
+    Time 2: Total=16.5, MSA=12.2, Pair=43.6
+    Time 3: Total=21.8, MSA=16.5, Pair=53.4
+  - Loss: 64.5074815750122
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=8.9, MSA=6.6, Pair=23.2
+    Time 2: Total=16.4, MSA=12.1, Pair=42.9
+    Time 3: Total=20.4, MSA=15.4, Pair=50.1
+  - Loss: 62.60310459136963
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 12 - Average Loss: 59.201400915781655
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_12.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=6.5, MSA=1.9, Pair=46.7
+    Time 2: Total=10.0, MSA=1.8, Pair=82.3
+    Time 3: Total=14.3, MSA=3.5, Pair=108.3
+  - Loss: 44.194963455200195
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=6.7, MSA=4.5, Pair=21.8
+    Time 2: Total=13.1, MSA=8.9, Pair=42.3
+    Time 3: Total=17.0, MSA=11.8, Pair=51.6
+  - Loss: 51.067487716674805
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=7.4, MSA=5.1, Pair=22.6
+    Time 2: Total=13.1, MSA=9.0, Pair=41.8
+    Time 3: Total=15.9, MSA=11.1, Pair=48.7
+  - Loss: 49.83582019805908
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 13 - Average Loss: 48.36609045664469
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_13.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=5.6, MSA=1.1, Pair=44.9
+    Time 2: Total=8.9, MSA=1.1, Pair=78.5
+    Time 3: Total=13.5, MSA=3.3, Pair=102.7
+  - Loss: 40.746469020843506
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=5.5, MSA=3.4, Pair=21.3
+    Time 2: Total=10.4, MSA=6.3, Pair=41.2
+    Time 3: Total=13.3, MSA=8.3, Pair=50.1
+  - Loss: 40.483959674835205
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=6.1, MSA=3.9, Pair=22.2
+    Time 2: Total=10.6, MSA=6.5, Pair=40.9
+    Time 3: Total=12.5, MSA=7.8, Pair=47.5
+  - Loss: 39.86475944519043
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 14 - Average Loss: 40.36506271362305
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_14.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=5.0, MSA=0.7, Pair=43.2
+    Time 2: Total=8.5, MSA=1.1, Pair=74.8
+    Time 3: Total=14.2, MSA=4.4, Pair=97.5
+  - Loss: 40.7871618270874
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=4.5, MSA=2.5, Pair=20.8
+    Time 2: Total=8.4, MSA=4.4, Pair=40.1
+    Time 3: Total=10.6, MSA=5.7, Pair=48.7
+  - Loss: 32.58682107925415
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=5.1, MSA=2.9, Pair=21.7
+    Time 2: Total=8.6, MSA=4.6, Pair=39.9
+    Time 3: Total=10.1, MSA=5.4, Pair=46.4
+  - Loss: 32.555938720703125
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 15 - Average Loss: 35.30997387568156
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_15.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=4.6, MSA=0.5, Pair=41.7
+    Time 2: Total=8.9, MSA=1.8, Pair=71.7
+    Time 3: Total=15.9, MSA=6.6, Pair=93.2
+  - Loss: 43.68862962722778
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=3.9, MSA=1.8, Pair=20.3
+    Time 2: Total=7.1, MSA=3.2, Pair=38.9
+    Time 3: Total=8.9, MSA=4.1, Pair=47.2
+  - Loss: 27.447654247283936
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=4.4, MSA=2.3, Pair=21.2
+    Time 2: Total=7.4, MSA=3.5, Pair=38.8
+    Time 3: Total=8.6, MSA=4.2, Pair=44.9
+  - Loss: 27.961438179016113
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 16 - Average Loss: 33.03257401784261
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_16.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=4.5, MSA=0.5, Pair=40.5
+    Time 2: Total=9.8, MSA=2.8, Pair=69.6
+    Time 3: Total=17.9, MSA=8.9, Pair=90.3
+  - Loss: 47.860291957855225
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=3.4, MSA=1.5, Pair=19.7
+    Time 2: Total=6.4, MSA=2.6, Pair=37.5
+    Time 3: Total=8.0, MSA=3.5, Pair=45.2
+  - Loss: 24.56463384628296
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=3.9, MSA=1.8, Pair=20.7
+    Time 2: Total=6.7, MSA=2.9, Pair=37.3
+    Time 3: Total=8.0, MSA=3.7, Pair=42.8
+  - Loss: 25.422847986221313
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 17 - Average Loss: 32.6159245967865
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_17.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=4.5, MSA=0.5, Pair=39.9
+    Time 2: Total=10.7, MSA=3.8, Pair=68.4
+    Time 3: Total=19.8, MSA=10.9, Pair=88.5
+  - Loss: 51.84492635726929
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=3.2, MSA=1.3, Pair=19.1
+    Time 2: Total=6.0, MSA=2.4, Pair=35.8
+    Time 3: Total=7.6, MSA=3.3, Pair=42.8
+  - Loss: 23.089029788970947
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=3.6, MSA=1.6, Pair=20.0
+    Time 2: Total=6.3, MSA=2.7, Pair=35.6
+    Time 3: Total=7.6, MSA=3.6, Pair=40.4
+  - Loss: 24.09173345565796
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 18 - Average Loss: 33.00856320063273
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_18.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=4.6, MSA=0.6, Pair=39.7
+    Time 2: Total=11.2, MSA=4.4, Pair=67.9
+    Time 3: Total=20.6, MSA=11.8, Pair=87.3
+  - Loss: 53.604928970336914
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=3.0, MSA=1.2, Pair=18.5
+    Time 2: Total=5.7, MSA=2.3, Pair=34.2
+    Time 3: Total=7.3, MSA=3.3, Pair=40.5
+  - Loss: 22.200371742248535
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=3.5, MSA=1.5, Pair=19.4
+    Time 2: Total=6.1, MSA=2.7, Pair=34.1
+    Time 3: Total=7.4, MSA=3.5, Pair=38.3
+  - Loss: 23.25719451904297
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 19 - Average Loss: 33.02083174387614
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_19.pt
+Processing protein 1fme_A - Step 1/3
+    Time 1: Total=4.6, MSA=0.6, Pair=39.5
+    Time 2: Total=11.3, MSA=4.5, Pair=67.5
+    Time 3: Total=20.5, MSA=11.9, Pair=86.3
+  - Loss: 53.52243423461914
+=== Memory Stats After protein 1fme_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 5fr6_A - Step 2/3
+    Time 1: Total=3.0, MSA=1.2, Pair=17.9
+    Time 2: Total=5.6, MSA=2.3, Pair=32.8
+    Time 3: Total=7.1, MSA=3.3, Pair=38.6
+  - Loss: 21.651127338409424
+=== Memory Stats After protein 5fr6_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Processing protein 4cue_A - Step 3/3
+    Time 1: Total=3.4, MSA=1.5, Pair=18.9
+    Time 2: Total=6.0, MSA=2.7, Pair=32.8
+    Time 3: Total=7.2, MSA=3.5, Pair=36.7
+  - Loss: 22.791082859039307
+=== Memory Stats After protein 4cue_A ===
+Allocated Memory: 17.67 MiB
+Reserved Memory: 546.00 MiB
+Max Memory Allocated: 323.05 MiB
+Max Memory Reserved: 546.00 MiB
+==============================
+Epoch 20 - Average Loss: 32.65488147735596
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_20.pt
+
+======================================
+Training completed at: Thu May 22 05:11:49 PM CEST 2025
+Full output saved to: /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/training_output_20250522_171131.txt

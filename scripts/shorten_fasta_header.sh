@@ -1,70 +1,66 @@
 #!/bin/bash
 set -e
 
-# Source (original FASTAs to fix)
-SOURCE_BASE="/home/visitor/Desktop/homoSapien_humoralImmuneResponse(OLD)"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
 
-# Destination (where fixed FASTAs go)
-DEST_BASE="/home/visitor/Desktop/homoSapien_humoralImmuneResponse"
-
-REL_PATHS=(
-    "total_dataset/sequences"
-    "training_data(75%)/sequences"
-    "validation_data(15%)/sequences"
-    "testing_data(10%)/sequences"
-)
+SRC_DIR="${ROOT_DIR}/neural_ODE/data/fasta_data"
+DEST_DIR="${ROOT_DIR}/neural_ODE/data/fasta_data"
 
 echo "🔧 Rewriting FASTA headers and replacing destination files..."
+echo "📂 Processing source: $SRC_DIR → destination: $DEST_DIR"
 
-for REL_PATH in "${REL_PATHS[@]}"; do
-    SRC_DIR="${SOURCE_BASE}/${REL_PATH}"
-    DEST_DIR="${DEST_BASE}/${REL_PATH}"
+for fasta in "$SRC_DIR"/*.fasta; do
+    [[ -f "$fasta" ]] || continue
 
-    echo "📂 Processing source: $SRC_DIR → destination: $DEST_DIR"
+    fname=$(basename "$fasta")
+    dest_fasta="${DEST_DIR}/${fname}"
 
-    for fasta in "$SRC_DIR"/*.fasta; do
-        [[ -f "$fasta" ]] || continue
+    echo "  ➤ Checking format for: $fname"
 
-        fname=$(basename "$fasta")
-        dest_fasta="${DEST_DIR}/${fname}"
+    awk '
+    BEGIN { OFS = ""; rewriting = 1 }
 
-        echo "  ➤ Rewriting: $fname"
+    NR == 1 && /^>[a-z0-9]{4}_[A-Za-z0-9]$/ {
+        rewriting = 0
+    }
 
-        awk '
-        BEGIN { OFS = "" }
-        /^>/ {
-            header = substr($0, 2)
-            split(header, parts, "|")
-            pdb_chain_raw = parts[1]
-            chain_info = parts[2]
-
-            # Lowercase the PDB ID
-            split(pdb_chain_raw, id_parts, "_")
-            pdb_id = tolower(id_parts[1])
-
-            # Extract chain letters from "Chains D, E" or "Chain A"
-            match(chain_info, /Chain[s]* ([A-Za-z0-9, ]+)/, m)
-            chains_str = m[1]
-            gsub(/,/, "", chains_str)  # Remove commas
-            gsub(/ /, "", chains_str)  # Remove spaces
-
-            # Save all chains for multi-line output
-            num_chains = length(chains_str)
-            for (i = 1; i <= num_chains; i++) {
-                chains[i] = substr(chains_str, i, 1)
-            }
-
+    {
+        if (rewriting == 0) {
+            print $0
             next
         }
-        {
-            # For each chain, output a header and sequence
-            for (i = 1; i <= num_chains; i++) {
-                print ">", pdb_id, "_", chains[i]
-                print $0
-            }
+    }
+
+    rewriting == 1 && /^>/ {
+        header = substr($0, 2)
+        split(header, parts, "|")
+        pdb_chain_raw = parts[1]
+        chain_info = parts[2]
+
+        split(pdb_chain_raw, id_parts, "_")
+        pdb_id = tolower(id_parts[1])
+
+        chains_str = chain_info
+        sub(/^Chains? /, "", chains_str)
+        gsub(/,/, "", chains_str)
+        gsub(/ /, "", chains_str)
+
+        num_chains = length(chains_str)
+        for (i = 1; i <= num_chains; i++) {
+            chains[i] = substr(chains_str, i, 1)
         }
-        ' "$fasta" > temp && mv temp "$dest_fasta"
-    done
+
+        next
+    }
+
+    rewriting == 1 {
+        for (i = 1; i <= num_chains; i++) {
+            print ">", pdb_id, "_", chains[i]
+            print $0
+        }
+    }
+    ' "$fasta" > temp && mv temp "$dest_fasta"
 done
 
-echo "✅ All FASTA headers rewritten and destination files updated."
+echo "✅ All FASTA headers rewritten and destination files updated if needed."

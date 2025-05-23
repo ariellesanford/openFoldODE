@@ -2,3 +2,4 @@
 /evoformer_init/openfold/resources/
 /evoformer_iter/openfold/resources/
 /checkpointing/
+/neural_ODE/data/incomplete_data/

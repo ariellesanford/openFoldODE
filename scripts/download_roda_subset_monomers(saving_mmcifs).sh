@@ -16,13 +16,14 @@ set -e
 #    "8UQE_A", "9F6Q_A", "9F6P_A", "8WZS_A"]'
 
 #RAW_LIST='["1H2P_A", "1H2Q_A", "1K58_A", "1LFH_A"]'
-RAW_LIST='["4d0f_A"]'
+RAW_LIST='["1l2y_A"]'
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
-BASE_DIR="${ROOT_DIR}/neural_ODE/data"
+BASE_DIR="${ROOT_DIR}/neural_ODE/data/RODA"
 RODA_TMP="${BASE_DIR}/alignment_dir_roda_subset"
 ALIGNMENT_OUT="${BASE_DIR}"
-FASTA_DIR="${BASE_DIR}/fasta_data"
+PDB_DATA_DIR="${BASE_DIR}/pdb_data"
+FASTA_DIR="${ROOT_DIR}/neural_ODE/data/fasta_data"
 FLATTEN_SCRIPT="${ROOT_DIR}/openfold/scripts/flatten_roda.sh"
 
 # === Extract and normalize PDB_CHAIN IDs (lowercase pdb ID, uppercase chain) ===
@@ -39,6 +40,7 @@ done
 
 # === Create directories ===
 mkdir -p "$RODA_TMP"
+mkdir -p "$PDB_DATA_DIR"
 mkdir -p "$FASTA_DIR"
 
 echo "📥 Downloading RODA alignment data from OpenFold S3..."
@@ -48,13 +50,29 @@ for pdbid in "${NORMALIZED_IDS[@]}"; do
     aws s3 cp "s3://openfold/pdb/${pdbid}/" "${RODA_TMP}/${pdbid}/" --recursive --no-sign-request
 done
 
+# === Download mmCIFs only if alignment data exists ===
+echo "🌐 Downloading mmCIFs from RCSB PDB (only for proteins with alignment data)..."
+
+for pdbid in "${NORMALIZED_IDS[@]}"; do
+    alignment_path="${RODA_TMP}/${pdbid}"
+    if [ -d "$alignment_path" ]; then
+        pdb_code=$(echo "$pdbid" | cut -d'_' -f1)
+        cif_url="https://files.rcsb.org/download/${pdb_code^^}.cif"
+        output_path="${PDB_DATA_DIR}/${pdbid}.cif"
+
+        echo "⬇️  Fetching $cif_url → $output_path"
+        curl -s -f "$cif_url" -o "$output_path" || echo "⚠️  Failed to download mmCIF for $pdbid"
+    else
+        echo "⏭  Skipping $pdbid — no alignment folder found, so no mmCIF download."
+    fi
+done
 
 # === Download FASTAs only if alignment data exists ===
 echo "📥 Downloading FASTA files from RCSB PDB (only for proteins with alignment data)..."
 
 for pdbid in "${NORMALIZED_IDS[@]}"; do
     alignment_path="${RODA_TMP}/${pdbid}"
-    if [ "$(ls -A "$alignment_path" 2>/dev/null)" ]; then
+    if [ -d "$alignment_path" ]; then
         pdb_code=$(echo "$pdbid" | cut -d'_' -f1)
         fasta_url="https://www.rcsb.org/fasta/entry/${pdb_code^^}"
         output_path="${FASTA_DIR}/${pdbid}.fasta"
@@ -71,9 +89,9 @@ done
 echo "🛠 Flattening RODA alignment structure..."
 bash "$FLATTEN_SCRIPT" "$RODA_TMP" "$ALIGNMENT_OUT"
 
-echo "🧹 Cleaning up temporary alignment folder..."
-rm -rf "$RODA_TMP"
+#echo "🧹 Cleaning up temporary alignment folder..."
+#rm -rf "$RODA_TMP"
 
 echo "✅ Done!"
 echo "   Alignments → $ALIGNMENT_OUT/alignments/"
-echo "   Fastas → $FASTA_DIR/"
+echo "   Structures → $PDB_DATA_DIR/"

@@ -10,7 +10,7 @@ PDB_ID="4d0f_A"
 INPUT_FASTA_DIR="${SCRIPT_DIR}/data/fasta_data/${PDB_ID}"
 TEMPLATE_MMCIF_DIR="${ROOT_DIR}/openfold/data/pdb70_mmcif/mmcif_files"
 OUTPUT_DIR="${SCRIPT_DIR}/data/quick_inference_data"
-PRECOMPUTED_ALIGNMENTS="${SCRIPT_DIR}/data/RODA/alignments"
+PRECOMPUTED_ALIGNMENTS="${SCRIPT_DIR}/data/alignments"
 # === Change to the desired working directory ===
 cd "${ROOT_DIR}/evoformer_init"
 

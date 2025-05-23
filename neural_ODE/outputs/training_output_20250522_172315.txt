@@ -1,0 +1,709 @@
+=== TRAINING CONFIGURATION ===
+Data directory: /home/visitor/PycharmProjects/openFold/neural_ODE/data/quick_inference_data
+Output directory: /home/visitor/PycharmProjects/openFold/neural_ODE/outputs
+Python path: /home/visitor/anaconda3/envs/openfold_env/bin/python
+CPU-only mode: false
+Test protein: 
+Fast ODE: true
+Epochs: 60
+Learning rate: 1e-3
+Time points: 5
+Integrator: euler
+Output will be saved to: /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/training_output_20250522_172315.txt
+=============================
+
+Running command:
+/home/visitor/anaconda3/envs/openfold_env/bin/python /home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py   --data_dir /home/visitor/PycharmProjects/openFold/neural_ODE/data/quick_inference_data   --output_dir /home/visitor/PycharmProjects/openFold/neural_ODE/outputs   --learning_rate 1e-3   --memory_split_size 128   --reduced_cluster_size 32   --reduced_hidden_dim 32   --num_time_points 5   --batch_size 1   --integrator euler   --gradient_accumulation 1   --chunk_size 0   --epochs 60 --no-cpu-only --use_fast_ode --use_amp --use_checkpoint --monitor_memory --no-clean_memory --reduced_precision_integration
+
+Training started at: Thu May 22 05:23:15 PM CEST 2025
+======================================
+PYTORCH_CUDA_ALLOC_CONF: None
+PYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:128
+CUDA initialized successfully
+Using data directory: /home/visitor/PycharmProjects/openFold/neural_ODE/data/quick_inference_data
+Using output directory: /home/visitor/PycharmProjects/openFold/neural_ODE/outputs
+
+=== ACTIVE CONFIGURATION ===
+Device: CUDA
+Memory Split Size: 128 MB
+Mixed Precision (AMP): Enabled
+Gradient Checkpointing: Enabled
+Gradient Accumulation: 1 steps
+Integration Chunking: Disabled
+Reduced Precision Integration: Enabled
+Aggressive Memory Cleaning: Disabled
+Memory Usage Monitoring: Enabled
+Reduced Cluster Size: 32 (original: 128)
+Reduced Hidden Dimension: 32 (default: 128)
+Learning Rate: 0.001
+Number of Time Points: 5 (original: 49)
+ODE Integrator: euler
+Time Step Batch Size: 1
+==============================
+Using FAST EvoformerODEFunc implementation
+pytorch_memlab not available, detailed memory monitoring disabled
+Training on 3 proteins from /home/visitor/PycharmProjects/openFold/neural_ODE/data/quick_inference_data
+Processing protein 1fme_A - Step 1/3
+  - Loss: 149.84619522094727
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 198.13667678833008
+Processing protein 4cue_A - Step 3/3
+  - Loss: 199.7609634399414
+Epoch 1 - Average Loss: 182.5812784830729
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_1.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 145.75113677978516
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 192.8605251312256
+Processing protein 4cue_A - Step 3/3
+  - Loss: 194.33172035217285
+Epoch 2 - Average Loss: 177.64779408772787
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_2.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 140.11062812805176
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 186.61216926574707
+Processing protein 4cue_A - Step 3/3
+  - Loss: 187.61896324157715
+Epoch 3 - Average Loss: 171.44725354512533
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_3.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 133.1307487487793
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 178.72725868225098
+Processing protein 4cue_A - Step 3/3
+  - Loss: 178.99784088134766
+Epoch 4 - Average Loss: 163.61861610412598
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_4.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 124.42277717590332
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 168.5209445953369
+Processing protein 4cue_A - Step 3/3
+  - Loss: 167.81588172912598
+Epoch 5 - Average Loss: 153.58653450012207
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_5.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 114.00192451477051
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 155.58191871643066
+Processing protein 4cue_A - Step 3/3
+  - Loss: 153.95205688476562
+Epoch 6 - Average Loss: 141.17863337198892
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_6.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 102.3609504699707
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 140.0332498550415
+Processing protein 4cue_A - Step 3/3
+  - Loss: 137.66348838806152
+Epoch 7 - Average Loss: 126.68589623769124
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_7.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 89.99988651275635
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 122.26066493988037
+Processing protein 4cue_A - Step 3/3
+  - Loss: 120.33788585662842
+Epoch 8 - Average Loss: 110.86614576975505
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_8.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 78.22852516174316
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 104.87502861022949
+Processing protein 4cue_A - Step 3/3
+  - Loss: 101.67088603973389
+Epoch 9 - Average Loss: 94.92481327056885
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_9.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 66.18812274932861
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 85.42559814453125
+Processing protein 4cue_A - Step 3/3
+  - Loss: 82.13196849822998
+Epoch 10 - Average Loss: 77.91522979736328
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_10.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 55.8007926940918
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 67.04042148590088
+Processing protein 4cue_A - Step 3/3
+  - Loss: 64.38065147399902
+Epoch 11 - Average Loss: 62.407288551330566
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_11.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 48.15056896209717
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 51.45030450820923
+Processing protein 4cue_A - Step 3/3
+  - Loss: 49.61386013031006
+Epoch 12 - Average Loss: 49.73824453353882
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_12.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 44.88457250595093
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 39.385197162628174
+Processing protein 4cue_A - Step 3/3
+  - Loss: 38.361361503601074
+Epoch 13 - Average Loss: 40.87704372406006
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_13.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 46.679829120635986
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 31.07099151611328
+Processing protein 4cue_A - Step 3/3
+  - Loss: 31.01777172088623
+Epoch 14 - Average Loss: 36.256197452545166
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_14.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 51.479005336761475
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 26.72669792175293
+Processing protein 4cue_A - Step 3/3
+  - Loss: 27.396913051605225
+Epoch 15 - Average Loss: 35.20087210337321
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_15.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 55.69077157974243
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 24.810335159301758
+Processing protein 4cue_A - Step 3/3
+  - Loss: 25.504836082458496
+Epoch 16 - Average Loss: 35.33531427383423
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_16.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 56.506258964538574
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 23.326396465301514
+Processing protein 4cue_A - Step 3/3
+  - Loss: 24.30402421951294
+Epoch 17 - Average Loss: 34.71222654978434
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_17.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 55.14747762680054
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 22.60495376586914
+Processing protein 4cue_A - Step 3/3
+  - Loss: 23.57503581047058
+Epoch 18 - Average Loss: 33.77582240104675
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_18.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 52.971139907836914
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 21.745197772979736
+Processing protein 4cue_A - Step 3/3
+  - Loss: 22.89146852493286
+Epoch 19 - Average Loss: 32.535935401916504
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_19.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 52.33055257797241
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 21.197174072265625
+Processing protein 4cue_A - Step 3/3
+  - Loss: 22.25586700439453
+Epoch 20 - Average Loss: 31.92786455154419
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_20.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 51.2902512550354
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 20.514840364456177
+Processing protein 4cue_A - Step 3/3
+  - Loss: 21.773969650268555
+Epoch 21 - Average Loss: 31.193020423253376
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_21.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 50.83366394042969
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 20.28884243965149
+Processing protein 4cue_A - Step 3/3
+  - Loss: 21.352835178375244
+Epoch 22 - Average Loss: 30.825113852818806
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_22.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 49.67610836029053
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.75712513923645
+Processing protein 4cue_A - Step 3/3
+  - Loss: 21.138556480407715
+Epoch 23 - Average Loss: 30.19059665997823
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_23.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 48.92780876159668
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.750056982040405
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.859683513641357
+Epoch 24 - Average Loss: 29.845849752426147
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_24.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 48.196595191955566
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.30945587158203
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.803667068481445
+Epoch 25 - Average Loss: 29.436572710673016
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_25.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 47.2997670173645
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.416418075561523
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.59840965270996
+Epoch 26 - Average Loss: 29.104864915211994
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_26.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 46.91767644882202
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.101499795913696
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.619571208953857
+Epoch 27 - Average Loss: 28.87958248456319
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_27.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 45.9939022064209
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.263718605041504
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.484977960586548
+Epoch 28 - Average Loss: 28.58086625734965
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_28.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 45.73715543746948
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.031455039978027
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.512211322784424
+Epoch 29 - Average Loss: 28.426940600077312
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_29.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 44.73601722717285
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.237606525421143
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.420754432678223
+Epoch 30 - Average Loss: 28.13145939509074
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_30.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 44.627808570861816
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.033339023590088
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.47851252555847
+Epoch 31 - Average Loss: 28.046553373336792
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_31.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 43.34465837478638
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.2228684425354
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.383658170700073
+Epoch 32 - Average Loss: 27.650394996007282
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_32.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 43.434781551361084
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.071226119995117
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.44431781768799
+Epoch 33 - Average Loss: 27.650108496348064
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_33.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 41.90556573867798
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.199085235595703
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.36737322807312
+Epoch 34 - Average Loss: 27.15734140078227
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_34.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 42.02521753311157
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.102810382843018
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.38825559616089
+Epoch 35 - Average Loss: 27.172094504038494
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_35.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 40.22642469406128
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.21825861930847
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.352890014648438
+Epoch 36 - Average Loss: 26.599191109339397
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_36.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 40.344616413116455
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.154158353805542
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.327953577041626
+Epoch 37 - Average Loss: 26.608909447987873
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_37.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 38.18814039230347
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.299930810928345
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.387335062026978
+Epoch 38 - Average Loss: 25.958468755086262
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_38.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 38.053303718566895
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.22024393081665
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.315175533294678
+Epoch 39 - Average Loss: 25.862907727559406
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_39.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 35.7953679561615
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.400739908218384
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.45619297027588
+Epoch 40 - Average Loss: 25.21743361155192
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_40.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 35.37281060218811
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.255990505218506
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.33704662322998
+Epoch 41 - Average Loss: 24.9886159102122
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_41.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 33.426260232925415
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.453517198562622
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.508431673049927
+Epoch 42 - Average Loss: 24.46273636817932
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_42.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 33.159656047821045
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.23741602897644
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.34314751625061
+Epoch 43 - Average Loss: 24.246739864349365
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_43.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 31.973270177841187
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.442644357681274
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.47629165649414
+Epoch 44 - Average Loss: 23.9640687306722
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_44.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 32.15139055252075
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.20694923400879
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.292685508728027
+Epoch 45 - Average Loss: 23.88367509841919
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_45.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 31.397169589996338
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.452609539031982
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.43003487586975
+Epoch 46 - Average Loss: 23.75993800163269
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_46.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 31.685500621795654
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.17168951034546
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.248159646987915
+Epoch 47 - Average Loss: 23.701783259709675
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_47.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 31.12212109565735
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.46511721611023
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.40094828605652
+Epoch 48 - Average Loss: 23.662728865941364
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_48.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 31.312422275543213
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.133320331573486
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.225258588790894
+Epoch 49 - Average Loss: 23.557000398635864
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_49.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 30.899285793304443
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.44977355003357
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.360710382461548
+Epoch 50 - Average Loss: 23.569923241933186
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_50.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 30.978294849395752
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.07453227043152
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.194305419921875
+Epoch 51 - Average Loss: 23.41571084658305
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_51.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 30.710800409317017
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.39274525642395
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.28524374961853
+Epoch 52 - Average Loss: 23.46292980511983
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_52.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 30.70575761795044
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.006060361862183
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.138835191726685
+Epoch 53 - Average Loss: 23.283551057179768
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_53.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 30.534056901931763
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.331217527389526
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.19382882118225
+Epoch 54 - Average Loss: 23.353034416834515
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_54.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 30.463457107543945
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 18.95519471168518
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.074122667312622
+Epoch 55 - Average Loss: 23.164258162180584
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_55.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 30.35754919052124
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.290749311447144
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.11221694946289
+Epoch 56 - Average Loss: 23.253505150477093
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_56.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 30.20604658126831
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 18.919530391693115
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.0264151096344
+Epoch 57 - Average Loss: 23.05066402753194
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_57.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 30.169343948364258
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.253960371017456
+Processing protein 4cue_A - Step 3/3
+  - Loss: 20.043322801589966
+Epoch 58 - Average Loss: 23.155542373657227
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_58.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 29.93356966972351
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 18.879682302474976
+Processing protein 4cue_A - Step 3/3
+  - Loss: 19.9889395236969
+Epoch 59 - Average Loss: 22.93406383196513
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_59.pt
+Processing protein 1fme_A - Step 1/3
+  - Loss: 29.966432332992554
+Processing protein 5fr6_A - Step 2/3
+  - Loss: 19.186374187469482
+Processing protein 4cue_A - Step 3/3
+  - Loss: 19.964781284332275
+Epoch 60 - Average Loss: 23.03919593493144
+Maximum Memory Usage Across All Proteins:
+  Max Memory Allocated: 323.05 MiB
+  Max Memory Reserved: 546.00 MiB
+Checkpoint saved to /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/evoformer_ode_epoch_60.pt
+
+======================================
+Training completed at: Thu May 22 05:24:05 PM CEST 2025
+Full output saved to: /home/visitor/PycharmProjects/openFold/neural_ODE/outputs/training_output_20250522_172315.txt

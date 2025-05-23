@@ -1,0 +1,80 @@
+EVOFORMER ODE CPU-ONLY MODE OPTIMIZATION REPORT
+========================================
+
+Configuration Settings:
+  CPU_ONLY: true
+  TEST_PROTEIN: all
+  USE_FAST_ODE: true
+
+System Information:
+  CUDA Available: True
+  Running in CPU-only mode (CUDA disabled)
+  PyTorch Version: 2.1.2
+
+
+============================================================
+CONFIGURATION TEST SUMMARY (CPU-ONLY MODE)
+============================================================
+
+Name                      Status     Time (ms)    Loss      
+--------------------------------------------------------------------------------
+CPU Baseline              SUCCESS    4931.11      50.2570   
+CPU Fast                  SUCCESS    4735.34      60.7052   
+
+============================================================
+BEST CPU CONFIGURATIONS
+============================================================
+
+🏆 Best Speed:
+   Name: CPU Fast
+   Time: 4735.34 ms
+   Loss: 60.7052
+
+🏆 Best Loss Performance:
+   Name: CPU Baseline
+   Time: 4931.11 ms
+   Loss: 50.2570
+
+============================================================
+
+Detailed Configuration Results:
+----------------------------------------
+
+Configuration 1: CPU Baseline
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 32
+    reduced_hidden_dim: 32
+    num_time_points: 10
+    batch_size: 1
+    integrator: euler
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: monitor_memory, test-single-step, cpu-only
+    disabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory
+  Results:
+    Loss: 50.256992
+    Max Memory: 0.00 MB
+    Time: 4931.11 ms
+
+Configuration 2: CPU Fast
+  Status: SUCCESS
+  Settings:
+    memory_split_size: 128
+    reduced_cluster_size: 16
+    reduced_hidden_dim: 16
+    num_time_points: 5
+    batch_size: 1
+    integrator: euler
+    gradient_accumulation: 1
+    chunk_size: 0
+    enabled flags: use_fast_ode, monitor_memory, test-single-step, cpu-only, reduced_precision_integration
+    disabled flags: use_amp, use_checkpoint, clean_memory
+  Results:
+    Loss: 60.705205
+    Max Memory: 0.00 MB
+    Time: 4735.34 ms
+
+========================================
+Report generated at: 2025-05-22 14:17:51
