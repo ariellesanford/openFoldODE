@@ -15,8 +15,8 @@ set -e
 #    "8EX6_A", "8EX7_A", "8EX8_A", "8G92_A", "8JHQ_A", "8JHR_A", "8RL8_A", "8RLD_A", "8UQC_A", "8UQD_A",
 #    "8UQE_A", "9F6Q_A", "9F6P_A", "8WZS_A"]'
 
-#RAW_LIST='["1H2P_A", "1H2Q_A", "1K58_A", "1LFH_A"]'
-RAW_LIST='["4d0f_A"]'
+RAW_LIST='["6o1w_A","4uus_A"]'
+#RAW_LIST='["7ok6_AAA","7bl2_6","3jbn_Ab","1bho_1"]'
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 ROOT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 BASE_DIR="${ROOT_DIR}/neural_ODE/data"
@@ -60,7 +60,7 @@ for pdbid in "${NORMALIZED_IDS[@]}"; do
         output_path="${FASTA_DIR}/${pdbid}.fasta"
 
         echo "➡️  Downloading FASTA for $pdbid from $fasta_url"
-        curl -s -f "$fasta_url" -o "$output_path" || echo "⚠️  Failed to download FASTA for $pdbid"
+        env -i /usr/bin/curl -s -f "$fasta_url" -o "$output_path" || echo "⚠️  Failed to download FASTA for $pdbid"
     else
         echo "⏭  Skipping $pdbid — no alignment folder found, so no FASTA download."
     fi
