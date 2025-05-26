@@ -15,7 +15,7 @@ set -e
 #    "8EX6_A", "8EX7_A", "8EX8_A", "8G92_A", "8JHQ_A", "8JHR_A", "8RL8_A", "8RLD_A", "8UQC_A", "8UQD_A",
 #    "8UQE_A", "9F6Q_A", "9F6P_A", "8WZS_A"]'
 
-RAW_LIST='["6o1w_A","4uus_A"]'
+RAW_LIST='["7d60_A","3foa_A","3eps_A"]'
 #RAW_LIST='["7ok6_AAA","7bl2_6","3jbn_Ab","1bho_1"]'
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 ROOT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
