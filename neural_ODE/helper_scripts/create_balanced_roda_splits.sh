@@ -135,9 +135,10 @@ for ((i=0; i<${#SELECTED_CHAINS[@]}; i++)); do
 
             # Try to extract organism from title (often in parentheses)
             organism="Unknown"
-            if [[ "$title" =~ \([^)]+\)$ ]]; then
+            if [[ "$title" =~ \([^\)]+\)$ ]]; then
                 # Extract content between parentheses
-                organism=$(echo "$title" | grep -o '([^)]*)
+                organism=$(echo "$title" | grep -oP '\(\K[^)]+(?=\)$)')
+            fi
 
             # Simple classification based on title keywords
             func_class="other"
