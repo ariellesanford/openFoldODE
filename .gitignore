@@ -4,3 +4,7 @@
 /checkpointing/
 /neural_ODE/data/incomplete_data/
 /neural_ODE/test_data/
+/neural_ODE/data/testing/
+/neural_ODE/data/training/
+/neural_ODE/data/validation/
+/neural_ODE/mini_data/
