@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Production version - Generate Evoformer inputs for all proteins in training, validation, and testing splits
+Fixed version of generate_evoformer_inputs.py with correct parameter paths
 """
 
 import argparse
@@ -15,10 +15,11 @@ from typing import Dict, List, Optional
 
 class EvoformerInputGenerator:
     def __init__(self, data_dir: str, config_preset: str = "model_1_ptm",
-                 device: str = "cuda:0", template_mmcif_dir: str = None):
+                 device: str = "cuda:0", template_mmcif_dir: str = None, debug: bool = False):
         self.data_dir = Path(data_dir)
         self.config_preset = config_preset
         self.device = device
+        self.debug = debug
 
         # Set default template directory if not provided
         if template_mmcif_dir is None:
@@ -33,15 +34,14 @@ class EvoformerInputGenerator:
         self.openfold_root = script_dir.parent.parent
         self.openfold_script = self.openfold_root / "evoformer_init" / "run_evoformer_init.py"
 
-        # Find the parameters file
+        # Find the parameters file - check multiple possible locations
         self.params_file = self.find_params_file()
 
         # Statistics
         self.stats = {
             'successful': 0,
             'failed': 0,
-            'skipped': 0,
-            'errors': []
+            'skipped': 0
         }
 
         self.python_path = self.get_python_path()
@@ -61,12 +61,20 @@ class EvoformerInputGenerator:
             self.openfold_root / "evoformer_init" / "resources" / "params" / param_filename,
         ]
 
+        print(f"🔍 Searching for {param_filename}...")
+
         for location in possible_locations:
+            print(f"   Checking: {location}")
             if location.exists():
+                print(f"   ✅ Found at: {location}")
                 return location
+            else:
+                print(f"   ❌ Not found")
 
         # If not found in expected locations, search more broadly
+        print(f"   🔍 Searching entire project directory...")
         for path in self.openfold_root.rglob(param_filename):
+            print(f"   ✅ Found at: {path}")
             return path
 
         raise FileNotFoundError(f"Could not find {param_filename} in any expected location")
@@ -88,6 +96,8 @@ class EvoformerInputGenerator:
             print("Please run create_balanced_protein_splits.py first.")
             sys.exit(1)
 
+        print(f"📄 Loading splits from {json_file}")
+
         try:
             with open(json_file, 'r') as f:
                 data = json.load(f)
@@ -96,8 +106,10 @@ class EvoformerInputGenerator:
             for split_name in ['training', 'validation', 'testing']:
                 if split_name in data['splits']:
                     splits[split_name] = data['splits'][split_name]['pdb_chains']
+                    print(f"   {split_name}: {len(splits[split_name])} chains")
                 else:
                     splits[split_name] = []
+                    print(f"   {split_name}: 0 chains (not found)")
 
             return splits
 
@@ -116,10 +128,12 @@ class EvoformerInputGenerator:
 
         if not self.template_mmcif_dir.exists():
             print(f"❌ Template directory not found: {self.template_mmcif_dir}")
+            print("   Please download PDB70 templates or specify correct path")
             return False
         print(f"   ✅ Template directory: {self.template_mmcif_dir}")
 
         try:
+            # This will also try to find the params file
             print(f"   ✅ Parameters file: {self.params_file}")
         except FileNotFoundError as e:
             print(f"❌ {e}")
@@ -172,6 +186,7 @@ class EvoformerInputGenerator:
     def prepare_fasta_directory(self, chain: str, fasta_file: Path, temp_fasta_dir: Path) -> bool:
         """Prepare FASTA directory for OpenFold processing"""
         if not fasta_file.exists():
+            print(f"      ❌ FASTA file not found: {fasta_file}")
             return False
 
         temp_fasta_dir.mkdir(parents=True, exist_ok=True)
@@ -181,15 +196,18 @@ class EvoformerInputGenerator:
             with open(fasta_file, 'r') as src, open(target_fasta, 'w') as dst:
                 dst.write(src.read())
             return True
-        except Exception:
+        except Exception as e:
+            print(f"      ❌ Error copying FASTA file: {e}")
             return False
 
-    def run_openfold_inference(self, chain: str, dirs: Dict[str, Path]) -> bool:
-        """Run OpenFold inference to generate Evoformer blocks"""
+    def test_single_protein(self, chain: str, dirs: Dict[str, Path]) -> bool:
+        """Test OpenFold inference on a single protein with detailed debugging"""
         temp_fasta_dir = dirs['protein_blocks_dir'] / 'temp_fasta'
 
         if not self.prepare_fasta_directory(chain, dirs['fasta_file'], temp_fasta_dir):
             return False
+
+        print(f"      🧬 Running OpenFold inference with full debug output...")
 
         # Use the parent directory to avoid double nesting
         output_parent_dir = dirs['protein_blocks_dir'].parent
@@ -204,10 +222,24 @@ class EvoformerInputGenerator:
             '--use_precomputed_alignments', str(dirs['alignments_dir']),
             '--config_preset', self.config_preset,
             '--model_device', self.device,
-            '--jax_param_path', str(self.params_file),
+            '--jax_param_path', str(self.params_file),  # Explicitly provide the params file path
             '--save_intermediates',
             '--save_outputs'
         ]
+
+        print(f"      🔧 Command: {' '.join(cmd)}")
+        print(f"      📁 Working directory: {self.openfold_root}")
+        print(f"      📂 Parameters file: {self.params_file}")
+
+        # Check if input files exist
+        print(f"      🔍 Checking input files:")
+        print(f"         FASTA file exists: {dirs['fasta_file'].exists()}")
+        print(f"         Alignment dir exists: {dirs['alignment_dir'].exists()}")
+        if dirs['alignment_dir'].exists():
+            alignment_files = list(dirs['alignment_dir'].glob('*'))
+            print(f"         Alignment files: {len(alignment_files)} files")
+            for f in alignment_files[:5]:  # Show first 5 files
+                print(f"           - {f.name}")
 
         # Set up environment
         env = os.environ.copy()
@@ -217,17 +249,33 @@ class EvoformerInputGenerator:
         else:
             env['PYTHONPATH'] = str(self.openfold_root)
 
+        print(f"      🌍 PYTHONPATH: {env['PYTHONPATH']}")
+
         try:
+            print(f"      ⏳ Starting OpenFold subprocess...")
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=1800,  # 30 minute timeout
+                timeout=1800,
                 cwd=str(self.openfold_root),
                 env=env
             )
 
+            print(f"      📊 Return code: {result.returncode}")
+
+            # Always show full output for debugging
+            if result.stdout:
+                print(f"      📄 STDOUT:")
+                print("      " + "\n      ".join(result.stdout.split('\n')))
+
+            if result.stderr:
+                print(f"      ❌ STDERR:")
+                print("      " + "\n      ".join(result.stderr.split('\n')))
+
             if result.returncode == 0:
+                print(f"      ✅ OpenFold inference completed successfully")
+
                 # Check output files - look in the correct nested directory
                 possible_recycle_dirs = [
                     dirs['protein_blocks_dir'] / "recycle_0",  # Direct path
@@ -238,6 +286,7 @@ class EvoformerInputGenerator:
                 for possible_dir in possible_recycle_dirs:
                     if possible_dir.exists():
                         recycle_dir = possible_dir
+                        print(f"      📁 Found recycle directory: {recycle_dir}")
                         break
 
                 if recycle_dir and recycle_dir.exists():
@@ -245,173 +294,78 @@ class EvoformerInputGenerator:
                     z_block_0 = recycle_dir / "z_block_0.pt"
 
                     if m_block_0.exists() and z_block_0.exists():
+                        print(f"      ✅ Evoformer blocks generated successfully")
+                        print(f"         m_block_0.pt: {m_block_0}")
+                        print(f"         z_block_0.pt: {z_block_0}")
+
                         # Move files to expected location if they're in the wrong place
                         expected_recycle_dir = dirs['protein_blocks_dir'] / "recycle_0"
                         if recycle_dir != expected_recycle_dir:
+                            print(f"      🔄 Moving files to expected location...")
                             expected_recycle_dir.mkdir(parents=True, exist_ok=True)
 
                             import shutil
                             for file_path in recycle_dir.glob("*.pt"):
                                 target_path = expected_recycle_dir / file_path.name
                                 shutil.copy2(file_path, target_path)
-
-                        # Clean up temporary FASTA directory
-                        try:
-                            import shutil
-                            shutil.rmtree(temp_fasta_dir)
-                        except:
-                            pass
+                                print(f"         Copied {file_path.name} to {target_path}")
 
                         return True
+                    else:
+                        print(f"      ❌ Expected block files not found")
+                        print(f"         m_block_0.pt exists: {m_block_0.exists()}")
+                        print(f"         z_block_0.pt exists: {z_block_0.exists()}")
+                else:
+                    print(f"      ❌ No recycle directory found in any expected location")
+                    # List what directories were created
+                    print(f"      📁 Contents of output directory:")
+                    for item in dirs['protein_blocks_dir'].iterdir():
+                        print(f"         - {item.name} ({'dir' if item.is_dir() else 'file'})")
+            else:
+                print(f"      ❌ OpenFold failed with return code {result.returncode}")
 
             return False
 
         except subprocess.TimeoutExpired:
-            self.stats['errors'].append(f"{chain}: Timeout after 30 minutes")
+            print(f"      ❌ OpenFold timed out after 30 minutes")
             return False
         except Exception as e:
-            self.stats['errors'].append(f"{chain}: {str(e)}")
+            print(f"      ❌ Error running OpenFold: {e}")
             return False
 
-    def process_protein(self, split: str, chain: str) -> bool:
-        """Process a single protein to generate Evoformer inputs"""
-        # Setup directories
+    def run_debug_single(self, split: str = 'training', limit: int = 1):
+        """Run debug mode on a single protein"""
+        print("🔍 DEBUG MODE: Testing single protein")
+
+        splits = self.load_protein_splits()
+
+        if not splits[split]:
+            print(f"❌ No proteins found in {split} split")
+            return
+
+        # Test first protein
+        chain = splits[split][0]
+        print(f"\n🧪 Testing {split}/{chain}")
+
         dirs = self.setup_protein_directories(split, chain)
 
         # Check if already processed
         if self.check_existing_blocks(dirs['protein_blocks_dir']):
-            self.stats['skipped'] += 1
-            return True
+            print(f"      ✅ Evoformer blocks already exist, skipping")
+            return
 
-        # Check if input files exist
-        if not dirs['fasta_file'].exists():
-            self.stats['errors'].append(f"{chain}: FASTA file not found")
-            self.stats['failed'] += 1
-            return False
+        # Run test
+        success = self.test_single_protein(chain, dirs)
 
-        if not dirs['alignment_dir'].exists():
-            self.stats['errors'].append(f"{chain}: Alignment directory not found")
-            self.stats['failed'] += 1
-            return False
-
-        # Run OpenFold inference
-        if self.run_openfold_inference(chain, dirs):
-            self.stats['successful'] += 1
-            return True
+        if success:
+            print(f"✅ Success! The issue has been resolved.")
         else:
-            self.stats['failed'] += 1
-            return False
-
-    def process_split(self, split_name: str, chains: List[str]):
-        """Process all proteins in a split"""
-        print(f"\n🔄 Processing {split_name} split ({len(chains)} proteins)")
-        print("=" * 60)
-
-        for i, chain in enumerate(chains):
-            print(f"[{i + 1}/{len(chains)}] {split_name}/{chain}... ", end='', flush=True)
-
-            if self.process_protein(split_name, chain):
-                print("✅")
-            else:
-                print("❌")
-
-            # Progress update every 10 proteins
-            if (i + 1) % 10 == 0:
-                print(f"\n   📊 Progress: {i + 1}/{len(chains)} proteins processed")
-                print(f"      ✅ Successful: {self.stats['successful']}")
-                print(f"      ⏭️  Skipped: {self.stats['skipped']}")
-                print(f"      ❌ Failed: {self.stats['failed']}")
-
-            # Small delay to prevent overwhelming the system
-            time.sleep(1)
-
-        print(f"\n✅ {split_name} split completed")
-
-    def print_final_stats(self):
-        """Print final processing statistics"""
-        print("\n" + "=" * 60)
-        print("📊 FINAL PROCESSING STATISTICS")
-        print("=" * 60)
-
-        total = self.stats['successful'] + self.stats['failed'] + self.stats['skipped']
-
-        print(f"✅ Successful: {self.stats['successful']}")
-        print(f"⏭️  Skipped (already exists): {self.stats['skipped']}")
-        print(f"❌ Failed: {self.stats['failed']}")
-        print(f"📈 Success rate: {self.stats['successful'] / max(total, 1) * 100:.1f}%")
-
-        if self.stats['errors']:
-            print(f"\n❌ Error details:")
-            for error in self.stats['errors'][:10]:  # Show first 10 errors
-                print(f"   - {error}")
-            if len(self.stats['errors']) > 10:
-                print(f"   ... and {len(self.stats['errors']) - 10} more errors")
-
-        print(f"\n📁 Output structure:")
-        for split in ['training', 'validation', 'testing']:
-            split_dir = self.data_dir / split / 'blocks'
-            if split_dir.exists():
-                block_dirs = [d for d in split_dir.iterdir() if d.is_dir() and d.name.endswith('_evoformer_blocks')]
-                print(f"  {split}/blocks/ ({len(block_dirs)} protein directories)")
-
-                # Count successful blocks
-                successful_blocks = 0
-                for block_dir in block_dirs:
-                    recycle_dir = block_dir / "recycle_0"
-                    if recycle_dir.exists():
-                        m_block = recycle_dir / "m_block_0.pt"
-                        z_block = recycle_dir / "z_block_0.pt"
-                        if m_block.exists() and z_block.exists():
-                            successful_blocks += 1
-
-                print(f"    └── {successful_blocks} with complete Evoformer blocks")
-
-    def run(self):
-        """Run the complete Evoformer input generation pipeline"""
-        print("🚀 Evoformer Input Generator - Production Mode")
-        print(f"📁 Data directory: {self.data_dir}")
-        print(f"🔧 Config preset: {self.config_preset}")
-        print(f"💻 Device: {self.device}")
-        print(f"🗂️  Template directory: {self.template_mmcif_dir}")
-        print(f"📄 Parameters file: {self.params_file}")
-
-        # Check prerequisites
-        if not self.check_prerequisites():
-            print("❌ Prerequisites check failed. Please fix the issues above.")
-            sys.exit(1)
-
-        # Load protein splits
-        print(f"\n📄 Loading protein splits...")
-        splits = self.load_protein_splits()
-
-        total_proteins = sum(len(chains) for chains in splits.values())
-        print(f"📊 Total proteins to process: {total_proteins}")
-        for split_name, chains in splits.items():
-            print(f"   {split_name}: {len(chains)} chains")
-
-        # Process each split
-        start_time = time.time()
-
-        for split_name in ['training', 'validation', 'testing']:
-            if splits[split_name]:
-                self.process_split(split_name, splits[split_name])
-
-        end_time = time.time()
-
-        # Print final statistics
-        self.print_final_stats()
-
-        print(f"\n🎯 Evoformer input generation completed!")
-        print(f"⏱️  Total time: {(end_time - start_time) / 60:.1f} minutes")
-        print(f"\n💡 Next steps:")
-        print(f"   1. Use the generated blocks for neural ODE training")
-        print(f"   2. Check failed proteins and investigate issues")
-        print(f"   3. The m_block_0.pt and z_block_0.pt files are ready for training")
+            print(f"❌ Still failing. Check the error output above for details.")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Generate Evoformer inputs for protein splits - Production Mode',
+        description='Generate Evoformer inputs for protein splits',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
 
@@ -427,6 +381,8 @@ def main():
                         help='Device for inference (cuda:0, cpu, etc.)')
     parser.add_argument('--template-mmcif-dir', type=str, default=None,
                         help='Directory containing template mmCIF files')
+    parser.add_argument('--debug', action='store_true',
+                        help='Run in debug mode (test single protein)')
 
     args = parser.parse_args()
 
@@ -434,19 +390,20 @@ def main():
         data_dir=args.data_dir,
         config_preset=args.config_preset,
         device=args.device,
-        template_mmcif_dir=args.template_mmcif_dir
+        template_mmcif_dir=args.template_mmcif_dir,
+        debug=args.debug
     )
 
-    # Confirm before starting
-    print("⚠️  This will process ALL proteins in your splits (training + validation + testing)")
-    print("   This may take several hours depending on the number of proteins.")
+    if not generator.check_prerequisites():
+        print("❌ Prerequisites check failed. Please fix the issues above.")
+        sys.exit(1)
 
-    response = input("\nDo you want to continue? (y/N): ")
-    if response.lower() not in ['y', 'yes']:
-        print("Cancelled.")
-        sys.exit(0)
-
-    generator.run()
+    if args.debug:
+        # Run debug mode
+        generator.run_debug_single()
+    else:
+        print("Use --debug flag to test a single protein with full error output")
+        print("Example: python generate_evoformer_inputs.py --debug")
 
 
 if __name__ == '__main__':

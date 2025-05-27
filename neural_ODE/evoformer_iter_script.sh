@@ -6,8 +6,8 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
 
 # === Define variables based on project root ===
-PDB_ID="4d0f_A"
-DATA_DIR="${SCRIPT_DIR}/data/quick_inference_data/${PDB_ID}_evoformer_blocks/recycle_0"
+PDB_ID="1tpg_A"
+DATA_DIR="${SCRIPT_DIR}/data/training/blocks/${PDB_ID}_evoformer_blocks/recycle_0"
 OUTPUT_DIR="${DATA_DIR}"
 
 # Get path to python interpreter
