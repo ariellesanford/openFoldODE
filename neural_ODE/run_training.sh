@@ -7,8 +7,6 @@ set -e
 
 # Enable CPU-only mode (set to true even if CUDA is available)
 CPU_ONLY=false
-
-# Test only a specific protein (leave empty for all proteins, or set a specific name like "1fme_A")
 TEST_PROTEIN=""
 
 # Use fast ODE implementation

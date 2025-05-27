@@ -6,10 +6,32 @@ import time
 import argparse
 
 
+
+def find_params_file(config_preset, project_root):
+    """Find the parameters file in various possible locations"""
+    param_filename = f"params_{config_preset}.npz"
+
+    possible_locations = [
+        # In main openfold directory
+        os.path.join(project_root, "openfold", "resources", "params", param_filename),
+        # In evoformer_init directory
+        os.path.join(project_root, "evoformer_init", "openfold", "resources", "params", param_filename),
+        # In current directory
+        os.path.join(os.path.dirname(__file__), "openfold", "resources", "params", param_filename),
+    ]
+
+    for location in possible_locations:
+        if os.path.exists(location):
+            return location
+
+    # If not found, raise an error
+    raise FileNotFoundError(f"Could not find {param_filename} in any expected location. Searched: {possible_locations}")
+
+
 def run_single_evoformer_block(
-    m_path: str,
-    z_path: str,
-    config, device, openfold_checkpoint_path, jax_param_path, output_dir
+        m_path: str,
+        z_path: str,
+        config, device, openfold_checkpoint_path, jax_param_path, output_dir
 ):
     """
     Load M, Z, msa_mask, and pair_mask tensors from disk and run them through a single Evoformer block.
@@ -17,9 +39,11 @@ def run_single_evoformer_block(
     Args:
         m_path (str): Path to the MSA embedding tensor (.pt file)
         z_path (str): Path to the pairwise embedding tensor (.pt file)
-        checkpoint_path (str): Path to OpenFold checkpoint
-        config_preset (str): Config preset name from OpenFold
+        openfold_checkpoint_path (str): Path to OpenFold checkpoint
+        jax_param_path (str): Path to JAX parameters
+        config (str): Config preset name from OpenFold
         device (str): Device to run inference on
+        output_dir (str): Output directory
 
     Returns:
         m_out (torch.Tensor), z_out (torch.Tensor)
@@ -30,8 +54,10 @@ def run_single_evoformer_block(
     # Load tensors
     m = torch.load(m_path, map_location=device)
     z = torch.load(z_path, map_location=device)
-    idx = int(os.path.basename(args.m_path).split("_")[-1].split(".")[0])
-    print(idx)
+
+    # Extract block index from filename
+    idx = int(os.path.basename(m_path).split("_")[-1].split(".")[0])
+    print(f"Processing block index: {idx}")
 
     # Add dummy batch dimensions if needed
     if m.ndim == 3:
@@ -61,25 +87,17 @@ def run_single_evoformer_block(
 
     # Load model with pretrained weights
     config = model_config(config)
-    model_generator = load_models_from_command_line(config, device, openfold_checkpoint_path, jax_param_path, output_dir)
-    # model_generator = load_models_from_command_line(
-    #     config,
-    #     args.model_device,
-    #     args.openfold_checkpoint_path,
-    #     args.jax_param_path,
-    #     args.output_dir)
+    model_generator = load_models_from_command_line(config, device, openfold_checkpoint_path, jax_param_path,
+                                                    output_dir)
+
     model, _ = next(model_generator)
-    for model, output_dir in model_generator:
-        print(f"Model: {model}")
-        print(f"Output Directory: {output_dir}")
+    print(f"Model loaded successfully")
 
-    # Extract the first Evoformer block
+    # Extract the specified Evoformer block
+    if idx >= len(model.evoformer.blocks):
+        raise IndexError(f"Block index {idx} is out of range. Model has {len(model.evoformer.blocks)} blocks.")
+
     block = model.evoformer.blocks[idx]
-
-    # Debugging: Check parameter stats
-    print("[DEBUG] EvoformerBlock parameter statistics:")
-    for name, param in block.named_parameters():
-        print(f"{name}: mean={param.mean().item():.4f}, std={param.std().item():.4f}")
 
     # Run single block
     with torch.no_grad():
@@ -116,14 +134,14 @@ if __name__ == "__main__":
              is also None, parameters are selected automatically according to 
              the model name from openfold/resources/params"""
     )
-    args = parser.parse_args()
-    if args.jax_param_path is None and args.openfold_checkpoint_path is None:
-        args.jax_param_path = os.path.join(
-            "openfold", "resources", "params",
-            "params_" + args.config_preset + ".npz"
-        )
 
-    print(f"[DEBUG] Loading checkpoint from: {args.jax_param_path}")
+    args = parser.parse_args()
+
+    # Find project root and parameters file
+    project_root = os.path.dirname(os.path.abspath(__file__))
+
+    if args.jax_param_path is None and args.openfold_checkpoint_path is None:
+        args.jax_param_path = os.path.join(project_root, "openfold", "resources", "params", f"params_{args.config_preset}.npz")
 
     os.makedirs(args.output_dir, exist_ok=True)
 

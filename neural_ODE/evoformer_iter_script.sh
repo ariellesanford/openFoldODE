@@ -6,7 +6,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
 
 # === Define variables based on project root ===
-PDB_ID="1tpg_A"
+PDB_ID="2wwn_A"
 DATA_DIR="${SCRIPT_DIR}/data/training/blocks/${PDB_ID}_evoformer_blocks/recycle_0"
 OUTPUT_DIR="${DATA_DIR}"
 

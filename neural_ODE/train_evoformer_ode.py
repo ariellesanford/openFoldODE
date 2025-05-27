@@ -252,14 +252,23 @@ def load_initial_input(protein_id):
     m_init = torch.load(m_path, map_location=device)
     z_init = torch.load(z_path, map_location=device)
 
+    print(f"    📏 Raw loaded shapes: m={list(m_init.shape)}, z={list(z_init.shape)}")
+
     # Remove batch dimension if present
     if m_init.dim() == 4 and m_init.size(0) == 1:
         m_init = m_init.squeeze(0)
+        print(f"    📦 Removed batch dim: m={list(m_init.shape)}")
     if z_init.dim() == 4 and z_init.size(0) == 1:
         z_init = z_init.squeeze(0)
+        print(f"    📦 Removed batch dim: z={list(z_init.shape)}")
 
-    # Reduce cluster size
-    m_init = m_init[:args.reduced_cluster_size]
+    # Reduce cluster size (MSA sequences, not residue length!)
+    original_cluster_size = m_init.shape[0]
+    if original_cluster_size > args.reduced_cluster_size:
+        m_init = m_init[:args.reduced_cluster_size]
+        print(f"    ✂️  Reduced cluster size: {original_cluster_size} → {args.reduced_cluster_size}")
+
+    print(f"    📊 Final shapes: m={list(m_init.shape)}, z={list(z_init.shape)}")
 
     return m_init, z_init
 
@@ -294,10 +303,30 @@ def load_block(protein_id, block_index):
 
 
 def balanced_loss_fn(pred_m, target_m, pred_z, target_z, msa_weight=1.0, pair_weight=0.1):
-    """Balanced loss function"""
+    """Balanced loss function that handles size mismatches from truncation"""
+
+    # Handle size mismatches due to sequence length truncation
+    pred_seq_len = pred_m.shape[1]
+    target_seq_len = target_m.shape[1]
+
+    if pred_seq_len != target_seq_len:
+        print(f"        🔧 Size mismatch detected: pred={pred_seq_len}, target={target_seq_len}")
+
+        # Use the minimum length to avoid index errors
+        min_len = min(pred_seq_len, target_seq_len)
+
+        # Truncate both to the same size
+        pred_m = pred_m[:, :min_len, :]
+        target_m = target_m[:, :min_len, :]
+        pred_z = pred_z[:min_len, :min_len, :]
+        target_z = target_z[:min_len, :min_len, :]
+
+        print(f"        ✂️  Truncated both to {min_len} residues for loss computation")
+
     msa_loss = F.mse_loss(pred_m, target_m)
     pair_loss = F.mse_loss(pred_z, target_z)
     weighted_loss = msa_weight * msa_loss + pair_weight * pair_loss
+
     return weighted_loss, msa_loss.item(), pair_loss.item()
 
 
@@ -324,12 +353,15 @@ class EvoformerIterationManager:
         self.device = device
 
         # Find the evoformer iteration script
+        # evoformer_iter is at the same level as neural_ODE, not inside it
         possible_scripts = [
             # Try Python script first (more reliable)
-            self.project_root / "evoformer_iter" / "run_evoformer_iter.py",
-            self.project_root / "run_evoformer_iter.py",
+            self.project_root.parent / "evoformer_iter" / "run_evoformer_iter.py",  # Go up one level
+            self.project_root / "evoformer_iter" / "run_evoformer_iter.py",  # Current level (fallback)
+            self.project_root / "run_evoformer_iter.py",  # Direct in neural_ODE
             # Then shell script
-            self.project_root / "evoformer_iter_script.sh",
+            self.project_root.parent / "evoformer_iter_script.sh",  # Go up one level
+            self.project_root / "evoformer_iter_script.sh",  # Current level (fallback)
         ]
 
         self.iter_script = None
@@ -383,6 +415,17 @@ class EvoformerIterationManager:
         # Remove batch dimension if present
         if m.dim() == 4 and m.size(0) == 1:
             m = m.squeeze(0)
+        if z.dim() == 4 and z.size(0) == 1:
+            z = z.squeeze(0)
+
+        print(f"          📏 Loaded tensor shapes: m={list(m.shape)}, z={list(z.shape)}")
+
+        # Apply cluster size reduction (only to MSA dimension, not sequence length)
+        if m.shape[0] > args.reduced_cluster_size:
+            m = m[:args.reduced_cluster_size]
+            print(f"          ✂️  Reduced cluster size to {args.reduced_cluster_size}")
+
+        return m, z.squeeze(0)
         if z.dim() == 4 and z.size(0) == 1:
             z = z.squeeze(0)
 
@@ -510,6 +553,11 @@ def train_step(protein_id):
         with autocast(enabled=args.use_amp):
             clear_memory()
 
+            print(f"    🧮 Starting ODE integration with {len(t_grid)} time points...")
+
+            # Debug: Check shapes before ODE integration
+            print(f"    📏 Input to ODE: m={m_init.shape}, z={z_init.shape}")
+
             # Integrate Neural ODE across time points
             if args.reduced_precision_integration:
                 pred_trajectory = odeint(
@@ -519,6 +567,9 @@ def train_step(protein_id):
                 pred_trajectory = odeint(
                     ode_func, ode_state, t_grid, method=args.integrator
                 )
+
+            # Debug: Check shapes after ODE integration
+            print(f"    📏 Output from ODE: m={pred_trajectory[0].shape}, z={pred_trajectory[1].shape}")
 
             # Compare predictions with ground truth at multiple time points
             # FIXED: Start from timestep 0, generate timestep 1, 2, 3, etc. sequentially
@@ -534,6 +585,9 @@ def train_step(protein_id):
                     # Get ODE prediction at this time point
                     pred_m = pred_trajectory[0][i]
                     pred_z = pred_trajectory[1][i]
+
+                    print(f"        📏 Pred shapes: m={pred_m.shape}, z={pred_z.shape}")
+                    print(f"        📏 Target shapes: m={target_m.shape}, z={target_z.shape}")
 
                     # Compute loss for this time step
                     step_loss, msa_loss, pair_loss = balanced_loss_fn(pred_m, target_m, pred_z, target_z)
