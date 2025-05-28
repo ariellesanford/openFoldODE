@@ -19,12 +19,12 @@ CONFIGURATION TEST SUMMARY
 
 Name                      Status     Memory (MB)  Time (ms)    Loss      
 --------------------------------------------------------------------------------
-True Baseline (Original   SUCCESS    2257.59      3545.58      43.0084   
-AMP Only                  SUCCESS    1550.93      2575.12      43.0206   
-Checkpoint Only           SUCCESS    945.40       2697.60      43.0104   
-Memory Optimized Baselin  SUCCESS    900.65       2897.48      43.0890   
-Speed-Optimized           SUCCESS    382.99       2291.85      46.6143   
-Balanced Speed-Quality    SUCCESS    792.45       2812.49      43.0648   
+True Baseline (Original   SUCCESS    6989.94      2897.62      12.7103   
+AMP Only                  SUCCESS    6608.66      3766.54      16.5824   
+Checkpoint Only           SUCCESS    7321.61      3609.30      12.7115   
+Memory Optimized Baselin  SUCCESS    6920.46      3989.52      12.7702   
+Speed-Optimized           SUCCESS    2666.84      3752.11      17.1881   
+Balanced Speed-Quality    SUCCESS    7104.14      5114.01      12.7402   
 
 ============================================================
 BEST CONFIGURATIONS
@@ -32,27 +32,27 @@ BEST CONFIGURATIONS
 
 🏆 Best Memory Efficiency:
    Name: Speed-Optimized
-   Memory: 382.99 MB
-   Time: 2291.85 ms
-   Loss: 46.6143
+   Memory: 2666.84 MB
+   Time: 3752.11 ms
+   Loss: 17.1881
 
 🏆 Best Speed:
-   Name: Speed-Optimized
-   Memory: 382.99 MB
-   Time: 2291.85 ms
-   Loss: 46.6143
+   Name: True Baseline (Original values, no optimizations)
+   Memory: 6989.94 MB
+   Time: 2897.62 ms
+   Loss: 12.7103
 
 🏆 Best Loss Performance:
    Name: True Baseline (Original values, no optimizations)
-   Memory: 2257.59 MB
-   Time: 3545.58 ms
-   Loss: 43.0084
+   Memory: 6989.94 MB
+   Time: 2897.62 ms
+   Loss: 12.7103
 
 🏆 Best Balance (Memory + Speed):
    Name: Speed-Optimized
-   Memory: 382.99 MB
-   Time: 2291.85 ms
-   Loss: 46.6143
+   Memory: 2666.84 MB
+   Time: 3752.11 ms
+   Loss: 17.1881
 
 ============================================================
 
@@ -73,9 +73,9 @@ Configuration 1: True Baseline (Original values, no optimizations)
     enabled flags: monitor_memory, test-single-step
     disabled flags: use_amp, use_checkpoint, reduced_precision_integration, clean_memory, cpu-only
   Results:
-    Loss: 43.008442
-    Max Memory: 2257.59 MB
-    Time: 3545.58 ms
+    Loss: 12.710346
+    Max Memory: 6989.94 MB
+    Time: 2897.62 ms
 
 Configuration 2: AMP Only
   Status: SUCCESS
@@ -91,9 +91,9 @@ Configuration 2: AMP Only
     enabled flags: use_amp, monitor_memory, test-single-step
     disabled flags: use_checkpoint, reduced_precision_integration, clean_memory, cpu-only
   Results:
-    Loss: 43.020606
-    Max Memory: 1550.93 MB
-    Time: 2575.12 ms
+    Loss: 16.582402
+    Max Memory: 6608.66 MB
+    Time: 3766.54 ms
 
 Configuration 3: Checkpoint Only
   Status: SUCCESS
@@ -109,9 +109,9 @@ Configuration 3: Checkpoint Only
     enabled flags: use_checkpoint, monitor_memory, test-single-step
     disabled flags: use_amp, reduced_precision_integration, clean_memory, cpu-only
   Results:
-    Loss: 43.010372
-    Max Memory: 945.40 MB
-    Time: 2697.60 ms
+    Loss: 12.711507
+    Max Memory: 7321.61 MB
+    Time: 3609.30 ms
 
 Configuration 4: Memory Optimized Baseline
   Status: SUCCESS
@@ -127,9 +127,9 @@ Configuration 4: Memory Optimized Baseline
     enabled flags: use_amp, use_checkpoint, monitor_memory, test-single-step
     disabled flags: reduced_precision_integration, clean_memory, cpu-only
   Results:
-    Loss: 43.088970
-    Max Memory: 900.65 MB
-    Time: 2897.48 ms
+    Loss: 12.770223
+    Max Memory: 6920.46 MB
+    Time: 3989.52 ms
 
 Configuration 5: Speed-Optimized
   Status: SUCCESS
@@ -145,9 +145,9 @@ Configuration 5: Speed-Optimized
     enabled flags: use_amp, use_checkpoint, reduced_precision_integration, monitor_memory, test-single-step, use_fast_ode
     disabled flags: clean_memory, cpu-only
   Results:
-    Loss: 46.614300
-    Max Memory: 382.99 MB
-    Time: 2291.85 ms
+    Loss: 17.188050
+    Max Memory: 2666.84 MB
+    Time: 3752.11 ms
 
 Configuration 6: Balanced Speed-Quality
   Status: SUCCESS
@@ -163,9 +163,9 @@ Configuration 6: Balanced Speed-Quality
     enabled flags: use_amp, use_checkpoint, monitor_memory, test-single-step
     disabled flags: reduced_precision_integration, clean_memory, cpu-only
   Results:
-    Loss: 43.064781
-    Max Memory: 792.45 MB
-    Time: 2812.49 ms
+    Loss: 12.740166
+    Max Memory: 7104.14 MB
+    Time: 5114.01 ms
 
 ========================================
-Report generated at: 2025-05-22 15:48:23
+Report generated at: 2025-05-28 16:16:07

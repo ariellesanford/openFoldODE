@@ -2,18 +2,22 @@
 set -e
 
 # =======================================================================================
-# MEMORY-OPTIMIZED CONFIGURATION SETTINGS
+# CONFIGURATION SETTINGS - Modify these variables directly
 # =======================================================================================
 
-# Enable CPU-only mode (set to true if you want to force CPU even with CUDA available)
+# Enable CPU-only mode (set to true even if CUDA is available)
 CPU_ONLY=false
+
+# Test only a specific protein (leave empty for all proteins, or set a specific name like "1fme_A")
 TEST_PROTEIN=""
 
-# Use fast ODE implementation (recommended for memory efficiency)
+# Use fast ODE implementation
 USE_FAST_ODE=true
 
-# Training settings
+# Number of training epochs
 EPOCHS=25
+
+# Learning rate setting
 LEARNING_RATE=1e-3  # Start with 1e-5 for stability, can increase to 1e-4 or 1e-3 if stable
 
 # Memory optimizations (keep your existing settings)
@@ -41,7 +45,7 @@ REDUCED_PRECISION=true   # For stability
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 # === Define variables based on project root ===
-DATA_DIR="${SCRIPT_DIR}/mini_data"
+DATA_DIR="${SCRIPT_DIR}/data/quick_inference_data"
 OUTPUT_DIR="${SCRIPT_DIR}/outputs"
 
 # Create output directory if it doesn't exist
@@ -59,51 +63,20 @@ else
 fi
 
 # Print configuration settings
-# Print configuration settings
 echo "=== TRAINING CONFIGURATION ===" | tee "${OUTPUT_FILE}"
-echo "📁 Directories:" | tee -a "${OUTPUT_FILE}"
-echo "   Data directory: ${DATA_DIR}" | tee -a "${OUTPUT_FILE}"
-echo "   Output directory: ${OUTPUT_DIR}" | tee -a "${OUTPUT_FILE}"
-echo "   Python path: ${PYTHON_PATH}" | tee -a "${OUTPUT_FILE}"
-echo "" | tee -a "${OUTPUT_FILE}"
-echo "⚙️  Training settings:" | tee -a "${OUTPUT_FILE}"
-echo "   CPU-only mode: ${CPU_ONLY}" | tee -a "${OUTPUT_FILE}"
-echo "   Test protein: ${TEST_PROTEIN:-"All proteins"}" | tee -a "${OUTPUT_FILE}"
-echo "   Fast ODE: ${USE_FAST_ODE}" | tee -a "${OUTPUT_FILE}"
-echo "   Epochs: ${EPOCHS}" | tee -a "${OUTPUT_FILE}"
-echo "   Learning rate: ${LEARNING_RATE}" | tee -a "${OUTPUT_FILE}"
-echo "   Integrator: ${INTEGRATOR}" | tee -a "${OUTPUT_FILE}"
-echo "" | tee -a "${OUTPUT_FILE}"
-echo "🧠 Memory settings:" | tee -a "${OUTPUT_FILE}"
-echo "   Cluster size: ${REDUCED_CLUSTER_SIZE}" | tee -a "${OUTPUT_FILE}"
-echo "   Hidden dim: ${REDUCED_HIDDEN_DIM}" | tee -a "${OUTPUT_FILE}"
-echo "   Time points: ${NUM_TIME_POINTS}" | tee -a "${OUTPUT_FILE}"
-echo "   Memory cleaning: ${CLEAN_MEMORY}" | tee -a "${OUTPUT_FILE}"
-echo "   Mixed precision (AMP): ${USE_AMP}" | tee -a "${OUTPUT_FILE}"
-echo "   Checkpointing: ${USE_CHECKPOINT}" | tee -a "${OUTPUT_FILE}"
-echo "" | tee -a "${OUTPUT_FILE}"
-echo "🧹 File cleanup: ENABLED (auto-cleanup generated iteration files)" | tee -a "${OUTPUT_FILE}"
-echo "   Output will be saved to: ${OUTPUT_FILE}" | tee -a "${OUTPUT_FILE}"
+echo "Data directory: ${DATA_DIR}" | tee -a "${OUTPUT_FILE}"
+echo "Output directory: ${OUTPUT_DIR}" | tee -a "${OUTPUT_FILE}"
+echo "Python path: ${PYTHON_PATH}" | tee -a "${OUTPUT_FILE}"
+echo "CPU-only mode: ${CPU_ONLY}" | tee -a "${OUTPUT_FILE}"
+echo "Test protein: ${TEST_PROTEIN}" | tee -a "${OUTPUT_FILE}"
+echo "Fast ODE: ${USE_FAST_ODE}" | tee -a "${OUTPUT_FILE}"
+echo "Epochs: ${EPOCHS}" | tee -a "${OUTPUT_FILE}"
+echo "Learning rate: ${LEARNING_RATE}" | tee -a "${OUTPUT_FILE}"
+echo "Time points: ${NUM_TIME_POINTS}" | tee -a "${OUTPUT_FILE}"
+echo "Integrator: ${INTEGRATOR}" | tee -a "${OUTPUT_FILE}"
+echo "Output will be saved to: ${OUTPUT_FILE}" | tee -a "${OUTPUT_FILE}"
 echo "=============================" | tee -a "${OUTPUT_FILE}"
 echo "" | tee -a "${OUTPUT_FILE}"
-
-# Check available GPU memory before starting
-if [ "${CPU_ONLY}" = false ] && command -v nvidia-smi >/dev/null 2>&1; then
-    echo "🔍 GPU Memory Check:" | tee -a "${OUTPUT_FILE}"
-    nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits | while IFS=',' read -r used total; do
-        # Remove any whitespace
-        used=$(echo "$used" | tr -d ' ')
-        total=$(echo "$total" | tr -d ' ')
-        available=$((total - used))
-        echo "   Available GPU Memory: ${available} MB / ${total} MB" | tee -a "${OUTPUT_FILE}"
-        if [ "${available}" -lt 4000 ]; then
-            echo "   ⚠️  WARNING: Available GPU memory is ${available} MB" | tee -a "${OUTPUT_FILE}"
-            echo "   With your current settings (cluster_size=${REDUCED_CLUSTER_SIZE}, hidden_dim=${REDUCED_HIDDEN_DIM})," | tee -a "${OUTPUT_FILE}"
-            echo "   you may still encounter OOM errors. Monitor memory usage closely." | tee -a "${OUTPUT_FILE}"
-        fi
-    done
-    echo "" | tee -a "${OUTPUT_FILE}"
-fi
 
 # Build command with all options
 CMD="${PYTHON_PATH} ${SCRIPT_DIR}/train_evoformer_ode.py \
@@ -169,30 +142,8 @@ else
 fi
 
 # Print the final command
-echo "🚀 Running memory-optimized training command:" | tee -a "${OUTPUT_FILE}"
+echo "Running command:" | tee -a "${OUTPUT_FILE}"
 echo "${CMD}" | tee -a "${OUTPUT_FILE}"
-echo "" | tee -a "${OUTPUT_FILE}"
-
-# Check if we're using the optimized training script
-if [ ! -f "${SCRIPT_DIR}/train_evoformer_ode.py" ]; then
-    echo "❌ ERROR: train_evoformer_ode.py not found!" | tee -a "${OUTPUT_FILE}"
-    echo "Please make sure you've replaced the training script with the memory-optimized version." | tee -a "${OUTPUT_FILE}"
-    exit 1
-fi
-
-# Final memory warning and confirmation
-echo "🚀 Ready to start training with automatic file cleanup!" | tee -a "${OUTPUT_FILE}"
-echo "✅ Your settings will be used:" | tee -a "${OUTPUT_FILE}"
-echo "   - Cluster size: ${REDUCED_CLUSTER_SIZE} (your preferred setting)" | tee -a "${OUTPUT_FILE}"
-echo "   - Hidden dimensions: ${REDUCED_HIDDEN_DIM} (your preferred setting)" | tee -a "${OUTPUT_FILE}"
-echo "   - Time points: ${NUM_TIME_POINTS} (your preferred setting)" | tee -a "${OUTPUT_FILE}"
-echo "   - Checkpointing: ENABLED (your preferred setting)" | tee -a "${OUTPUT_FILE}"
-echo "   - Memory cleaning: DISABLED (your preferred setting)" | tee -a "${OUTPUT_FILE}"
-echo "" | tee -a "${OUTPUT_FILE}"
-echo "🧹 AUTOMATIC CLEANUP:" | tee -a "${OUTPUT_FILE}"
-echo "   - Generated iteration files will be automatically deleted during training" | tee -a "${OUTPUT_FILE}"
-echo "   - Only initial block_0 files will be kept" | tee -a "${OUTPUT_FILE}"
-echo "   - This saves disk space without affecting training quality" | tee -a "${OUTPUT_FILE}"
 echo "" | tee -a "${OUTPUT_FILE}"
 
 # Execute the command and save ALL output to file
@@ -202,20 +153,8 @@ echo "======================================" | tee -a "${OUTPUT_FILE}"
 # Run the command and capture ALL output
 eval "${CMD}" 2>&1 | tee -a "${OUTPUT_FILE}"
 
-# Capture the exit code
-EXIT_CODE=${PIPESTATUS[0]}
-
 # Add completion timestamp
 echo "" | tee -a "${OUTPUT_FILE}"
 echo "======================================" | tee -a "${OUTPUT_FILE}"
 echo "Training completed at: $(date)" | tee -a "${OUTPUT_FILE}"
-echo "Exit code: ${EXIT_CODE}" | tee -a "${OUTPUT_FILE}"
 echo "Full output saved to: ${OUTPUT_FILE}" | tee -a "${OUTPUT_FILE}"
-
-# Print final status
-if [ ${EXIT_CODE} -eq 0 ]; then
-    echo "✅ Training completed successfully!"
-else
-    echo "❌ Training failed with exit code ${EXIT_CODE}"
-    echo "Check the output file for details: ${OUTPUT_FILE}"
-fi
