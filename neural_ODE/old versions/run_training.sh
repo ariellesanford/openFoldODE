@@ -45,7 +45,7 @@ REDUCED_PRECISION=true   # For stability
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 # === Define variables based on project root ===
-DATA_DIR="${SCRIPT_DIR}/data/quick_inference_data"
+DATA_DIR="${SCRIPT_DIR}/data/complete_blocks"
 OUTPUT_DIR="${SCRIPT_DIR}/outputs"
 
 # Create output directory if it doesn't exist
