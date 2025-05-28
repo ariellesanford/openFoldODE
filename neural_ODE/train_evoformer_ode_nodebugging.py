@@ -143,19 +143,8 @@ def print_memory_stats(label=""):
         allocated = torch.cuda.memory_allocated() / 1024 ** 2
         reserved = torch.cuda.memory_reserved() / 1024 ** 2
         max_allocated = torch.cuda.max_memory_allocated() / 1024 ** 2
-
-        # Calculate available memory
-        total_memory = torch.cuda.get_device_properties(0).total_memory / 1024 ** 2
-        available = total_memory - allocated
-
         print(f"=== Memory Stats {label} ===")
-        print(f"Allocated: {allocated:.1f} MB, Reserved: {reserved:.1f} MB")
-        print(f"Available: {available:.1f} MB, Max Used: {max_allocated:.1f} MB")
-
-        # Warning if memory is getting low
-        if available < 2000:  # Less than 2GB available
-            print(f"⚠️  WARNING: Low GPU memory! Only {available:.1f} MB available")
-
+        print(f"Allocated: {allocated:.2f} MB, Reserved: {reserved:.2f} MB, Max: {max_allocated:.2f} MB")
     except Exception as e:
         print(f"Memory stats error: {e}")
 
@@ -442,7 +431,7 @@ class EvoformerIterationManager:
             self.cleanup_protein_files(protein_id, keep_blocks)
 
     def _run_evoformer_iter(self, m_path: Path, z_path: Path, output_dir: Path) -> bool:
-        """Run the evoformer iteration script with concise error reporting"""
+        """Run the evoformer iteration script"""
         try:
             if self.iter_script.suffix == '.sh':
                 cmd = [
@@ -469,48 +458,25 @@ class EvoformerIterationManager:
             else:
                 env['PYTHONPATH'] = str(self.project_root)
 
-            # Run with reduced timeout
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=300,  # 5 minutes
+                timeout=600,
                 cwd=str(self.project_root),
                 env=env
             )
 
-            # Check expected output files
-            current_idx = int(m_path.stem.split('_')[-1])
-            next_idx = current_idx + 1
-            m_next = output_dir / f"m_block_{next_idx}.pt"
-            z_next = output_dir / f"z_block_{next_idx}.pt"
+            if result.returncode == 0:
+                # Check if output files were actually created
+                m_next = output_dir / f"m_block_{int(m_path.stem.split('_')[-1]) + 1}.pt"
+                z_next = output_dir / f"z_block_{int(z_path.stem.split('_')[-1]) + 1}.pt"
+                return m_next.exists() and z_next.exists()
 
-            if result.returncode == 0 and m_next.exists() and z_next.exists():
-                return True
-            else:
-                # Concise error reporting
-                print(f"          ❌ Evoformer iteration failed:")
-                if result.returncode != 0:
-                    print(f"             Return code: {result.returncode}")
-                if not m_next.exists() or not z_next.exists():
-                    print(f"             Missing output files: {m_next.name}, {z_next.name}")
-
-                # Check for key error patterns
-                full_output = f"{result.stdout}\n{result.stderr}".lower()
-                if "cuda out of memory" in full_output or "out of memory" in full_output:
-                    print(f"             CAUSE: CUDA Out of Memory")
-                elif "file not found" in full_output:
-                    print(f"             CAUSE: File not found")
-                elif "module not found" in full_output or "import error" in full_output:
-                    print(f"             CAUSE: Import/module error")
-
-                return False
-
-        except subprocess.TimeoutExpired:
-            print(f"          ⏰ Evoformer iteration timed out (5 minutes)")
             return False
+
         except Exception as e:
-            print(f"          💥 Unexpected error: {str(e)[:100]}")
+            print(f"        ❌ Error running evoformer iteration: {e}")
             return False
 
 
@@ -534,7 +500,7 @@ def train_step_batch_efficient():
     print(f"  🧬 Batch training on {len(dataset)} proteins")
 
     # Load initial states for all proteins
-    print(f"    📥 Loading initial states...")
+    print(f"    📥 Loading initial states for all proteins...")
     protein_states = {}
     successful_proteins = []
 
@@ -543,6 +509,7 @@ def train_step_batch_efficient():
             m_init, z_init = load_initial_input(protein_id)
             protein_states[protein_id] = (m_init, z_init)
             successful_proteins.append(protein_id)
+            print(f"      ✅ {protein_id}: m={m_init.shape}, z={z_init.shape}")
         except Exception as e:
             print(f"      ❌ {protein_id}: Failed to load - {e}")
             continue
@@ -558,8 +525,8 @@ def train_step_batch_efficient():
 
     # Process each time step for all proteins together
     for time_step in range(1, args.num_time_points):
-        print(f"\n    🎯 Time step {time_step}/{args.num_time_points - 1}")
-        print_memory_stats(f"Before time step {time_step}")
+        print(
+            f"    🎯 Time step {time_step}/{args.num_time_points - 1} - Processing {len(successful_proteins)} proteins")
 
         try:
             clear_memory()
@@ -569,15 +536,10 @@ def train_step_batch_efficient():
 
             step_loss = torch.tensor(0.0, device=device)
             step_comparisons = 0
-            failed_proteins = []
 
-            # Process each protein at this time step WITH MEMORY CLEANUP
-            for i, protein_id in enumerate(successful_proteins):
+            # Process each protein at this time step
+            for protein_id in successful_proteins:
                 try:
-                    # Clear GPU memory between proteins to prevent accumulation
-                    if i > 0:
-                        clear_memory()
-
                     m_current, z_current = protein_states[protein_id]
 
                     with autocast(enabled=args.use_amp):
@@ -608,52 +570,48 @@ def train_step_batch_efficient():
                         # Update protein state for next time step
                         protein_states[protein_id] = (pred_m.detach().clone(), pred_z.detach().clone())
 
-                        print(f"      ✅ {protein_id}: Loss={protein_loss:.3f}")
+                        print(
+                            f"        📊 {protein_id}: Loss={protein_loss:.4f} (MSA={msa_loss:.4f}, Pair={pair_loss:.4f})")
 
                         # Clean up tensors immediately
                         del pred_trajectory, ode_state, pred_m, pred_z, target_m, target_z, protein_loss
-                        clear_memory()
 
                 except Exception as e:
-                    print(f"      ❌ {protein_id}: {str(e)[:50]}...")
-                    failed_proteins.append(protein_id)
-                    clear_memory()
+                    print(f"        ⚠️  {protein_id} failed at time step {time_step}: {e}")
+                    # Remove failed protein from further processing
+                    if protein_id in successful_proteins:
+                        successful_proteins.remove(protein_id)
                     continue
 
-            # Remove failed proteins from further processing
-            for protein_id in failed_proteins:
-                if protein_id in successful_proteins:
-                    successful_proteins.remove(protein_id)
-                if protein_id in protein_states:
-                    del protein_states[protein_id]
-
-            # Clean up generated files from PREVIOUS time step
-            if time_step > 1:
+            # FIXED: Clean up generated files from PREVIOUS time step (not current)
+            # At time step N, we can safely delete files from time step N-1
+            if time_step > 1:  # Don't delete anything on first time step
                 cleanup_time_step = time_step - 1
+                print(f"      🧹 Cleaning up time step {cleanup_time_step} files for all proteins...")
                 cleanup_count = iter_manager.cleanup_specific_timestep(cleanup_time_step)
-                if cleanup_count > 0:
-                    print(f"      🧹 Cleaned up {cleanup_count} files from time step {cleanup_time_step}")
+                print(f"      💾 Cleaned up time step {cleanup_time_step} files ({cleanup_count} files total)")
 
             if step_comparisons > 0:
                 avg_step_loss = step_loss / step_comparisons
                 total_loss += avg_step_loss
                 num_time_steps += 1
-                print(f"      📊 Average loss: {avg_step_loss:.3f} ({step_comparisons} proteins)")
+                print(f"      📊 Time step {time_step} average loss: {avg_step_loss:.4f} ({step_comparisons} proteins)")
 
-                print_memory_stats(f"After time step {time_step}")
-            else:
-                print(f"      ⚠️  No proteins completed time step {time_step}")
+            clear_memory()
 
         except Exception as e:
             print(f"      ❌ Time step {time_step} failed: {e}")
             continue
 
-    # Final cleanup - remove the last time step files
+    # FIXED: Clean up the final time step files after all processing is done
     final_cleanup_time_step = args.num_time_points - 1
     if final_cleanup_time_step > 0:
-        cleanup_count = iter_manager.cleanup_specific_timestep(final_cleanup_time_step)
-        if cleanup_count > 0:
-            print(f"    🧹 Final cleanup: removed {cleanup_count} files from time step {final_cleanup_time_step}")
+        print(f"    🧹 Final cleanup - removing time step {final_cleanup_time_step} files...")
+        for protein_id in successful_proteins:
+            try:
+                iter_manager.cleanup_protein_files(protein_id, keep_blocks=[0])
+            except Exception as e:
+                print(f"      ⚠️  Final cleanup failed for {protein_id}: {e}")
 
     # Clean up protein states
     del protein_states
@@ -662,7 +620,7 @@ def train_step_batch_efficient():
     # Calculate final average loss
     if num_time_steps > 0:
         final_loss = total_loss / num_time_steps
-        print(f"    📊 Final average loss: {final_loss:.4f} across {num_time_steps} time steps")
+        print(f"    📊 Final average loss across {num_time_steps} time steps: {final_loss:.4f}")
         return final_loss
     else:
         print(f"    ⚠️  No time steps completed successfully")

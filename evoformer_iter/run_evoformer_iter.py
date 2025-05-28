@@ -4,28 +4,7 @@ from openfold.config import model_config
 from openfold.utils.script_utils import load_models_from_command_line
 import time
 import argparse
-
-
-
-def find_params_file(config_preset, project_root):
-    """Find the parameters file in various possible locations"""
-    param_filename = f"params_{config_preset}.npz"
-
-    possible_locations = [
-        # In main openfold directory
-        os.path.join(project_root, "openfold", "resources", "params", param_filename),
-        # In evoformer_init directory
-        os.path.join(project_root, "evoformer_init", "openfold", "resources", "params", param_filename),
-        # In current directory
-        os.path.join(os.path.dirname(__file__), "openfold", "resources", "params", param_filename),
-    ]
-
-    for location in possible_locations:
-        if os.path.exists(location):
-            return location
-
-    # If not found, raise an error
-    raise FileNotFoundError(f"Could not find {param_filename} in any expected location. Searched: {possible_locations}")
+import gc
 
 
 def run_single_evoformer_block(
@@ -113,6 +92,24 @@ def run_single_evoformer_block(
             _mask_trans=True
         )
 
+    # ADDED: GPU Memory cleanup to prevent memory leaks
+    print(f"🧹 Cleaning up GPU memory...")
+
+    # Delete input tensors
+    del m, z, msa_mask, pair_mask
+
+    # Delete model components
+    del block, model
+    del model_generator  # This might still hold references
+
+    # Force garbage collection and GPU cleanup
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+
+    print(f"✅ GPU memory cleanup completed")
+
     return m_out, z_out
 
 
@@ -137,11 +134,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Find project root and parameters file
+    # Find project root and parameters file (original logic)
     project_root = os.path.dirname(os.path.abspath(__file__))
 
     if args.jax_param_path is None and args.openfold_checkpoint_path is None:
-        args.jax_param_path = os.path.join(project_root, "openfold", "resources", "params", f"params_{args.config_preset}.npz")
+        args.jax_param_path = os.path.join(project_root, "openfold", "resources", "params",
+                                           f"params_{args.config_preset}.npz")
 
     os.makedirs(args.output_dir, exist_ok=True)
 
@@ -167,7 +165,16 @@ if __name__ == "__main__":
     torch.save(m_out, m_out_path)
     torch.save(z_out, z_out_path)
 
+    # ADDED: Final cleanup of output tensors
+    print(f"🧹 Final cleanup of output tensors...")
+    del m_out, z_out
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+
     end_time = time.time()
     print(f"✅ Saved m_out to {m_out_path}")
     print(f"✅ Saved z_out to {z_out_path}")
     print(f"⏱️ Time taken: {end_time - start_time:.2f} seconds")
+    print(f"💾 GPU memory fully cleaned up")
