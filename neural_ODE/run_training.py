@@ -321,14 +321,14 @@ if __name__ == "__main__":
             'cpu_only': False,
             'test_protein': '',  # Leave empty to test all proteins
             'use_fast_ode': True,
-            'epochs': 25,
-            'learning_rate': 1e-3,  # Start with 1e-5 for stability, can increase to 1e-4 or 1e-3 if stable
+            'epochs': 5,
+            'learning_rate': 1e-5,  # Start with 1e-5 for stability, can increase to 1e-4 or 1e-3 if stable
             'memory_split_size': 128,
-            'reduced_cluster_size': 32,  # Start small for stability
-            'reduced_hidden_dim': 32,  # Start small for stability
-            'num_time_points': 48,  # Start small for stability
+            'reduced_cluster_size': 64,  # Start small for stability
+            'reduced_hidden_dim': 64,  # Start small for stability
+            'num_time_points': 49,  # Start small for stability
             'batch_size': 1,
-            'integrator': 'euler',  # Most stable
+            'integrator': 'rk4',  # Most stable
             'gradient_accumulation': 1,
             'chunk_size': 0,
             'use_amp': True,
