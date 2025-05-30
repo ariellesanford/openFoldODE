@@ -14,7 +14,7 @@ class TrainingLogger:
     def __init__(self, output_dir: str, experiment_name: str = None):
         self.output_dir = output_dir
         self.experiment_name = experiment_name or f"training_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        self.log_file = os.path.join(output_dir, f"{self.experiment_name}_training_report.txt")
+        self.log_file = os.path.join(output_dir, f"{self.experiment_name}")
 
         # Training data storage
         self.config = {}
