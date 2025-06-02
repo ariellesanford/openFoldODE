@@ -8,16 +8,15 @@ from typing import Dict, List, Any
 
 class TrainingLogger:
     """
-    Enhanced logger that captures both structured metrics AND console output
+    Simplified logger - only saves one log file with both structured data and console output
     """
 
     def __init__(self, output_dir: str, experiment_name: str = None):
         self.output_dir = output_dir
         self.experiment_name = experiment_name or f"training_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-        # Two output files
+        # Only one output file
         self.log_file = os.path.join(output_dir, f"{self.experiment_name}.txt")
-        self.console_file = os.path.join(output_dir, f"{self.experiment_name}_console.txt")
 
         # Training data storage
         self.config = {}
@@ -26,50 +25,11 @@ class TrainingLogger:
         self.protein_results = {}
         self.epoch_summaries = []
 
-        # Console capture
-        self.original_stdout = sys.stdout
-        self.console_buffer = []
-
         # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
 
-        # Initialize files
+        # Initialize file
         self._write_header()
-        self._start_console_capture()
-
-    def _start_console_capture(self):
-        """Start capturing console output"""
-        self.console_file_handle = open(self.console_file, 'w')
-        self.console_file_handle.write(f"CONSOLE OUTPUT - {self.experiment_name}\n")
-        self.console_file_handle.write("=" * 50 + "\n")
-        self.console_file_handle.write(f"Started: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-
-        # Create a custom stdout that writes to both console and file
-        class TeeOutput:
-            def __init__(self, original_stdout, file_handle):
-                self.original_stdout = original_stdout
-                self.file_handle = file_handle
-
-            def write(self, text):
-                self.original_stdout.write(text)
-                self.file_handle.write(text)
-                self.file_handle.flush()
-
-            def flush(self):
-                self.original_stdout.flush()
-                self.file_handle.flush()
-
-        sys.stdout = TeeOutput(self.original_stdout, self.console_file_handle)
-
-    def close(self):
-        """Stop console capture and close files"""
-        if hasattr(self, 'console_file_handle'):
-            self.console_file_handle.write(
-                f"\nConsole capture ended: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            self.console_file_handle.close()
-
-        # Restore original stdout
-        sys.stdout = self.original_stdout
 
     def log_configuration(self, args, model_info: Dict, optimizer_info: Dict):
         """Log all configuration parameters"""
@@ -174,7 +134,10 @@ class TrainingLogger:
         self.training_complete_time = datetime.datetime.now()
         self.final_model_path = final_model_path
         self._write_final_report()
-        self.close()  # Stop console capture
+
+    def close(self):
+        """Close logger"""
+        pass
 
     def _write_header(self):
         """Write the initial header to the log file"""
@@ -182,8 +145,7 @@ class TrainingLogger:
             f.write("EVOFORMER NEURAL ODE TRAINING REPORT\n")
             f.write("=" * 50 + "\n\n")
             f.write(f"Experiment: {self.experiment_name}\n")
-            f.write(f"Started: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"Console output: {self.console_file}\n\n")
+            f.write(f"Started: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
     def _update_log_file(self):
         """Update the log file with current progress"""
@@ -204,7 +166,6 @@ class TrainingLogger:
         # Experiment info
         f.write(f"Experiment: {self.experiment_name}\n")
         f.write(f"Started: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write(f"Console output: {self.console_file}\n")
         if final and hasattr(self, 'training_complete_time'):
             f.write(f"Completed: {self.training_complete_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write("\n")

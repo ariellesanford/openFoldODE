@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple runner - relies on TrainingLogger for all output
+Fixed simple runner - captures subprocess output properly
 """
 
 import os
@@ -14,7 +14,7 @@ from datetime import datetime
 def main():
     # Get script directory and set up paths
     script_dir = Path(__file__).parent
-    data_dir = script_dir / "data" / "complete_blocks"
+    data_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
     output_dir = script_dir / "outputs"
     training_script = script_dir / "improved_train_evoformer_ode.py"
 
@@ -31,13 +31,13 @@ def main():
     output_dir.mkdir(exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    experiment_name = f"neural_ode_training_{timestamp}"
+    experiment_name = f"training_output_{timestamp}"
 
     # Configuration
     config = {
         'data_dir': str(data_dir),
         'device': 'cuda' if torch.cuda.is_available() else 'cpu',
-        'epochs': 14,
+        'epochs': 20,
         'learning_rate': 1e-3,
         'reduced_cluster_size': 32,
         'hidden_dim': 64,
@@ -45,8 +45,8 @@ def main():
         'use_fast_ode': True,
         'use_amp': torch.cuda.is_available(),
         'output_dir': str(output_dir),
-        'experiment_name': experiment_name,  # TrainingLogger will use this
-        'batch_size': 2,
+        'experiment_name': experiment_name,
+        'batch_size': 20,
         'max_residues': 200,
     }
 
@@ -89,22 +89,52 @@ def main():
     print(f"📁 Data: {config['data_dir']}")
     print(f"💻 Device: {config['device']}")
     print(f"🔧 Config: LR={config['learning_rate']}, Epochs={config['epochs']}")
-    print(f"📊 Detailed report will be saved to: {output_dir}/{experiment_name}")
+    print(f"📊 Reports will be saved to: {output_dir}/{experiment_name}")
     print("=" * 50)
 
-    # Run training - let TrainingLogger handle all the detailed logging
-    try:
-        result = subprocess.run(cmd, cwd=script_dir)
+    # FIXED: Stream output in real-time to console, save to file at end
+    console_output_file = output_dir / f"{experiment_name}_console_output.txt"
 
-        # Print where to find the report
+    try:
+        # Start the process with streaming output
+        process = subprocess.Popen(
+            cmd,
+            cwd=script_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,  # Line buffered
+            universal_newlines=True
+        )
+
+        # Collect output while streaming to console
+        output_lines = []
+        for line in process.stdout:
+            print(line, end='')  # Print to console immediately
+            output_lines.append(line)  # Collect for file
+
+        # Wait for process to complete
+        result_code = process.wait()
+
+        # Write collected output to file
+        with open(console_output_file, 'w') as f:
+            f.writelines(output_lines)
+
         print("\n" + "=" * 50)
-        if result.returncode == 0:
+        if result_code == 0:
             print("✅ Training completed successfully!")
             print(f"📊 Detailed training report: {output_dir}/{experiment_name}")
+            print(f"📄 Console output: {console_output_file}")
         else:
             print("❌ Training failed!")
+            print(f"📄 Check console output: {console_output_file}")
 
-        return result.returncode
+        # List all files created
+        print(f"\n📁 Files created in {output_dir}:")
+        for file in sorted(output_dir.glob(f"{experiment_name}*")):
+            print(f"  - {file.name}")
+
+        return result_code
 
     except KeyboardInterrupt:
         print("\n⏹️  Training interrupted by user")
@@ -115,14 +145,14 @@ def main():
 
 
 if __name__ == "__main__":
-    print("Neural ODE Training Runner")
+    print("Neural ODE Training Runner (Fixed)")
     print("Usage:")
-    print("  python simple_runner.py           # Batched approach (default)")
-    print("  python simple_runner.py --stride  # Strided approach")
-    print("  python simple_runner.py --test    # Test on single protein")
-    print("  python simple_runner.py cpu       # Force CPU")
+    print("  python fixed_simple_runner.py           # Batched approach (default)")
+    print("  python fixed_simple_runner.py --stride  # Strided approach")
+    print("  python fixed_simple_runner.py --test    # Test on single protein")
+    print("  python fixed_simple_runner.py cpu       # Force CPU")
     print("")
-    print("📊 Detailed training reports with metrics are saved by TrainingLogger")
+    print("📊 This version properly captures subprocess output")
     print("")
 
     sys.exit(main())
