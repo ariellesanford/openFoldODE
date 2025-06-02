@@ -9,6 +9,7 @@ from typing import Dict, List, Any
 class TrainingLogger:
     """
     Simplified logger - only saves one log file with both structured data and console output
+    Updated to handle train/validation splits properly
     """
 
     def __init__(self, output_dir: str, experiment_name: str = None):
@@ -35,6 +36,8 @@ class TrainingLogger:
         """Log all configuration parameters"""
         self.config = {
             'data_dir': getattr(args, 'data_dir', 'N/A'),
+            'splits_dir': getattr(args, 'splits_dir', 'N/A'),
+            'mode': getattr(args, 'mode', 'N/A'),
             'output_dir': getattr(args, 'output_dir', 'N/A'),
             'use_fast_ode': getattr(args, 'use_fast_ode', False),
             'reduced_cluster_size': getattr(args, 'reduced_cluster_size', 'N/A'),
@@ -49,6 +52,8 @@ class TrainingLogger:
             'use_amp': getattr(args, 'use_amp', False),
             'max_residues': getattr(args, 'max_residues', 'N/A'),
             'loss_function': model_info.get('loss_function', 'Adaptive MSE'),
+            'train_proteins': model_info.get('train_proteins', 'N/A'),
+            'val_proteins': model_info.get('val_proteins', 'N/A'),
         }
 
         self.system_info = {
@@ -73,7 +78,8 @@ class TrainingLogger:
             'start_time': datetime.datetime.now(),
             'protein_results': {},
             'total_loss': 0,
-            'memory_stats': {}
+            'memory_stats': {},
+            'validation': None
         }
 
     def log_protein_step(self, protein_id: str, step_idx: int, loss: float,
@@ -106,11 +112,15 @@ class TrainingLogger:
         self.current_epoch['protein_results'][protein_id] = protein_result
         self.current_epoch['total_loss'] += loss
 
-    def log_epoch_end(self):
+    def log_epoch_end(self, val_results: Dict = None):
         """Log the end of an epoch and compute summaries"""
         self.current_epoch['end_time'] = datetime.datetime.now()
         self.current_epoch['duration'] = (
                 self.current_epoch['end_time'] - self.current_epoch['start_time']).total_seconds()
+
+        # Store validation results
+        if val_results:
+            self.current_epoch['validation'] = val_results
 
         # Compute average loss
         num_proteins = len(self.current_epoch['protein_results'])
@@ -190,24 +200,29 @@ class TrainingLogger:
             f.write("=" * 50 + "\n\n")
 
             # Summary table
-            f.write(f"{'Epoch':<8} {'Avg Loss':<12} {'Best Loss':<12} {'Worst Loss':<12} {'Duration (s)':<12}\n")
-            f.write("-" * 60 + "\n")
+            f.write(
+                f"{'Epoch':<8} {'Train Loss':<12} {'Val Loss':<12} {'Best Loss':<12} {'Worst Loss':<12} {'Duration (s)':<12}\n")
+            f.write("-" * 80 + "\n")
 
             for epoch_data in self.epoch_summaries:
                 epoch = epoch_data['epoch']
-                avg_loss = epoch_data['average_loss']
+                train_loss = epoch_data['average_loss']
+                val_loss = epoch_data.get('validation', {}).get('avg_loss', 'N/A')
                 best_loss = epoch_data.get('best_protein', {}).get('loss', 'N/A')
                 worst_loss = epoch_data.get('worst_protein', {}).get('loss', 'N/A')
                 duration = epoch_data['duration']
 
+                if isinstance(val_loss, (int, float)):
+                    val_loss = f"{val_loss:.2f}"
                 if isinstance(best_loss, (int, float)):
                     best_loss = f"{best_loss:.2f}"
                 if isinstance(worst_loss, (int, float)):
                     worst_loss = f"{worst_loss:.2f}"
 
-                f.write(f"{epoch:<8} {avg_loss:<12.2f} {best_loss:<12} {worst_loss:<12} {duration:<12.1f}\n")
+                f.write(
+                    f"{epoch:<8} {train_loss:<12.2f} {val_loss:<12} {best_loss:<12} {worst_loss:<12} {duration:<12.1f}\n")
 
-            f.write("-" * 60 + "\n\n")
+            f.write("-" * 80 + "\n\n")
 
             # Performance analysis
             if len(self.epoch_summaries) > 0:
@@ -216,11 +231,31 @@ class TrainingLogger:
 
                 f.write("PERFORMANCE ANALYSIS\n")
                 f.write("-" * 30 + "\n")
-                f.write(f"Best Epoch: {best_epoch['epoch']} (Loss: {best_epoch['average_loss']:.2f})\n")
-                f.write(f"Worst Epoch: {worst_epoch['epoch']} (Loss: {worst_epoch['average_loss']:.2f})\n")
+                f.write(f"Best Training Epoch: {best_epoch['epoch']} (Loss: {best_epoch['average_loss']:.2f})\n")
+                f.write(f"Worst Training Epoch: {worst_epoch['epoch']} (Loss: {worst_epoch['average_loss']:.2f})\n")
                 if worst_epoch['average_loss'] > 0:
                     improvement = worst_epoch['average_loss'] / best_epoch['average_loss']
-                    f.write(f"Improvement: {improvement:.1f}x better from worst to best\n")
+                    f.write(f"Training Improvement: {improvement:.1f}x better from worst to best\n")
+
+                # Validation analysis if available
+                val_epochs = [e for e in self.epoch_summaries if 'validation' in e and e['validation']]
+                if val_epochs:
+                    best_val_epoch = min(val_epochs, key=lambda x: x['validation']['avg_loss'])
+                    worst_val_epoch = max(val_epochs, key=lambda x: x['validation']['avg_loss'])
+                    f.write(
+                        f"Best Validation Epoch: {best_val_epoch['epoch']} (Loss: {best_val_epoch['validation']['avg_loss']:.2f})\n")
+                    f.write(
+                        f"Worst Validation Epoch: {worst_val_epoch['epoch']} (Loss: {worst_val_epoch['validation']['avg_loss']:.2f})\n")
+
+                    # Check for overfitting
+                    final_epoch = self.epoch_summaries[-1]
+                    if 'validation' in final_epoch and final_epoch['validation']:
+                        train_loss = final_epoch['average_loss']
+                        val_loss = final_epoch['validation']['avg_loss']
+                        if val_loss > train_loss * 1.2:  # 20% worse validation
+                            f.write(
+                                f"⚠️  Potential overfitting detected: Val loss ({val_loss:.2f}) >> Train loss ({train_loss:.2f})\n")
+
                 f.write("\n")
 
         # Detailed results for each epoch
@@ -230,17 +265,38 @@ class TrainingLogger:
         for epoch_data in self.epoch_summaries:
             f.write(f"Epoch {epoch_data['epoch']}:\n")
             f.write(f"  Duration: {epoch_data['duration']:.1f} seconds\n")
-            f.write(f"  Average Loss: {epoch_data['average_loss']:.4f}\n")
+            f.write(f"  Training Loss: {epoch_data['average_loss']:.4f}\n")
+
+            if 'validation' in epoch_data and epoch_data['validation']:
+                val = epoch_data['validation']
+                f.write(f"  Validation Loss: {val['avg_loss']:.4f} ({val['num_proteins']} proteins)\n")
+                if 'min_loss' in val and 'max_loss' in val:
+                    f.write(f"    Val range: [{val['min_loss']:.4f}, {val['max_loss']:.4f}]\n")
 
             if 'best_protein' in epoch_data:
                 f.write(f"  Best: {epoch_data['best_protein']['id']} ({epoch_data['best_protein']['loss']:.2f})\n")
                 f.write(f"  Worst: {epoch_data['worst_protein']['id']} ({epoch_data['worst_protein']['loss']:.2f})\n")
 
-            f.write(f"  Proteins:\n")
+            f.write(f"  Training Proteins:\n")
             for protein_id, result in epoch_data['protein_results'].items():
-                f.write(
-                    f"    {protein_id}: {result['total_loss']:.2f} ({result['approach']}, {result['num_blocks']} blocks)\n")
+                approach_info = f"{result['approach']}"
+                if result['approach'] == 'batched' and 'batch_size' in result:
+                    approach_info += f" (batch_size={result['batch_size']})"
+                elif result['approach'] == 'strided' and 'stride' in result:
+                    approach_info += f" (stride={result['stride']})"
 
+                f.write(
+                    f"    {protein_id}: {result['total_loss']:.2f} ({approach_info}, {result['num_blocks']} blocks)\n")
+
+            f.write("\n")
+
+        # Final model information
+        if final and hasattr(self, 'final_model_path') and self.final_model_path:
+            f.write("FINAL MODEL\n")
+            f.write("-" * 30 + "\n")
+            f.write(f"Model saved to: {self.final_model_path}\n")
+            f.write(f"Total parameters: {self.config.get('model_parameters', 'N/A')}\n")
+            f.write(f"Model type: {self.config.get('model_type', 'N/A')}\n")
             f.write("\n")
 
         f.write("=" * 50 + "\n")

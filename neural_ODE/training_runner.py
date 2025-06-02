@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Fixed simple runner - captures subprocess output properly
+Updated for proper train/validation splits
 """
 
 import os
@@ -15,6 +16,7 @@ def main():
     # Get script directory and set up paths
     script_dir = Path(__file__).parent
     data_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
+    splits_dir = script_dir / "data_splits" / "mini"
     output_dir = script_dir / "outputs"
     training_script = script_dir / "train_evoformer_ode.py"
 
@@ -27,6 +29,10 @@ def main():
         print(f"❌ Training script not found: {training_script}")
         return 1
 
+    if not splits_dir.exists():
+        print(f"❌ Data splits directory not found: {splits_dir}")
+        return 1
+
     # Create output directory
     output_dir.mkdir(exist_ok=True)
 
@@ -36,6 +42,7 @@ def main():
     # Configuration
     config = {
         'data_dir': str(data_dir),
+        'splits_dir': str(splits_dir),
         'device': 'cuda' if torch.cuda.is_available() else 'cpu',
         'epochs': 20,
         'learning_rate': 1e-3,
@@ -46,7 +53,7 @@ def main():
         'use_amp': torch.cuda.is_available(),
         'output_dir': str(output_dir),
         'experiment_name': experiment_name,
-        'batch_size': 20,
+        'batch_size': 10,
         'max_residues': 200,
     }
 
@@ -67,7 +74,14 @@ def main():
         if 'batch_size' in config:
             del config['batch_size']
 
+    # Add mode handling
     if '--test' in sys.argv:
+        config['mode'] = 'testing'
+    else:
+        config['mode'] = 'training'  # default - includes validation
+
+    if '--test' in sys.argv:
+        # Find available proteins to test with
         proteins = []
         for item in data_dir.iterdir():
             if item.is_dir() and item.name.endswith('_evoformer_blocks'):
@@ -75,6 +89,7 @@ def main():
                 proteins.append(protein_id)
         if proteins:
             config['test_single_protein'] = proteins[0]
+            config['mode'] = 'single_test'
 
     # Build command
     cmd = [sys.executable, str(training_script)]
@@ -87,6 +102,8 @@ def main():
 
     print("🚀 Starting Neural ODE Training")
     print(f"📁 Data: {config['data_dir']}")
+    print(f"📂 Splits: {config['splits_dir']}")
+    print(f"🎯 Mode: {config['mode']}")
     print(f"💻 Device: {config['device']}")
     print(f"🔧 Config: LR={config['learning_rate']}, Epochs={config['epochs']}")
     print(f"📊 Reports will be saved to: {output_dir}/{experiment_name}")
@@ -125,6 +142,19 @@ def main():
             print("✅ Training completed successfully!")
             print(f"📊 Detailed training report: {output_dir}/{experiment_name}")
             print(f"📄 Console output: {console_output_file}")
+
+            # Show validation results if available
+            training_log = output_dir / f"{experiment_name}.txt"
+            if training_log.exists():
+                print(f"📈 Training log: {training_log}")
+                # Try to extract final validation loss from log
+                try:
+                    with open(training_log, 'r') as f:
+                        content = f.read()
+                        if 'Validation Loss:' in content:
+                            print("🔍 Training included validation - check log for train/val curves")
+                except:
+                    pass
         else:
             print("❌ Training failed!")
             print(f"📄 Check console output: {console_output_file}")
@@ -132,7 +162,13 @@ def main():
         # List all files created
         print(f"\n📁 Files created in {output_dir}:")
         for file in sorted(output_dir.glob(f"{experiment_name}*")):
-            print(f"  - {file.name}")
+            size_mb = file.stat().st_size / 1024 / 1024
+            if file.suffix == '.pt':
+                print(f"  - {file.name} ({size_mb:.1f} MB) [Model checkpoint]")
+            elif file.suffix == '.txt':
+                print(f"  - {file.name} ({size_mb:.1f} MB) [Training log/Console output]")
+            else:
+                print(f"  - {file.name} ({size_mb:.1f} MB)")
 
         return result_code
 
@@ -147,12 +183,13 @@ def main():
 if __name__ == "__main__":
     print("Neural ODE Training Runner (Fixed)")
     print("Usage:")
-    print("  python fixed_simple_runner.py           # Batched approach (default)")
-    print("  python fixed_simple_runner.py --stride  # Strided approach")
-    print("  python fixed_simple_runner.py --test    # Test on single protein")
-    print("  python fixed_simple_runner.py cpu       # Force CPU")
+    print("  python training_runner.py                # Training mode with validation")
+    print("  python training_runner.py --test         # Testing mode")
+    print("  python training_runner.py --batch        # Batched approach")
+    print("  python training_runner.py --stride       # Strided approach")
+    print("  python training_runner.py cpu            # Force CPU")
     print("")
-    print("📊 This version properly captures subprocess output")
+    print("📊 Training mode automatically includes validation after each epoch")
     print("")
 
     sys.exit(main())

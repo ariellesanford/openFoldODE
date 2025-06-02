@@ -4,6 +4,7 @@
 Simplified and more effective Neural ODE training for Evoformer
 Fixes the key issues: learning signal, loss normalization, and training stability
 FIXED: Proper TrainingLogger usage throughout
+UPDATED: Proper train/validation splits with validation during training
 """
 
 import os
@@ -33,16 +34,121 @@ def clear_memory(device: str):
         torch.cuda.empty_cache()
 
 
-def get_dataset(data_dir: str) -> List[str]:
-    """Get list of available protein IDs"""
-    datasets = []
-    for name in os.listdir(data_dir):
-        full_path = os.path.join(data_dir, name)
-        if (os.path.isdir(full_path) and name.endswith('_evoformer_blocks') and
-                os.path.isdir(os.path.join(full_path, 'recycle_0'))):
-            protein_id = name.replace('_evoformer_blocks', '')
-            datasets.append(protein_id)
-    return sorted(datasets)
+def load_split_proteins(splits_dir: str, mode: str) -> List[str]:
+    """Load protein IDs from the appropriate split file"""
+    split_files = {
+        'training': 'training_chains.txt',
+        'validation': 'validation_chains.txt',
+        'testing': 'testing_chains.txt'
+    }
+
+    if mode not in split_files:
+        raise ValueError(f"Invalid mode: {mode}. Must be one of {list(split_files.keys())}")
+
+    split_file = os.path.join(splits_dir, split_files[mode])
+
+    if not os.path.exists(split_file):
+        raise FileNotFoundError(f"Split file not found: {split_file}")
+
+    proteins = []
+    with open(split_file, 'r') as f:
+        for line in f:
+            protein_id = line.strip()
+            if protein_id:  # Skip empty lines
+                proteins.append(protein_id)
+
+    return proteins
+
+
+def get_available_proteins(data_dir: str, splits_dir: str, mode: str) -> List[str]:
+    """Get list of available protein IDs for the specified mode"""
+    # Load proteins from split file
+    split_proteins = load_split_proteins(splits_dir, mode)
+
+    # Check which ones actually exist in data_dir
+    available_proteins = []
+    for protein_id in split_proteins:
+        protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+        if os.path.isdir(protein_dir):
+            available_proteins.append(protein_id)
+
+    return available_proteins
+
+
+def get_train_val_datasets(data_dir: str, splits_dir: str) -> Tuple[List[str], List[str]]:
+    """Get training and validation datasets"""
+    train_proteins = get_available_proteins(data_dir, splits_dir, 'training')
+    val_proteins = get_available_proteins(data_dir, splits_dir, 'validation')
+    return train_proteins, val_proteins
+
+
+def filter_proteins_by_size(proteins: List[str], data_dir: str, max_residues: int = None) -> Tuple[
+    List[str], List[str]]:
+    """Filter proteins by residue count, return (valid_proteins, oversized_proteins)"""
+    if max_residues is None:
+        return proteins, []
+
+    valid_proteins = []
+    oversized_proteins = []
+
+    print(f"🔍 Filtering {len(proteins)} proteins by size limit ({max_residues} residues)...")
+
+    for protein_id in proteins:
+        try:
+            protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+            m_path = os.path.join(protein_dir, "m_block_0.pt")
+
+            if os.path.exists(m_path):
+                m_test = torch.load(m_path, map_location='cpu')
+                num_residues = m_test.shape[-2] if m_test.dim() == 4 else m_test.shape[-2]
+                del m_test  # Free memory immediately
+
+                if num_residues <= max_residues:
+                    valid_proteins.append(protein_id)
+                else:
+                    oversized_proteins.append((protein_id, num_residues))
+            else:
+                # If we can't load the file, skip it
+                oversized_proteins.append((protein_id, "unknown"))
+
+        except Exception as e:
+            # If there's any error checking size, skip the protein
+            oversized_proteins.append((protein_id, f"error: {e}"))
+
+    print(f"  ✅ Valid proteins: {len(valid_proteins)}")
+    print(f"  ⏭️  Oversized proteins: {len(oversized_proteins)}")
+
+    if oversized_proteins and len(oversized_proteins) <= 10:
+        # Show details if not too many
+        print(f"  📊 Oversized proteins:")
+        for protein_id, size in oversized_proteins:
+            if isinstance(size, int):
+                print(f"    - {protein_id}: {size} residues")
+            else:
+                print(f"    - {protein_id}: {size}")
+    elif oversized_proteins:
+        print(f"  📊 Oversized proteins (showing first 5):")
+        for protein_id, size in oversized_proteins[:5]:
+            if isinstance(size, int):
+                print(f"    - {protein_id}: {size} residues")
+            else:
+                print(f"    - {protein_id}: {size}")
+        print(f"    ... and {len(oversized_proteins) - 5} more")
+
+    return valid_proteins, [p[0] for p in oversized_proteins]
+    """Get list of available protein IDs based on mode and splits"""
+    if splits_dir and mode in ['training', 'validation', 'testing']:
+        return get_available_proteins(data_dir, splits_dir, mode)
+    else:
+        # Fallback to old behavior - scan all directories
+        datasets = []
+        for name in os.listdir(data_dir):
+            full_path = os.path.join(data_dir, name)
+            if (os.path.isdir(full_path) and name.endswith('_evoformer_blocks') and
+                    os.path.isdir(os.path.join(full_path, 'recycle_0'))):
+                protein_id = name.replace('_evoformer_blocks', '')
+                datasets.append(protein_id)
+        return sorted(datasets)
 
 
 def load_protein_block(protein_id: str, block_idx: int, data_dir: str,
@@ -307,11 +413,221 @@ def train_single_protein_strided(protein_id: str, ode_func: torch.nn.Module, opt
     }
 
 
+def validate_single_protein_batched(protein_id: str, ode_func: torch.nn.Module, args: argparse.Namespace) -> Dict:
+    """Validate using temporal batching - no gradient updates"""
+    # Find all available blocks
+    protein_dir = os.path.join(args.data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+    available_blocks = []
+    for i in range(args.max_blocks):
+        m_path = os.path.join(protein_dir, f"m_block_{i}.pt")
+        z_path = os.path.join(protein_dir, f"z_block_{i}.pt")
+        if os.path.exists(m_path) and os.path.exists(z_path):
+            available_blocks.append(i)
+        else:
+            break
+
+    num_blocks = len(available_blocks)
+    batch_size = args.batch_size
+
+    # Load initial state
+    m_current, z_current = load_protein_block(
+        protein_id, available_blocks[0], args.data_dir, args.device, args.reduced_cluster_size
+    )
+
+    total_loss = 0
+    total_batches = 0
+
+    # Process in batches
+    for batch_start in range(0, num_blocks - 1, batch_size):
+        batch_end = min(batch_start + batch_size, num_blocks - 1)
+
+        # Create time grid for this batch
+        batch_blocks = available_blocks[batch_start:batch_end + 1]
+        t_grid = torch.linspace(0.0, 1.0, len(batch_blocks)).to(args.device)
+
+        # Solve ODE for this batch
+        trajectory = odeint(
+            ode_func,
+            (m_current, z_current),
+            t_grid,
+            method=args.integrator,
+            rtol=1e-4,
+            atol=1e-5
+        )
+
+        # Compute loss for this batch
+        batch_loss = 0
+        valid_steps = 0
+
+        for i, block_idx in enumerate(batch_blocks[1:], 1):  # Skip first (initial state)
+            m_target, z_target = load_protein_block(
+                protein_id, block_idx, args.data_dir, args.device, args.reduced_cluster_size
+            )
+
+            m_pred = trajectory[0][i]
+            z_pred = trajectory[1][i]
+
+            loss_dict = compute_adaptive_loss(m_pred, m_target, z_pred, z_target)
+            batch_loss += loss_dict['total'].item()  # Convert to scalar immediately
+            valid_steps += 1
+
+        batch_loss = batch_loss / valid_steps
+        total_loss += batch_loss
+        total_batches += 1
+
+        # Update current state for next batch (detached)
+        if batch_end < num_blocks - 1:  # Not the last batch
+            m_current = trajectory[0][-1].detach()
+            z_current = trajectory[1][-1].detach()
+
+        # Clean up
+        del trajectory, m_target, z_target, m_pred, z_pred
+        clear_memory(args.device)
+
+    avg_loss = total_loss / total_batches
+    return {
+        'protein': protein_id,
+        'approach': 'batched',
+        'num_blocks': num_blocks,
+        'batch_size': batch_size,
+        'num_batches': total_batches,
+        'total_loss': avg_loss
+    }
+
+
+def validate_single_protein_strided(protein_id: str, ode_func: torch.nn.Module, args: argparse.Namespace) -> Dict:
+    """Validate using block striding - no gradient updates"""
+    # Find all available blocks
+    protein_dir = os.path.join(args.data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+    available_blocks = []
+    for i in range(args.max_blocks):
+        m_path = os.path.join(protein_dir, f"m_block_{i}.pt")
+        z_path = os.path.join(protein_dir, f"z_block_{i}.pt")
+        if os.path.exists(m_path) and os.path.exists(z_path):
+            available_blocks.append(i)
+        else:
+            break
+
+    # Select blocks with stride
+    stride = args.block_stride
+    selected_blocks = []
+    selected_blocks.append(available_blocks[0])
+
+    for i in range(stride, len(available_blocks), stride):
+        selected_blocks.append(available_blocks[i])
+
+    if available_blocks[-1] not in selected_blocks:
+        selected_blocks.append(available_blocks[-1])
+
+    # Load initial state
+    m_init, z_init = load_protein_block(
+        protein_id, selected_blocks[0], args.data_dir, args.device, args.reduced_cluster_size
+    )
+
+    # Create time grid
+    t_grid = torch.linspace(0.0, 1.0, len(selected_blocks)).to(args.device)
+
+    # Solve ODE for selected blocks
+    trajectory = odeint(
+        ode_func,
+        (m_init, z_init),
+        t_grid,
+        method=args.integrator,
+        rtol=1e-4,
+        atol=1e-5
+    )
+
+    # Compute loss against selected blocks
+    total_loss = 0
+    valid_steps = 0
+
+    for i, block_idx in enumerate(selected_blocks[1:], 1):  # Skip first block
+        m_target, z_target = load_protein_block(
+            protein_id, block_idx, args.data_dir, args.device, args.reduced_cluster_size
+        )
+
+        m_pred = trajectory[0][i]
+        z_pred = trajectory[1][i]
+
+        loss_dict = compute_adaptive_loss(m_pred, m_target, z_pred, z_target)
+        total_loss += loss_dict['total'].item()  # Convert to scalar immediately
+        valid_steps += 1
+
+    total_loss = total_loss / valid_steps
+
+    # Clean up
+    del trajectory, m_target, z_target, m_pred, z_pred, m_init, z_init
+    clear_memory(args.device)
+
+    return {
+        'protein': protein_id,
+        'approach': 'strided',
+        'num_blocks': len(selected_blocks),
+        'total_available': len(available_blocks),
+        'stride': stride,
+        'selected_blocks': selected_blocks,
+        'total_loss': total_loss
+    }
+
+
+def validate_model(ode_func: torch.nn.Module, val_proteins: List[str], args: argparse.Namespace) -> Dict:
+    """Run validation on validation set"""
+    ode_func.eval()
+    val_losses = []
+    successful_validations = 0
+    skipped_validations = 0
+
+    with torch.no_grad():
+        for val_idx, protein_id in enumerate(val_proteins):
+            print(f"    [{val_idx + 1}/{len(val_proteins)}] Validating {protein_id}... ", end='', flush=True)
+
+            try:
+                if args.batch_size is not None:
+                    step_info = validate_single_protein_batched(protein_id, ode_func, args)
+                else:
+                    step_info = validate_single_protein_strided(protein_id, ode_func, args)
+
+                val_losses.append(step_info['total_loss'])
+                successful_validations += 1
+                print(f"✅ Loss: {step_info['total_loss']:.3f}")
+
+            except Exception as e:
+                print(f"❌ Error: {str(e)[:50]}...")
+                continue
+
+            # Memory cleanup after each validation protein
+            clear_memory(args.device)
+            if args.device == 'cuda':
+                torch.cuda.synchronize()
+
+    ode_func.train()  # Switch back to training mode
+
+    if val_losses:
+        return {
+            'avg_loss': sum(val_losses) / len(val_losses),
+            'min_loss': min(val_losses),
+            'max_loss': max(val_losses),
+            'num_proteins': len(val_losses),
+            'successful_validations': successful_validations,
+            'skipped_validations': 0  # No skipping since pre-filtered
+        }
+    else:
+        return {
+            'avg_loss': float('inf'),
+            'num_proteins': 0,
+            'successful_validations': 0,
+            'skipped_validations': 0  # No skipping since pre-filtered
+        }
+
+
 def main():
     parser = argparse.ArgumentParser(description='Simplified Neural ODE Training')
 
     # Core settings
     parser.add_argument('--data_dir', type=str, required=True, help='Data directory')
+    parser.add_argument('--splits_dir', type=str, default=None, help='Directory containing split files')
+    parser.add_argument('--mode', type=str, choices=['training', 'testing', 'single_test'],
+                        default='training', help='Training mode (validation runs during training)')
     parser.add_argument('--output_dir', type=str, default=None, help='Path to output directory')
     parser.add_argument('--experiment_name', type=str, default=None, help='Experiment name for logging')
     parser.add_argument('--device', type=str, default='cuda', help='Device (cuda/cpu)')
@@ -346,6 +662,9 @@ def main():
 
     print(f"🚀 Starting Neural ODE Training")
     print(f"📁 Data directory: {args.data_dir}")
+    if args.splits_dir:
+        print(f"📂 Splits directory: {args.splits_dir}")
+        print(f"🎯 Mode: {args.mode}")
     print(f"💻 Device: {args.device}")
     print(f"🔧 Settings: LR={args.learning_rate}, Fast ODE={args.use_fast_ode}, AMP={args.use_amp}")
 
@@ -355,20 +674,100 @@ def main():
         print(f"🚀 CUDA initialized: {torch.cuda.get_device_name(0)}")
         print(f"💾 GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024 ** 3:.1f} GB")
 
-    # Load dataset
-    dataset = get_dataset(args.data_dir)
-    if not dataset:
-        print(f"❌ No proteins found in {args.data_dir}")
-        return
+    # Load dataset based on mode
+    if args.mode == 'single_test' and args.test_single_protein:
+        # Single protein test mode
+        train_dataset = [args.test_single_protein]
+        val_dataset = []
+        print(f"🧪 Single protein test mode: {args.test_single_protein}")
+    elif args.splits_dir and args.mode in ['training', 'testing']:
+        if args.mode == 'training':
+            # Training mode - use train/val splits
+            train_dataset_raw, val_dataset_raw = get_train_val_datasets(args.data_dir, args.splits_dir)
+            if not train_dataset_raw:
+                print(f"❌ No training proteins found in {args.data_dir}")
+                return
 
-    if args.test_single_protein:
-        if args.test_single_protein in dataset:
-            dataset = [args.test_single_protein]
-        else:
-            print(f"❌ Protein {args.test_single_protein} not found")
+            print(f"🧬 Raw training proteins: {len(train_dataset_raw)}")
+            print(f"🔍 Raw validation proteins: {len(val_dataset_raw)}")
+
+            # Filter by size if max_residues is specified
+            if args.max_residues is not None:
+                print(f"\n📏 Applying size filter (max {args.max_residues} residues)...")
+
+                print(f"\n📚 Training set:")
+                train_dataset, train_oversized = filter_proteins_by_size(
+                    train_dataset_raw, args.data_dir, args.max_residues
+                )
+
+                print(f"\n🔍 Validation set:")
+                val_dataset, val_oversized = filter_proteins_by_size(
+                    val_dataset_raw, args.data_dir, args.max_residues
+                )
+
+                print(f"\n📊 Final dataset sizes:")
+                print(f"  Training: {len(train_dataset)} / {len(train_dataset_raw)} ({len(train_oversized)} filtered)")
+                print(f"  Validation: {len(val_dataset)} / {len(val_dataset_raw)} ({len(val_oversized)} filtered)")
+
+                if not train_dataset:
+                    print(f"❌ No training proteins remain after size filtering!")
+                    return
+
+            else:
+                train_dataset = train_dataset_raw
+                val_dataset = val_dataset_raw
+                print(f"📊 No size filtering applied")
+
+            # Report missing proteins from split files
+            try:
+                train_split = load_split_proteins(args.splits_dir, 'training')
+                val_split = load_split_proteins(args.splits_dir, 'validation')
+
+                missing_train = set(train_split) - set(train_dataset_raw)
+                missing_val = set(val_split) - set(val_dataset_raw)
+
+                if missing_train:
+                    print(f"⚠️  {len(missing_train)} training proteins not found in data")
+                if missing_val:
+                    print(f"⚠️  {len(missing_val)} validation proteins not found in data")
+            except Exception as e:
+                print(f"⚠️  Could not load split info: {e}")
+
+        else:  # testing mode
+            test_dataset_raw = get_dataset(args.data_dir, args.splits_dir, 'testing')
+
+            # Filter by size if max_residues is specified
+            if args.max_residues is not None:
+                print(f"\n📏 Applying size filter to testing set (max {args.max_residues} residues)...")
+                train_dataset, test_oversized = filter_proteins_by_size(
+                    test_dataset_raw, args.data_dir, args.max_residues
+                )
+                print(f"📊 Testing: {len(train_dataset)} / {len(test_dataset_raw)} ({len(test_oversized)} filtered)")
+            else:
+                train_dataset = test_dataset_raw
+
+            val_dataset = []
+            print(f"🧪 Testing mode: {len(train_dataset)} proteins")
+    else:
+        # Fallback to scanning all data
+        train_dataset_raw = get_dataset(args.data_dir)
+        val_dataset = []
+        if not train_dataset_raw:
+            print(f"❌ No proteins found in {args.data_dir}")
             return
 
-    print(f"🧬 Found {len(dataset)} proteins: {dataset}")
+        # Filter by size if max_residues is specified
+        if args.max_residues is not None:
+            print(f"\n📏 Applying size filter (max {args.max_residues} residues)...")
+            train_dataset, train_oversized = filter_proteins_by_size(
+                train_dataset_raw, args.data_dir, args.max_residues
+            )
+            print(f"📊 Training: {len(train_dataset)} / {len(train_dataset_raw)} ({len(train_oversized)} filtered)")
+        else:
+            train_dataset = train_dataset_raw
+
+    dataset = train_dataset  # For compatibility with existing code
+    print(f"📊 Final proteins to process: {len(dataset)}")
 
     # Initialize model
     c_m = 256  # MSA embedding dimension
@@ -396,6 +795,9 @@ def main():
                 'total_params': sum(p.numel() for p in ode_func.parameters()),
                 'model_type': 'EvoformerODEFuncFast' if args.use_fast_ode else 'EvoformerODEFunc',
                 'loss_function': 'Adaptive MSE (variance-scaled)',
+                'mode': args.mode,
+                'train_proteins': len(train_dataset),
+                'val_proteins': len(val_dataset)
             }
 
             optimizer_info = {
@@ -426,20 +828,6 @@ def main():
             print(f"  [{protein_idx + 1}/{len(dataset)}] Processing {protein_id}... ", end='', flush=True)
 
             protein_start_time = time.time()
-
-            # Optional: Skip large proteins to avoid OOM
-            if args.max_residues is not None:
-                try:
-                    protein_dir = os.path.join(args.data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
-                    m_test = torch.load(os.path.join(protein_dir, "m_block_0.pt"), map_location='cpu')
-                    num_residues = m_test.shape[-2] if m_test.dim() == 4 else m_test.shape[-2]
-                    if num_residues > args.max_residues:
-                        print(f"⏭️  SKIPPED ({num_residues} residues > {args.max_residues} limit)")
-                        del m_test
-                        continue
-                    del m_test
-                except:
-                    pass  # If we can't check size, proceed anyway
 
             # Choose training approach
             if args.batch_size is not None:
@@ -475,9 +863,23 @@ def main():
             if args.device == 'cuda':
                 torch.cuda.synchronize()
 
+        # Run validation after each epoch if we have validation data
+        val_results = None
+        if val_dataset:
+            print(f"\n🔍 Running validation on {len(val_dataset)} proteins...")
+            val_start_time = time.time()
+            val_results = validate_model(ode_func, val_dataset, args)
+            val_time = time.time() - val_start_time
+
+            # Enhanced validation summary
+            print(f"📊 Validation Summary:")
+            print(f"    Loss: {val_results['avg_loss']:.3f}")
+            print(f"    Successful: {val_results['successful_validations']}/{len(val_dataset)}")
+            print(f"    Time: {val_time:.1f}s")
+
         # FIXED: Log epoch end
         if logger:
-            logger.log_epoch_end()
+            logger.log_epoch_end(val_results)
 
         # Epoch summary
         if epoch_losses:
@@ -485,7 +887,12 @@ def main():
             epoch_time = time.time() - epoch_start_time
 
             print(f"📊 Epoch {epoch + 1} Summary:")
-            print(f"    Average Loss: {avg_loss:.3f}")
+            print(f"    Training Loss: {avg_loss:.3f}")
+            if val_results:
+                print(f"    Validation Loss: {val_results['avg_loss']:.3f}")
+                val_success_rate = val_results['successful_validations'] / len(val_dataset) * 100
+                print(
+                    f"    Val Success Rate: {val_success_rate:.1f}% ({val_results['successful_validations']}/{len(val_dataset)})")
             print(f"    Successful proteins: {successful_proteins}/{len(dataset)}")
             print(f"    Loss range: [{min(epoch_losses):.3f}, {max(epoch_losses):.3f}]")
             print(f"    Epoch time: {epoch_time:.1f} seconds")
@@ -495,9 +902,9 @@ def main():
                 prev_avg = sum(previous_losses) / len(previous_losses)
                 improvement = (prev_avg - avg_loss) / prev_avg * 100
                 if improvement > 0:
-                    print(f"    📈 Improvement: {improvement:.1f}% better than previous epoch")
+                    print(f"    📈 Training improvement: {improvement:.1f}% better than previous epoch")
                 else:
-                    print(f"    📉 Change: {abs(improvement):.1f}% worse than previous epoch")
+                    print(f"    📉 Training change: {abs(improvement):.1f}% worse than previous epoch")
 
             previous_losses = epoch_losses[:]
 
