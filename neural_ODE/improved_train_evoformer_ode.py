@@ -1,9 +1,9 @@
-# !/usr/bin/env python3
-
+#!/usr/bin/env python3
 
 """
 Simplified and more effective Neural ODE training for Evoformer
 Fixes the key issues: learning signal, loss normalization, and training stability
+FIXED: Proper TrainingLogger usage throughout
 """
 
 import os
@@ -44,6 +44,7 @@ def get_dataset(data_dir: str) -> List[str]:
             datasets.append(protein_id)
     return sorted(datasets)
 
+
 def load_protein_block(protein_id: str, block_idx: int, data_dir: str,
                        device: str, max_cluster_size: int = None) -> Tuple[torch.Tensor, torch.Tensor]:
     """Load M and Z tensors for a specific block"""
@@ -65,6 +66,7 @@ def load_protein_block(protein_id: str, block_idx: int, data_dir: str,
         m = m[:max_cluster_size]
 
     return m, z
+
 
 def compute_adaptive_loss(pred_m: torch.Tensor, target_m: torch.Tensor,
                           pred_z: torch.Tensor, target_z: torch.Tensor) -> Dict[str, torch.Tensor]:
@@ -91,91 +93,6 @@ def compute_adaptive_loss(pred_m: torch.Tensor, target_m: torch.Tensor,
         'pair_raw': pair_loss,
         'msa_scaled': msa_scaled,
         'pair_scaled': pair_scaled
-    }
-
-
-def train_single_protein(protein_id: str, ode_func: torch.nn.Module, optimizer: torch.optim.Optimizer,
-                         scaler: GradScaler, args: argparse.Namespace) -> Dict:
-    """Train on a single protein - simple approach using all blocks"""
-
-    # Find all available blocks
-    protein_dir = os.path.join(args.data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
-    available_blocks = []
-    for i in range(args.max_blocks):
-        m_path = os.path.join(protein_dir, f"m_block_{i}.pt")
-        z_path = os.path.join(protein_dir, f"z_block_{i}.pt")
-        if os.path.exists(m_path) and os.path.exists(z_path):
-            available_blocks.append(i)
-        else:
-            break
-
-    print(f"Simple: {len(available_blocks)} blocks")
-
-    # Load initial state
-    m_init, z_init = load_protein_block(
-        protein_id, available_blocks[0], args.data_dir, args.device, args.reduced_cluster_size
-    )
-
-    # Create time grid
-    t_grid = torch.linspace(0.0, 1.0, len(available_blocks)).to(args.device)
-
-    optimizer.zero_grad()
-
-    with autocast(enabled=args.use_amp):
-        # Solve ODE for all blocks
-        trajectory = odeint(
-            ode_func,
-            (m_init, z_init),
-            t_grid,
-            method=args.integrator,
-            rtol=1e-4,
-            atol=1e-5
-        )
-
-        # Compute loss against all blocks
-        total_loss = 0
-        valid_steps = 0
-
-        for i, block_idx in enumerate(available_blocks[1:], 1):  # Skip first block
-            m_target, z_target = load_protein_block(
-                protein_id, block_idx, args.data_dir, args.device, args.reduced_cluster_size
-            )
-
-            m_pred = trajectory[0][i]
-            z_pred = trajectory[1][i]
-
-            loss_dict = compute_adaptive_loss(m_pred, m_target, z_pred, z_target)
-            total_loss += loss_dict['total']
-            valid_steps += 1
-
-        total_loss = total_loss / valid_steps
-
-    # Backward pass
-    if args.use_amp:
-        scaler.scale(total_loss).backward()
-        scaler.unscale_(optimizer)
-        torch.nn.utils.clip_grad_norm_(ode_func.parameters(), max_norm=1.0)
-        scaler.step(optimizer)
-        scaler.update()
-    else:
-        total_loss.backward()
-        torch.nn.utils.clip_grad_norm_(ode_func.parameters(), max_norm=1.0)
-        optimizer.step()
-
-    # Store loss value before deletion
-    total_loss_value = total_loss.item()
-
-    # AGGRESSIVE MEMORY CLEARING
-    del trajectory, total_loss, loss_dict, m_pred, z_pred, m_target, z_target, m_init, z_init
-    clear_memory(args.device)
-    if args.device == 'cuda':
-        torch.cuda.synchronize()
-
-    return {
-        'protein': protein_id,
-        'approach': 'simple',
-        'num_blocks': len(available_blocks),
-        'total_loss': total_loss_value
     }
 
 
@@ -285,6 +202,7 @@ def train_single_protein_batched(protein_id: str, ode_func: torch.nn.Module, opt
         'total_loss': avg_loss,
         'batch_losses': all_losses
     }
+
 
 def train_single_protein_strided(protein_id: str, ode_func: torch.nn.Module, optimizer: torch.optim.Optimizer,
                                  scaler: GradScaler, args: argparse.Namespace) -> Dict:
@@ -416,8 +334,6 @@ def main():
     parser.add_argument('--test_single_protein', type=str, default=None, help='Test on single protein')
     parser.add_argument('--max_residues', type=int, default=None, help='Skip proteins with more than N residues')
 
-
-
     args = parser.parse_args()
 
     # Device setup
@@ -454,10 +370,6 @@ def main():
 
     print(f"🧬 Found {len(dataset)} proteins: {dataset}")
 
-    # Validate arguments - allow all three approaches
-    num_approaches = sum([args.batch_size is not None, args.block_stride is not None,
-                          args.batch_size is None and args.block_stride is None])
-
     # Initialize model
     c_m = 256  # MSA embedding dimension
     c_z = 128  # Pair embedding dimension
@@ -472,40 +384,51 @@ def main():
 
     print(f"🤖 Model initialized: {sum(p.numel() for p in ode_func.parameters())} parameters")
 
-    # Initialize training logger
+    # FIXED: Initialize training logger properly
+    logger = None
     if args.experiment_name and args.output_dir:
-        logger = TrainingLogger(args.output_dir, args.experiment_name)
+        try:
+            os.makedirs(args.output_dir, exist_ok=True)
+            logger = TrainingLogger(args.output_dir, args.experiment_name)
 
-        # Log configuration
-        model_info = {
-            'total_params': sum(p.numel() for p in ode_func.parameters()),
-            'model_type': 'EvoformerODEFuncFast' if args.use_fast_ode else 'EvoformerODEFunc',
-            'loss_function': 'Adaptive MSE (variance-scaled)',
-        }
+            # Log configuration
+            model_info = {
+                'total_params': sum(p.numel() for p in ode_func.parameters()),
+                'model_type': 'EvoformerODEFuncFast' if args.use_fast_ode else 'EvoformerODEFunc',
+                'loss_function': 'Adaptive MSE (variance-scaled)',
+            }
 
-        optimizer_info = {
-            'learning_rate': args.learning_rate,
-        }
+            optimizer_info = {
+                'learning_rate': args.learning_rate,
+            }
 
-        logger.log_configuration(args, model_info, optimizer_info)
-        print(f"📝 Training logger initialized: {args.experiment_name}")
-    else:
-        logger = None
+            logger.log_configuration(args, model_info, optimizer_info)
+            print(f"📝 Training logger initialized: {args.experiment_name}")
+            print(f"📊 Reports will be saved to: {args.output_dir}/{args.experiment_name}")
+        except Exception as e:
+            print(f"⚠️ Warning: Could not initialize logger: {e}")
+            logger = None
 
     # Training loop
     previous_losses = []
     for epoch in range(args.epochs):
         print(f"\n📈 Epoch {epoch + 1}/{args.epochs}")
 
+        # FIXED: Log epoch start
+        if logger:
+            logger.log_epoch_start(epoch + 1, args.epochs, dataset)
+
         epoch_losses = []
         successful_proteins = 0
+        epoch_start_time = time.time()
 
         for protein_idx, protein_id in enumerate(dataset):
             print(f"  [{protein_idx + 1}/{len(dataset)}] Processing {protein_id}... ", end='', flush=True)
 
+            protein_start_time = time.time()
+
             # Optional: Skip large proteins to avoid OOM
             if args.max_residues is not None:
-                # Quick check of protein size by loading first block
                 try:
                     protein_dir = os.path.join(args.data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
                     m_test = torch.load(os.path.join(protein_dir, "m_block_0.pt"), map_location='cpu')
@@ -524,9 +447,20 @@ def main():
             else:
                 step_info = train_single_protein_strided(protein_id, ode_func, optimizer, scaler, args)
 
+            protein_time = time.time() - protein_start_time
             epoch_losses.append(step_info['total_loss'])
             successful_proteins += 1
             print(f"✅ Loss: {step_info['total_loss']:.3f}")
+
+            # FIXED: Log protein step
+            if logger:
+                logger.log_protein_step(
+                    protein_id=protein_id,
+                    step_idx=protein_idx,
+                    loss=step_info['total_loss'],
+                    step_info=step_info,
+                    time_taken=protein_time
+                )
 
             # Show detailed metrics for first protein of first epoch
             if epoch == 0 and protein_idx == 0:
@@ -541,13 +475,20 @@ def main():
             if args.device == 'cuda':
                 torch.cuda.synchronize()
 
+        # FIXED: Log epoch end
+        if logger:
+            logger.log_epoch_end()
+
         # Epoch summary
         if epoch_losses:
             avg_loss = sum(epoch_losses) / len(epoch_losses)
+            epoch_time = time.time() - epoch_start_time
+
             print(f"📊 Epoch {epoch + 1} Summary:")
             print(f"    Average Loss: {avg_loss:.3f}")
             print(f"    Successful proteins: {successful_proteins}/{len(dataset)}")
             print(f"    Loss range: [{min(epoch_losses):.3f}, {max(epoch_losses):.3f}]")
+            print(f"    Epoch time: {epoch_time:.1f} seconds")
 
             # Check for learning progress
             if epoch > 0 and len(previous_losses) > 0:
@@ -559,6 +500,21 @@ def main():
                     print(f"    📉 Change: {abs(improvement):.1f}% worse than previous epoch")
 
             previous_losses = epoch_losses[:]
+
+    # FIXED: Save final model and close logger
+    if logger:
+        # Save final model
+        model_path = os.path.join(args.output_dir, f"{args.experiment_name}_final_model.pt")
+        torch.save({
+            'model_state_dict': ode_func.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'config': vars(args),
+            'final_loss': avg_loss if epoch_losses else None
+        }, model_path)
+
+        logger.log_training_complete(model_path)
+        print(f"📊 Training complete! Full report saved to: {args.output_dir}/{args.experiment_name}")
+        print(f"🤖 Final model saved to: {model_path}")
 
     print(f"\n🎯 Training completed!")
 

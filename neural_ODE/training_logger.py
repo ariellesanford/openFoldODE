@@ -2,19 +2,22 @@ import os
 import datetime
 import torch
 import json
+import sys
 from typing import Dict, List, Any
 
 
 class TrainingLogger:
     """
-    Comprehensive logger for Neural ODE training that saves detailed reports
-    similar to memory_config_tester output format
+    Enhanced logger that captures both structured metrics AND console output
     """
 
     def __init__(self, output_dir: str, experiment_name: str = None):
         self.output_dir = output_dir
         self.experiment_name = experiment_name or f"training_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        self.log_file = os.path.join(output_dir, f"{self.experiment_name}")
+
+        # Two output files
+        self.log_file = os.path.join(output_dir, f"{self.experiment_name}.txt")
+        self.console_file = os.path.join(output_dir, f"{self.experiment_name}_console.txt")
 
         # Training data storage
         self.config = {}
@@ -23,59 +26,78 @@ class TrainingLogger:
         self.protein_results = {}
         self.epoch_summaries = []
 
+        # Console capture
+        self.original_stdout = sys.stdout
+        self.console_buffer = []
+
         # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
 
-        # Initialize log file
+        # Initialize files
         self._write_header()
+        self._start_console_capture()
+
+    def _start_console_capture(self):
+        """Start capturing console output"""
+        self.console_file_handle = open(self.console_file, 'w')
+        self.console_file_handle.write(f"CONSOLE OUTPUT - {self.experiment_name}\n")
+        self.console_file_handle.write("=" * 50 + "\n")
+        self.console_file_handle.write(f"Started: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+
+        # Create a custom stdout that writes to both console and file
+        class TeeOutput:
+            def __init__(self, original_stdout, file_handle):
+                self.original_stdout = original_stdout
+                self.file_handle = file_handle
+
+            def write(self, text):
+                self.original_stdout.write(text)
+                self.file_handle.write(text)
+                self.file_handle.flush()
+
+            def flush(self):
+                self.original_stdout.flush()
+                self.file_handle.flush()
+
+        sys.stdout = TeeOutput(self.original_stdout, self.console_file_handle)
+
+    def close(self):
+        """Stop console capture and close files"""
+        if hasattr(self, 'console_file_handle'):
+            self.console_file_handle.write(
+                f"\nConsole capture ended: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            self.console_file_handle.close()
+
+        # Restore original stdout
+        sys.stdout = self.original_stdout
 
     def log_configuration(self, args, model_info: Dict, optimizer_info: Dict):
         """Log all configuration parameters"""
         self.config = {
-            # Data settings
             'data_dir': getattr(args, 'data_dir', 'N/A'),
             'output_dir': getattr(args, 'output_dir', 'N/A'),
-
-            # Model settings
             'use_fast_ode': getattr(args, 'use_fast_ode', False),
             'reduced_cluster_size': getattr(args, 'reduced_cluster_size', 'N/A'),
-            'reduced_hidden_dim': getattr(args, 'reduced_hidden_dim', 'N/A'),
+            'hidden_dim': getattr(args, 'hidden_dim', 'N/A'),
             'model_parameters': model_info.get('total_params', 'N/A'),
             'model_type': model_info.get('model_type', 'N/A'),
-
-            # Training settings
             'epochs': getattr(args, 'epochs', 'N/A'),
             'learning_rate': optimizer_info.get('learning_rate', 'N/A'),
-            'num_time_points': getattr(args, 'num_time_points', 'N/A'),
             'batch_size': getattr(args, 'batch_size', 'N/A'),
+            'block_stride': getattr(args, 'block_stride', 'N/A'),
             'integrator': getattr(args, 'integrator', 'N/A'),
-            'gradient_accumulation': getattr(args, 'gradient_accumulation', 'N/A'),
-            'chunk_size': getattr(args, 'chunk_size', 'N/A'),
-
-            # Optimization settings
             'use_amp': getattr(args, 'use_amp', False),
-            'use_checkpoint': getattr(args, 'use_checkpoint', False),
-            'reduced_precision_integration': getattr(args, 'reduced_precision_integration', False),
-            'clean_memory': getattr(args, 'clean_memory', False),
-            'monitor_memory': getattr(args, 'monitor_memory', False),
-            'cpu_only': getattr(args, 'cpu_only', False),
-            'memory_split_size': getattr(args, 'memory_split_size', 'N/A'),
-
-            # Loss settings
-            'loss_function': model_info.get('loss_function', 'N/A'),
-            'msa_weight': model_info.get('msa_weight', 'N/A'),
-            'pair_weight': model_info.get('pair_weight', 'N/A'),
-            'gradient_clipping': model_info.get('gradient_clipping', 'N/A'),
+            'max_residues': getattr(args, 'max_residues', 'N/A'),
+            'loss_function': model_info.get('loss_function', 'Adaptive MSE'),
         }
 
-        # System info
         self.system_info = {
             'cuda_available': torch.cuda.is_available(),
-            'device': 'cuda' if torch.cuda.is_available() and not getattr(args, 'cpu_only', False) else 'cpu',
+            'device': getattr(args, 'device', 'N/A'),
             'pytorch_version': torch.__version__,
         }
 
-        if torch.cuda.is_available() and not getattr(args, 'cpu_only', False):
+        if torch.cuda.is_available() and getattr(args, 'device', '') == 'cuda':
             self.system_info.update({
                 'gpu_name': torch.cuda.get_device_name(0),
                 'cuda_version': torch.version.cuda,
@@ -95,37 +117,40 @@ class TrainingLogger:
         }
 
     def log_protein_step(self, protein_id: str, step_idx: int, loss: float,
-                         msa_loss: float = None, pair_loss: float = None,
-                         memory_stats: Dict = None, time_taken: float = None):
+                         step_info: Dict = None, memory_stats: Dict = None, time_taken: float = None):
         """Log results for a single protein training step"""
         protein_result = {
             'protein_id': protein_id,
             'step_idx': step_idx,
             'total_loss': loss,
-            'msa_loss': msa_loss,
-            'pair_loss': pair_loss,
+            'approach': step_info.get('approach', 'unknown') if step_info else 'unknown',
+            'num_blocks': step_info.get('num_blocks', 'unknown') if step_info else 'unknown',
             'time_taken_ms': time_taken * 1000 if time_taken else None,
             'memory_stats': memory_stats or {}
         }
 
+        if step_info:
+            if step_info['approach'] == 'batched':
+                protein_result.update({
+                    'batch_size': step_info.get('batch_size'),
+                    'num_batches': step_info.get('num_batches'),
+                    'batch_losses': step_info.get('batch_losses', [])
+                })
+            elif step_info['approach'] == 'strided':
+                protein_result.update({
+                    'stride': step_info.get('stride'),
+                    'selected_blocks': step_info.get('selected_blocks', []),
+                    'total_available': step_info.get('total_available')
+                })
+
         self.current_epoch['protein_results'][protein_id] = protein_result
         self.current_epoch['total_loss'] += loss
-
-        # Update memory stats
-        if memory_stats:
-            for key, value in memory_stats.items():
-                if key not in self.current_epoch['memory_stats']:
-                    self.current_epoch['memory_stats'][key] = value
-                else:
-                    # Keep the maximum values
-                    if 'max' in key.lower() and value > self.current_epoch['memory_stats'][key]:
-                        self.current_epoch['memory_stats'][key] = value
 
     def log_epoch_end(self):
         """Log the end of an epoch and compute summaries"""
         self.current_epoch['end_time'] = datetime.datetime.now()
         self.current_epoch['duration'] = (
-                    self.current_epoch['end_time'] - self.current_epoch['start_time']).total_seconds()
+                self.current_epoch['end_time'] - self.current_epoch['start_time']).total_seconds()
 
         # Compute average loss
         num_proteins = len(self.current_epoch['protein_results'])
@@ -142,8 +167,6 @@ class TrainingLogger:
             self.current_epoch['worst_protein'] = {'id': worst_protein[0], 'loss': worst_protein[1]}
 
         self.epoch_summaries.append(self.current_epoch.copy())
-
-        # Write to file immediately
         self._update_log_file()
 
     def log_training_complete(self, final_model_path: str = None):
@@ -151,6 +174,7 @@ class TrainingLogger:
         self.training_complete_time = datetime.datetime.now()
         self.final_model_path = final_model_path
         self._write_final_report()
+        self.close()  # Stop console capture
 
     def _write_header(self):
         """Write the initial header to the log file"""
@@ -158,7 +182,8 @@ class TrainingLogger:
             f.write("EVOFORMER NEURAL ODE TRAINING REPORT\n")
             f.write("=" * 50 + "\n\n")
             f.write(f"Experiment: {self.experiment_name}\n")
-            f.write(f"Started: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            f.write(f"Started: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Console output: {self.console_file}\n\n")
 
     def _update_log_file(self):
         """Update the log file with current progress"""
@@ -179,6 +204,7 @@ class TrainingLogger:
         # Experiment info
         f.write(f"Experiment: {self.experiment_name}\n")
         f.write(f"Started: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Console output: {self.console_file}\n")
         if final and hasattr(self, 'training_complete_time'):
             f.write(f"Completed: {self.training_complete_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write("\n")
@@ -203,9 +229,8 @@ class TrainingLogger:
             f.write("=" * 50 + "\n\n")
 
             # Summary table
-            f.write(
-                f"{'Epoch':<8} {'Avg Loss':<12} {'Best Loss':<12} {'Worst Loss':<12} {'Duration (s)':<12} {'Memory (MB)'}\n")
-            f.write("-" * 80 + "\n")
+            f.write(f"{'Epoch':<8} {'Avg Loss':<12} {'Best Loss':<12} {'Worst Loss':<12} {'Duration (s)':<12}\n")
+            f.write("-" * 60 + "\n")
 
             for epoch_data in self.epoch_summaries:
                 epoch = epoch_data['epoch']
@@ -213,14 +238,17 @@ class TrainingLogger:
                 best_loss = epoch_data.get('best_protein', {}).get('loss', 'N/A')
                 worst_loss = epoch_data.get('worst_protein', {}).get('loss', 'N/A')
                 duration = epoch_data['duration']
-                max_memory = epoch_data['memory_stats'].get('max_memory_allocated_mb', 'N/A')
 
-                f.write(
-                    f"{epoch:<8} {avg_loss:<12.2f} {best_loss:<12.2f} {worst_loss:<12.2f} {duration:<12.1f} {max_memory}\n")
+                if isinstance(best_loss, (int, float)):
+                    best_loss = f"{best_loss:.2f}"
+                if isinstance(worst_loss, (int, float)):
+                    worst_loss = f"{worst_loss:.2f}"
 
-            f.write("-" * 80 + "\n\n")
+                f.write(f"{epoch:<8} {avg_loss:<12.2f} {best_loss:<12} {worst_loss:<12} {duration:<12.1f}\n")
 
-            # Best/Worst Performance
+            f.write("-" * 60 + "\n\n")
+
+            # Performance analysis
             if len(self.epoch_summaries) > 0:
                 best_epoch = min(self.epoch_summaries, key=lambda x: x['average_loss'])
                 worst_epoch = max(self.epoch_summaries, key=lambda x: x['average_loss'])
@@ -229,9 +257,12 @@ class TrainingLogger:
                 f.write("-" * 30 + "\n")
                 f.write(f"Best Epoch: {best_epoch['epoch']} (Loss: {best_epoch['average_loss']:.2f})\n")
                 f.write(f"Worst Epoch: {worst_epoch['epoch']} (Loss: {worst_epoch['average_loss']:.2f})\n")
-                f.write(f"Improvement: {worst_epoch['average_loss'] / best_epoch['average_loss']:.1f}x better\n\n")
+                if worst_epoch['average_loss'] > 0:
+                    improvement = worst_epoch['average_loss'] / best_epoch['average_loss']
+                    f.write(f"Improvement: {improvement:.1f}x better from worst to best\n")
+                f.write("\n")
 
-        # Detailed Epoch Results
+        # Detailed results for each epoch
         f.write("DETAILED EPOCH RESULTS\n")
         f.write("=" * 50 + "\n\n")
 
@@ -239,39 +270,17 @@ class TrainingLogger:
             f.write(f"Epoch {epoch_data['epoch']}:\n")
             f.write(f"  Duration: {epoch_data['duration']:.1f} seconds\n")
             f.write(f"  Average Loss: {epoch_data['average_loss']:.4f}\n")
-            f.write(f"  Total Loss: {epoch_data['total_loss']:.4f}\n")
 
             if 'best_protein' in epoch_data:
-                f.write(
-                    f"  Best Protein: {epoch_data['best_protein']['id']} (Loss: {epoch_data['best_protein']['loss']:.2f})\n")
-                f.write(
-                    f"  Worst Protein: {epoch_data['worst_protein']['id']} (Loss: {epoch_data['worst_protein']['loss']:.2f})\n")
+                f.write(f"  Best: {epoch_data['best_protein']['id']} ({epoch_data['best_protein']['loss']:.2f})\n")
+                f.write(f"  Worst: {epoch_data['worst_protein']['id']} ({epoch_data['worst_protein']['loss']:.2f})\n")
 
-            # Memory stats
-            if epoch_data['memory_stats']:
-                f.write(f"  Memory Stats:\n")
-                for key, value in epoch_data['memory_stats'].items():
-                    f.write(f"    {key}: {value}\n")
-
-            # Individual protein results
-            f.write(f"  Protein Results:\n")
+            f.write(f"  Proteins:\n")
             for protein_id, result in epoch_data['protein_results'].items():
-                f.write(f"    {protein_id}: Total={result['total_loss']:.2f}")
-                if result['msa_loss'] is not None:
-                    f.write(f", MSA={result['msa_loss']:.2f}, Pair={result['pair_loss']:.2f}")
-                if result['time_taken_ms'] is not None:
-                    f.write(f", Time={result['time_taken_ms']:.1f}ms")
-                f.write("\n")
+                f.write(
+                    f"    {protein_id}: {result['total_loss']:.2f} ({result['approach']}, {result['num_blocks']} blocks)\n")
 
             f.write("\n")
 
-        # Final model info
-        if final and hasattr(self, 'final_model_path'):
-            f.write("FINAL MODEL\n")
-            f.write("-" * 30 + "\n")
-            f.write(f"Model saved to: {self.final_model_path}\n")
-            f.write(
-                f"Total training time: {(self.training_complete_time - datetime.datetime.now()).total_seconds():.1f} seconds\n")
-
-        f.write("\n" + "=" * 50 + "\n")
+        f.write("=" * 50 + "\n")
         f.write(f"Report generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")

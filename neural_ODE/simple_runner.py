@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple runner for the improved Neural ODE training
+Simple runner - relies on TrainingLogger for all output
 """
 
 import os
@@ -21,39 +21,36 @@ def main():
     # Check if data directory exists
     if not data_dir.exists():
         print(f"❌ Data directory not found: {data_dir}")
-        print("Please make sure you have generated the Evoformer blocks first")
         return 1
 
-    # Check if training script exists
     if not training_script.exists():
         print(f"❌ Training script not found: {training_script}")
         return 1
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    experiment_name = f"training_output_{timestamp}.txt"
+    # Create output directory
+    output_dir.mkdir(exist_ok=True)
 
-    # Configuration for stable training
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    experiment_name = f"neural_ode_training_{timestamp}"
+
+    # Configuration
     config = {
         'data_dir': str(data_dir),
         'device': 'cuda' if torch.cuda.is_available() else 'cpu',
-        'epochs': 20,
-        'learning_rate': 1e-3,  # Good starting point
-        'reduced_cluster_size': 32,  # Small for stability
+        'epochs': 14,
+        'learning_rate': 1e-3,
+        'reduced_cluster_size': 32,
         'hidden_dim': 64,
-        'integrator': 'rk4',  # Stable integrator
+        'integrator': 'rk4',
         'use_fast_ode': True,
-        'use_amp': torch.cuda.is_available(),  # Enable AMP only if CUDA available
+        'use_amp': torch.cuda.is_available(),
         'output_dir': str(output_dir),
-        'experiment_name': experiment_name,
-
-        # Choose ONE approach - batching, striding, OR simple (all three options)
-        'batch_size': 20,        # Use temporal batching with size 2
-        # 'block_stride': 8,      # OR use every 8th block (8 divides 48)
-        # Neither batch_size nor block_stride = simple approach (all blocks at once)
-        'max_residues': 200,  # Skip proteins larger than 200 residues to avoid OOM
+        'experiment_name': experiment_name,  # TrainingLogger will use this
+        'batch_size': 2,
+        'max_residues': 200,
     }
 
-    # Override device if specified in command line
+    # Parse command line arguments
     if 'cpu' in sys.argv:
         config['device'] = 'cpu'
         config['use_amp'] = False
@@ -61,33 +58,26 @@ def main():
         config['device'] = 'cuda'
         config['use_amp'] = torch.cuda.is_available()
 
-    # Override approach if specified
     if '--batch' in sys.argv:
-        config['batch_size'] = 2  # Use batching approach
+        config['batch_size'] = 2
+        if 'block_stride' in config:
+            del config['block_stride']
     elif '--stride' in sys.argv:
-        config['block_stride'] = 8  # Use stride approach
-    # Otherwise use simple approach (neither batch_size nor block_stride)
+        config['block_stride'] = 8
+        if 'batch_size' in config:
+            del config['batch_size']
 
-    # Check for test mode
     if '--test' in sys.argv:
-        # Find first protein for testing
         proteins = []
         for item in data_dir.iterdir():
             if item.is_dir() and item.name.endswith('_evoformer_blocks'):
                 protein_id = item.name.replace('_evoformer_blocks', '')
                 proteins.append(protein_id)
-
         if proteins:
             config['test_single_protein'] = proteins[0]
-            print(f"🧪 Test mode: using protein {proteins[0]}")
-        else:
-            print("❌ No proteins found for testing")
-            return 1
 
     # Build command
     cmd = [sys.executable, str(training_script)]
-
-    # Add arguments
     for key, value in config.items():
         if isinstance(value, bool):
             if value:
@@ -99,17 +89,23 @@ def main():
     print(f"📁 Data: {config['data_dir']}")
     print(f"💻 Device: {config['device']}")
     print(f"🔧 Config: LR={config['learning_rate']}, Epochs={config['epochs']}")
-
-    if 'test_single_protein' in config:
-        print(f"🧪 Testing single protein: {config['test_single_protein']}")
-
-    print(f"⚡ Command: {' '.join(cmd)}")
+    print(f"📊 Detailed report will be saved to: {output_dir}/{experiment_name}")
     print("=" * 50)
 
-    # Run training
+    # Run training - let TrainingLogger handle all the detailed logging
     try:
         result = subprocess.run(cmd, cwd=script_dir)
+
+        # Print where to find the report
+        print("\n" + "=" * 50)
+        if result.returncode == 0:
+            print("✅ Training completed successfully!")
+            print(f"📊 Detailed training report: {output_dir}/{experiment_name}")
+        else:
+            print("❌ Training failed!")
+
         return result.returncode
+
     except KeyboardInterrupt:
         print("\n⏹️  Training interrupted by user")
         return 1
@@ -121,24 +117,12 @@ def main():
 if __name__ == "__main__":
     print("Neural ODE Training Runner")
     print("Usage:")
-    print("  python simple_runner.py           # Simple approach (all blocks at once)")
-    print("  python simple_runner.py --batch   # Batched approach (batch_size=2)")
-    print("  python simple_runner.py --stride  # Strided approach (every 8th block)")
+    print("  python simple_runner.py           # Batched approach (default)")
+    print("  python simple_runner.py --stride  # Strided approach")
     print("  python simple_runner.py --test    # Test on single protein")
-    print("  python simple_runner.py cuda      # Force CUDA")
     print("  python simple_runner.py cpu       # Force CPU")
     print("")
-    print("Approaches:")
-    print("  Simple:   Use all 49 blocks at once (highest memory, best accuracy)")
-    print("  Batching: Process 49 blocks in chunks of 2 (medium memory, good accuracy)")
-    print("  Striding: Use blocks 0,8,16,24,32,40,48 (lowest memory, fast)")
+    print("📊 Detailed training reports with metrics are saved by TrainingLogger")
     print("")
 
-    exit_code = main()
-
-    if exit_code == 0:
-        print("\n✅ Training completed successfully!")
-    else:
-        print("\n❌ Training failed!")
-
-    sys.exit(exit_code)
+    sys.exit(main())
