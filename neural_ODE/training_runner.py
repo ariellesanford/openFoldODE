@@ -16,7 +16,7 @@ def main():
     script_dir = Path(__file__).parent
     data_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
     output_dir = script_dir / "outputs"
-    training_script = script_dir / "improved_train_evoformer_ode.py"
+    training_script = script_dir / "train_evoformer_ode.py"
 
     # Check if data directory exists
     if not data_dir.exists():

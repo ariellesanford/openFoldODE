@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+
+"""
+Simplified and more effective Neural ODE training for Evoformer
+Fixes the key issues: learning signal, loss normalization, and training stability
+FIXED: Proper TrainingLogger usage throughout
+"""
+
 import os
 import gc
 import torch
@@ -5,686 +13,511 @@ import argparse
 import sys
 from torchdiffeq import odeint
 import torch.optim as optim
-from evoformer_ode import EvoformerODEFunc  # Import from existing module
+from evoformer_ode import EvoformerODEFunc, EvoformerODEFuncFast
 from torch.cuda.amp import autocast, GradScaler
-from torch.utils.checkpoint import checkpoint
 import torch.nn.functional as F
+import time
+from typing import Dict, List, Tuple
+from training_logger import TrainingLogger
 
-# Function to get project root directory
+
 def get_project_root():
     """Get the path to the project root directory."""
-    # Get the directory of the current file
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    # The current file should be in the neural_ODE directory, so current_dir is the project root
-    return current_dir
+    return os.path.dirname(os.path.abspath(__file__))
 
 
-# === Parse command line arguments for memory optimizations ===
-parser = argparse.ArgumentParser(description='Train Evoformer ODE with configurable memory optimizations')
-
-# Memory optimization options
-parser.add_argument('--memory_split_size', type=int, default=128,
-                    help='Memory split size (MB) to avoid fragmentation')
-parser.add_argument('--use_amp', action='store_true', default=False,
-                    help='Use Automatic Mixed Precision')
-parser.add_argument('--no-use_amp', dest='use_amp', action='store_false',
-                    help='Disable Automatic Mixed Precision')
-parser.add_argument('--use_checkpoint', action='store_true', default=False,
-                    help='Use gradient checkpointing')
-parser.add_argument('--no-use_checkpoint', dest='use_checkpoint', action='store_false',
-                    help='Disable gradient checkpointing')
-parser.add_argument('--gradient_accumulation', type=int, default=4,
-                    help='Number of steps to accumulate gradients over (1 disables)')
-parser.add_argument('--chunk_size', type=int, default=10,
-                    help='Size of chunks for time integration (0 disables chunking)')
-parser.add_argument('--reduced_precision_integration', action='store_true', default=False,
-                    help='Use reduced precision for ODE integration')
-parser.add_argument('--no-reduced_precision_integration', dest='reduced_precision_integration',
-                    action='store_false', help='Disable reduced precision for ODE integration')
-parser.add_argument('--clean_memory', action='store_true', default=False,
-                    help='Aggressively clean memory')
-parser.add_argument('--no-clean_memory', dest='clean_memory', action='store_false',
-                    help='Disable aggressive memory cleaning')
-parser.add_argument('--reduced_cluster_size', type=int, default=64,
-                    help='Maximum cluster size (original is 128)')
-parser.add_argument('--reduced_hidden_dim', type=int, default=128,
-                    help='Hidden dimension size (default is 128 from EvoformerODEFunc)')
-parser.add_argument('--learning_rate', type=float, default=1e-3,
-                    help='Learning rate for the optimizer')
-parser.add_argument('--num_time_points', type=int, default=25,
-                    help='Number of integration time points (original is 49)')
-parser.add_argument('--integrator', choices=['dopri5', 'rk4', 'euler'], default='dopri5',
-                    help='ODE integrator method')
-parser.add_argument('--batch_size', type=int, default=5,
-                    help='Batch size for time steps')
-parser.add_argument('--use_fast_ode', action='store_true', default=False,
-                    help='Use the faster implementation of EvoformerODEFunc')
-parser.add_argument('--no-use_fast_ode', dest='use_fast_ode', action='store_false',
-                    help='Use the standard implementation of EvoformerODEFunc')
-parser.add_argument('--monitor_memory', action='store_true', default=False,
-                    help='Print memory usage statistics')
-parser.add_argument('--no-monitor_memory', dest='monitor_memory', action='store_false',
-                    help='Disable memory usage statistics')
-
-
-parser.add_argument('--cpu-only', action='store_true', default=False,
-                    help='Force CPU-only mode regardless of CUDA availability')
-parser.add_argument('--no-cpu-only', dest='cpu_only', action='store_false',
-                    help='Disable CPU-only mode (use CUDA if available)')
-
-# Data and output directory options
-parser.add_argument('--data_dir', type=str, default=None,
-                    help='Path to data directory')
-parser.add_argument('--output_dir', type=str, default=None,
-                    help='Path to output directory')
-
-# Test mode option
-parser.add_argument('--test-configs', action='store_true', default=False,
-                    help='Run configuration testing instead of training')
-parser.add_argument('--test-single-step', action='store_true', default=False,
-                    help='Run only one training step for testing')
-parser.add_argument('--test-protein', type=str, default=None,
-                    help='Specific protein ID to test (use "all" to test all proteins)')
-parser.add_argument('--epochs', type=int, default=5,
-                    help='Number of training epochs')
-
-# Parse arguments
-args = parser.parse_args()
-
-# === Memory Optimization Configuration ===
-# Set memory split size to avoid fragmentation
-print(f"PYTORCH_CUDA_ALLOC_CONF: {os.getenv('PYTORCH_CUDA_ALLOC_CONF')}")
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = f"max_split_size_mb:{args.memory_split_size}"
-print(f"PYTORCH_CUDA_ALLOC_CONF: {os.getenv('PYTORCH_CUDA_ALLOC_CONF')}")
-
-# Get project root directory
-PROJECT_ROOT = get_project_root()
-
-# Check if CPU-only mode is forced
-if args.cpu_only:
-    print("Forcing CPU-only mode (CUDA disabled)")
-    device = "cpu"
-    # Disable features that only work with CUDA
-    args.use_amp = False
-else:
-    # Set device based on CUDA availability
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    if device == "cpu":
-        print("CUDA not available, using CPU")
-        args.use_amp = False
-
-
-# Define a memory tracking function
-def print_memory_stats(label=""):
-    if not args.monitor_memory:
-        return
-
-    if device == "cpu":
-        print(f"=== Memory Stats {label} (CPU mode) ===")
-        print("Memory monitoring is limited in CPU mode")
-        import psutil
-        process = psutil.Process(os.getpid())
-        print(f"Current Process Memory Usage: {process.memory_info().rss / 1024 ** 2:.2f} MiB")
-        print("=" * 30)
-        return
-
-    try:
-        torch.cuda.synchronize()
-        allocated = torch.cuda.memory_allocated() / 1024 ** 2
-        reserved = torch.cuda.memory_reserved() / 1024 ** 2
-
-        try:
-            max_allocated = torch.cuda.max_memory_allocated() / 1024 ** 2
-            max_reserved = torch.cuda.max_memory_reserved() / 1024 ** 2
-        except RuntimeError:
-            # Handle case where peak stats aren't available
-            max_allocated = allocated
-            max_reserved = reserved
-
-        print(f"=== Memory Stats {label} ===")
-        print(f"Allocated Memory: {allocated:.2f} MiB")
-        print(f"Reserved Memory: {reserved:.2f} MiB")
-        print(f"Max Memory Allocated: {max_allocated:.2f} MiB")
-        print(f"Max Memory Reserved: {max_reserved:.2f} MiB")
-        print("=" * 30)
-    except Exception as e:
-        print(f"=== Memory Stats {label} (Error) ===")
-        print(f"Could not get memory stats: {e}")
-        print("=" * 30)
-
-
-# Trigger CUDA initialization if using CUDA
-if device == "cuda":
-    try:
-        _ = torch.tensor([0.0], device=device)
-        print("CUDA initialized successfully")
-    except RuntimeError as e:
-        print(f"Error initializing CUDA: {e}")
-        print("Falling back to CPU mode")
-        device = "cpu"
-        args.use_amp = False
-else:
-    print("Using CPU - CUDA initialization skipped")
-
-
-# Force garbage collection and clear CUDA cache
-def clear_memory():
-    if not args.clean_memory:
-        return
-
+def clear_memory(device: str):
+    """Clear GPU memory if using CUDA"""
     gc.collect()
-
     if device == "cuda":
-        try:
-            torch.cuda.empty_cache()
-            try:
-                torch.cuda.reset_peak_memory_stats()
-            except RuntimeError as e:
-                print(f"Warning: Could not reset CUDA peak memory stats: {e}")
-        except Exception as e:
-            print(f"Warning: CUDA error when clearing memory: {e}")
+        torch.cuda.empty_cache()
 
 
-clear_memory()
-
-# === Configuration ===
-c_m = 256  # MSA (M) channels
-c_z = 128  # Pair (Z) channels
-hidden_dim = args.reduced_hidden_dim  # Configurable hidden dimension
-learning_rate = args.learning_rate
-
-# Use command line data directory if provided, otherwise use default
-if args.data_dir is None:
-    print("Warning: No data directory specified. Using default.")
-    DATA_DIR = os.path.join(PROJECT_ROOT, "data")
-else:
-    DATA_DIR = args.data_dir
-    print(f"Using data directory: {DATA_DIR}")
-
-if args.output_dir is None:
-    print("Warning: No output directory specified. Using current directory.")
-    OUTPUT_DIR = PROJECT_ROOT
-else:
-    OUTPUT_DIR = args.output_dir
-    print(f"Using output directory: {OUTPUT_DIR}")
-
-# Use configured memory optimization settings
-USE_AMP = args.use_amp and device == "cuda"  # AMP only works with CUDA
-GRADIENT_ACCUMULATION_STEPS = args.gradient_accumulation
-CHUNK_SIZE = args.chunk_size
-
-# Setup gradient scaler for mixed precision
-scaler = GradScaler(enabled=USE_AMP)
-
-# Print active optimizations
-print("\n=== ACTIVE CONFIGURATION ===")
-print(f"Device: {device.upper()}")
-print(f"Memory Split Size: {args.memory_split_size} MB")
-print(f"Mixed Precision (AMP): {'Enabled' if USE_AMP else 'Disabled'}")
-print(f"Gradient Checkpointing: {'Enabled' if args.use_checkpoint else 'Disabled'}")
-print(f"Gradient Accumulation: {args.gradient_accumulation} steps")
-print(f"Integration Chunking: {'Enabled' if args.chunk_size > 0 else 'Disabled'}")
-print(f"Reduced Precision Integration: {'Enabled' if args.reduced_precision_integration else 'Disabled'}")
-print(f"Aggressive Memory Cleaning: {'Enabled' if args.clean_memory else 'Disabled'}")
-print(f"Memory Usage Monitoring: {'Enabled' if args.monitor_memory else 'Disabled'}")
-print(f"Reduced Cluster Size: {args.reduced_cluster_size} (original: 128)")
-print(f"Reduced Hidden Dimension: {args.reduced_hidden_dim} (default: 128)")
-print(f"Learning Rate: {learning_rate}")
-print(f"Number of Time Points: {args.num_time_points} (original: 49)")
-print(f"ODE Integrator: {args.integrator}")
-print(f"Time Step Batch Size: {args.batch_size}")
-print("=" * 30)
-
-
-def get_dataset(input_dir):
-    """ Get all protein folder names that contain evoformer blocks data. """
+def get_dataset(data_dir: str) -> List[str]:
+    """Get list of available protein IDs"""
     datasets = []
-    for name in os.listdir(input_dir):
-        full_path = os.path.join(input_dir, name)
-        # Only include directories that end with '_evoformer_blocks' and contain recycle_0 subdirectory
-        if (os.path.isdir(full_path) and
-            name.endswith('_evoformer_blocks') and
-            os.path.isdir(os.path.join(full_path, 'recycle_0'))):
-            # Extract the protein ID (remove '_evoformer_blocks' suffix)
+    for name in os.listdir(data_dir):
+        full_path = os.path.join(data_dir, name)
+        if (os.path.isdir(full_path) and name.endswith('_evoformer_blocks') and
+                os.path.isdir(os.path.join(full_path, 'recycle_0'))):
             protein_id = name.replace('_evoformer_blocks', '')
             datasets.append(protein_id)
-    return datasets
+    return sorted(datasets)
 
 
-def load_initial_input(protein_id):
-    """
-    Load the initial M and Z tensors for block 0.
-    """
-    # Updated to match the actual directory structure
-    protein_dir = os.path.join(DATA_DIR, f"{protein_id}_evoformer_blocks", "recycle_0")
-    m_path = os.path.join(protein_dir, "m_block_0.pt")
-    z_path = os.path.join(protein_dir, "z_block_0.pt")
+def load_protein_block(protein_id: str, block_idx: int, data_dir: str,
+                       device: str, max_cluster_size: int = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Load M and Z tensors for a specific block"""
+    protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+    m_path = os.path.join(protein_dir, f"m_block_{block_idx}.pt")
+    z_path = os.path.join(protein_dir, f"z_block_{block_idx}.pt")
 
-    if not os.path.exists(m_path) or not os.path.exists(z_path):
-        raise FileNotFoundError(f"Initial block not found for {protein_id}. Expected paths:\n  {m_path}\n  {z_path}")
+    m = torch.load(m_path, map_location=device)
+    z = torch.load(z_path, map_location=device)
 
-    # Load tensors
-    m_init = torch.load(m_path, map_location=device)  # (s_c, r, c_m)
-    z_init = torch.load(z_path, map_location=device)  # (r, r, c_z)
+    # Remove batch dimension
+    if m.dim() == 4:
+        m = m.squeeze(0)
+    if z.dim() == 4:
+        z = z.squeeze(0)
 
-    # Ensure proper dimensions
-    if m_init.dim() == 4 and m_init.size(0) == 1:
-        m_init = m_init.squeeze(0)  # Remove batch dimension if present
-    if z_init.dim() == 4 and z_init.size(0) == 1:
-        z_init = z_init.squeeze(0)  # Remove batch dimension if present
+    # Limit cluster size for memory efficiency
+    if max_cluster_size and m.shape[0] > max_cluster_size:
+        m = m[:max_cluster_size]
 
-    # Reduce cluster size if enabled
-    max_clusters = args.reduced_cluster_size
-    m_init = m_init[:max_clusters]
-    return m_init, z_init
-
-
-def load_block(protein_id, block_index):
-    """
-    Load M and Z tensors for a specific block index.
-    Adjusts dimensions to ensure compatibility.
-    """
-    # Updated to match the actual directory structure
-    protein_dir = os.path.join(DATA_DIR, f"{protein_id}_evoformer_blocks", "recycle_0")
-    m_path = os.path.join(protein_dir, f"m_block_{block_index}.pt")
-    z_path = os.path.join(protein_dir, f"z_block_{block_index}.pt")
-
-    if not os.path.exists(m_path) or not os.path.exists(z_path):
-        raise FileNotFoundError(f"Block {block_index} not found for {protein_id}. Expected paths:\n  {m_path}\n  {z_path}")
-
-    # Load tensors
-    m = torch.load(m_path, map_location=device)  # (1, s_c, r, c_m)
-    z = torch.load(z_path, map_location=device)  # (1, r, r, c_z)
-
-    # Remove batch dimension for consistency
-    m = m.squeeze(0)  # (s_c, r, c_m)
-    z = z.squeeze(0)  # (r, r, c_z)
-
-    # Reduce cluster size if enabled
-    max_clusters = args.reduced_cluster_size
-    m = m[:max_clusters]
     return m, z
 
 
-def balanced_loss_fn(pred_m, target_m, pred_z, target_z, msa_weight=1.0, pair_weight=0.1):
+def compute_adaptive_loss(pred_m: torch.Tensor, target_m: torch.Tensor,
+                          pred_z: torch.Tensor, target_z: torch.Tensor) -> Dict[str, torch.Tensor]:
     """
-    Balanced loss function that accounts for different data scales
+    Compute loss with proper scaling that preserves learning signal
     """
+    # Standard MSE losses
     msa_loss = F.mse_loss(pred_m, target_m)
     pair_loss = F.mse_loss(pred_z, target_z)
 
-    # Weight the losses to balance their contributions
-    weighted_loss = msa_weight * msa_loss + pair_weight * pair_loss
+    # Scale-aware losses (normalized by variance to be scale-invariant)
+    msa_variance = target_m.var() + 1e-8
+    pair_variance = target_z.var() + 1e-8
 
-    return weighted_loss, msa_loss.item(), pair_loss.item()
+    msa_scaled = msa_loss / msa_variance
+    pair_scaled = pair_loss / pair_variance
+
+    # Balanced loss (equal contribution from MSA and pair)
+    total_loss = msa_scaled + pair_scaled
+
+    return {
+        'total': total_loss,
+        'msa_raw': msa_loss,
+        'pair_raw': pair_loss,
+        'msa_scaled': msa_scaled,
+        'pair_scaled': pair_scaled
+    }
 
 
-# === Neural ODE with Configurable Memory Optimizations ===
-# Create a ODE function with optional checkpointing
-class CheckpointedEvoformerODEFunc(torch.nn.Module):
-    def __init__(self, ode_func, use_checkpoint=True):
-        super().__init__()
-        self.ode_func = ode_func
-        self.use_checkpoint = use_checkpoint
+def train_single_protein_batched(protein_id: str, ode_func: torch.nn.Module, optimizer: torch.optim.Optimizer,
+                                 scaler: GradScaler, args: argparse.Namespace) -> Dict:
+    """Train using temporal batching - break sequence into smaller chunks"""
 
-    def forward(self, t, state):
-        if self.use_checkpoint:
-            # Use checkpointing to save memory during backprop
-            # Fix: use use_reentrant=False as recommended
-            return checkpoint(self.ode_func.forward, t, state, use_reentrant=False)
+    # Find all available blocks
+    protein_dir = os.path.join(args.data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+    available_blocks = []
+    for i in range(args.max_blocks):
+        m_path = os.path.join(protein_dir, f"m_block_{i}.pt")
+        z_path = os.path.join(protein_dir, f"z_block_{i}.pt")
+        if os.path.exists(m_path) and os.path.exists(z_path):
+            available_blocks.append(i)
         else:
-            # Direct computation without checkpointing
-            return self.ode_func(t, state)
+            break
 
-
-# Initialize model with configurable parameters
-if args.use_fast_ode:
-    print("Using FAST EvoformerODEFunc implementation")
-    from evoformer_ode import EvoformerODEFuncFast as OdeFunction
-else:
-    print("Using standard EvoformerODEFunc implementation")
-    from evoformer_ode import EvoformerODEFunc as OdeFunction
-
-ode_func = OdeFunction(c_m, c_z, hidden_dim).to(device)
-checkpointed_ode_func = CheckpointedEvoformerODEFunc(ode_func, use_checkpoint=args.use_checkpoint)
-optimizer = optim.Adam(ode_func.parameters(), lr=learning_rate)
-
-# Configure integration time points
-num_points = args.num_time_points
-t_grid_full = torch.linspace(0, 1, num_points).to(device)
-
-
-def chunk_integration(func, y0, t, chunk_size=CHUNK_SIZE):
-    """
-    Perform integration in chunks to reduce memory usage.
-    Only used if chunk_size > 0.
-    """
-    if chunk_size <= 0:
-        # Do regular integration if chunking is disabled
-        return odeint(func, y0, t, method=args.integrator,
-                      rtol=1e-3 if args.reduced_precision_integration else 1e-4,
-                      atol=1e-4 if args.reduced_precision_integration else 1e-5)
-
-    chunks = []
-    for i in range(0, len(t), chunk_size):
-        # Get current chunk of time points
-        t_chunk = t[i:i + chunk_size]
-        if len(t_chunk) == 1 and i > 0:
-            # Skip single point chunks except the first
-            continue
-
-        if i == 0:
-            # For the first chunk, use the initial state
-            y_chunk = y0
-        else:
-            # For subsequent chunks, use the final state from the previous chunk
-            if chunks:
-                last_chunk = chunks[-1]
-                if isinstance(last_chunk, tuple):
-                    # If the result is a tuple of tensors
-                    y_chunk = (last_chunk[0][-1], last_chunk[1][-1])
-                else:
-                    # If it's a single tensor
-                    y_chunk = last_chunk[-1]
-            else:
-                y_chunk = y0
-
-        # Integrate this chunk
-        chunk_traj = odeint(
-            func,
-            y_chunk,
-            t_chunk,
-            method=args.integrator,
-            rtol=1e-3 if args.reduced_precision_integration else 1e-4,
-            atol=1e-4 if args.reduced_precision_integration else 1e-5
-        )
-        chunks.append(chunk_traj)
-
-    # Concatenate the chunks excluding duplicate states
-    # Since we have a tuple of (m, z) trajectories, we need to handle them separately
-    m_results = []
-    z_results = []
-
-    for i, chunk in enumerate(chunks):
-        if isinstance(chunk, tuple) and len(chunk) == 2:
-            m_chunk, z_chunk = chunk
-        else:
-            # Handle the case where odeint returns trajectories differently
-            m_chunk = chunk[0]
-            z_chunk = chunk[1]
-
-        if i == 0:
-            m_results.append(m_chunk)
-            z_results.append(z_chunk)
-        else:
-            # Skip the first state in subsequent chunks
-            m_results.append(m_chunk[1:])
-            z_results.append(z_chunk[1:])
-
-    # Concatenate results
-    m_trajectory = torch.cat(m_results, dim=0)
-    z_trajectory = torch.cat(z_results, dim=0)
-
-    return (m_trajectory, z_trajectory)
-
-
-def train_step(protein_id, step_idx):
-    """
-    Single training step for one protein with configurable memory optimizations.
-    NOTE: For neural ODEs, we must process time sequentially. The 'batches' here
-    are contiguous chunks of the time sequence, not independent batches.
-    """
-    clear_memory()
-
-    m_init, z_init = load_initial_input(protein_id)
-
-    ode_state = (m_init, z_init)
-
-    # Configure batch size for time steps
+    num_blocks = len(available_blocks)
     batch_size = args.batch_size
+
+    print(f"Batched: {num_blocks} blocks, batch_size={batch_size}")
+
+    # Load initial state
+    m_current, z_current = load_protein_block(
+        protein_id, available_blocks[0], args.data_dir, args.device, args.reduced_cluster_size
+    )
+
     total_loss = 0
+    total_batches = 0
+    all_losses = []
 
-    # Choose which ODE function to use
-    active_ode_func = checkpointed_ode_func if args.use_checkpoint else ode_func
+    # Process in batches
+    for batch_start in range(0, num_blocks - 1, batch_size):
+        batch_end = min(batch_start + batch_size, num_blocks - 1)
 
-    # Create time batches - these are CONTIGUOUS chunks, not independent batches
-    all_time_batches = [(batch_start, min(batch_start + batch_size, len(t_grid_full)))
-                        for batch_start in range(1, len(t_grid_full), batch_size)]
+        # Create time grid for this batch
+        batch_blocks = available_blocks[batch_start:batch_end + 1]
+        t_grid = torch.linspace(0.0, 1.0, len(batch_blocks)).to(args.device)
 
-    # If test single step, only process first batch of time steps for quick testing
-    time_batches = all_time_batches[:1] if args.test_single_step else all_time_batches
-
-    # Calculate loss for contiguous chunks of time steps
-    current_state = ode_state  # Track the current state through time
-
-    for batch_idx, (batch_start, batch_end) in enumerate(time_batches):
-        # Include the last time point from previous batch for continuity
-        start_idx = batch_start - 1 if batch_idx == 0 else batch_start - 1
-        t_grid_batch = t_grid_full[start_idx:batch_end]
-
-        # Clear gradients
         optimizer.zero_grad()
 
-        with autocast(enabled=USE_AMP):
-            # Integrate Neural ODE from current state through this time chunk
-            if args.chunk_size > 0:
-                pred_trajectory = chunk_integration(
-                    active_ode_func,
-                    current_state,  # Use current state, not initial state
-                    t_grid_batch,
-                    chunk_size=args.chunk_size
-                )
-            else:
-                pred_trajectory = odeint(
-                    active_ode_func,
-                    current_state,  # Use current state, not initial state
-                    t_grid_batch,
-                    method='euler',  # CHANGED: use stable integration
-                    rtol=1e-2,  # CHANGED: relaxed tolerances
-                    atol=1e-2
-                )
+        with autocast(enabled=args.use_amp):
+            # Solve ODE for this batch
+            trajectory = odeint(
+                ode_func,
+                (m_current, z_current),
+                t_grid,
+                method=args.integrator,
+                rtol=1e-4,
+                atol=1e-5
+            )
 
-            # Update current state to the final state of this trajectory
-            # Detach to prevent gradients from flowing back through previous chunks
-            if isinstance(pred_trajectory, tuple):
-                current_state = (pred_trajectory[0][-1].detach(), pred_trajectory[1][-1].detach())
-            else:
-                # Handle different output formats from different integrators
-                current_state = (pred_trajectory[0][-1].detach(), pred_trajectory[1][-1].detach())
-
-            # Compute loss for each time step in the batch
+            # Compute loss for this batch
             batch_loss = 0
-            # Skip first time point if it's not the first batch (it's from previous batch)
-            start_i = 1 if batch_idx == 0 else 0
+            valid_steps = 0
 
-            for i in range(start_i, len(t_grid_batch)):
-                time_idx = start_idx + i
-                try:
-                    gt_m, gt_z = load_block(protein_id, time_idx)
-                except FileNotFoundError:
-                    print(f"Skipping block {time_idx} for {protein_id} (not found)")
-                    continue
+            for i, block_idx in enumerate(batch_blocks[1:], 1):  # Skip first (initial state)
+                m_target, z_target = load_protein_block(
+                    protein_id, block_idx, args.data_dir, args.device, args.reduced_cluster_size
+                )
 
-                # Get predictions - Make sure i is within bounds
-                if isinstance(pred_trajectory, tuple):
-                    # Make sure i is within bounds of pred_trajectory
-                    if i < pred_trajectory[0].shape[0] and i < pred_trajectory[1].shape[0]:
-                        pred_m, pred_z = pred_trajectory[0][i], pred_trajectory[1][i]
-                    else:
-                        print(f"Warning: Index {i} out of bounds for pred_trajectory with shape "
-                              f"{pred_trajectory[0].shape[0]}, {pred_trajectory[1].shape[0]}. Skipping...")
-                        continue
-                else:
-                    # Handle different output formats for different integrators
-                    if i < pred_trajectory[0].shape[0] and i < pred_trajectory[1].shape[0]:
-                        pred_m, pred_z = pred_trajectory[0][i], pred_trajectory[1][i]
-                    else:
-                        print(f"Warning: Index {i} out of bounds for pred_trajectory with shape "
-                              f"{pred_trajectory[0].shape[0]}, {pred_trajectory[1].shape[0]}. Skipping...")
-                        continue
+                m_pred = trajectory[0][i]
+                z_pred = trajectory[1][i]
 
-                # FIXED: Compute balanced loss
-                step_loss, msa_loss, pair_loss = balanced_loss_fn(pred_m, gt_m, pred_z, gt_z)
-                batch_loss += step_loss  # FIXED: use step_loss instead of undefined 'loss'
+                loss_dict = compute_adaptive_loss(m_pred, m_target, z_pred, z_target)
+                batch_loss += loss_dict['total']
+                valid_steps += 1
 
-                # # Optional: Print component losses for monitoring
-                # if i % 3 == 0:  # Every 3rd time step
-                #     print(f"    Time {time_idx}: Total={step_loss:.1f}, MSA={msa_loss:.1f}, Pair={pair_loss:.1f}")
+            batch_loss = batch_loss / valid_steps
 
-            # Adjust loss based on batch size for consistency
-            if batch_loss > 0:
-                batch_loss = batch_loss / (len(t_grid_batch) - start_i)
-                total_loss += batch_loss.item()
-
-        # FIXED: Scale gradients and backpropagate with gradient clipping
-        if USE_AMP:
+        # Backward pass for this batch
+        if args.use_amp:
             scaler.scale(batch_loss).backward()
-            # ADD gradient clipping
             scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(ode_func.parameters(), max_norm=1.0)
-            if args.gradient_accumulation <= 1 or (step_idx + 1) % args.gradient_accumulation == 0:
-                scaler.step(optimizer)
-                scaler.update()
+            scaler.step(optimizer)
+            scaler.update()
         else:
             batch_loss.backward()
-            # ADD gradient clipping
             torch.nn.utils.clip_grad_norm_(ode_func.parameters(), max_norm=1.0)
-            if args.gradient_accumulation <= 1 or (step_idx + 1) % args.gradient_accumulation == 0:
-                optimizer.step()
+            optimizer.step()
 
-        # Free memory
-        del pred_trajectory, batch_loss
-        clear_memory()
+        total_loss += batch_loss.item()
+        total_batches += 1
+        all_losses.append(batch_loss.item())
 
-    # Free remaining memory
-    del m_init, z_init, ode_state, current_state
-    clear_memory()
+        # Update current state for next batch (detached from computation graph)
+        if batch_end < num_blocks - 1:  # Not the last batch
+            m_current = trajectory[0][-1].detach()
+            z_current = trajectory[1][-1].detach()
 
-    return total_loss
+        # AGGRESSIVE MEMORY CLEARING
+        del trajectory, batch_loss, loss_dict, m_pred, z_pred, m_target, z_target
+        clear_memory(args.device)
+        if args.device == 'cuda':
+            torch.cuda.synchronize()
+
+    avg_loss = total_loss / total_batches
+
+    return {
+        'protein': protein_id,
+        'approach': 'batched',
+        'num_blocks': num_blocks,
+        'batch_size': batch_size,
+        'num_batches': total_batches,
+        'total_loss': avg_loss,
+        'batch_losses': all_losses
+    }
 
 
-def train(input_dir):
-    """
-    Main training loop with configurable memory optimizations.
-    """
-    dataset = get_dataset(input_dir)
-    print(f"Training on {len(dataset)} proteins from {input_dir}")
+def train_single_protein_strided(protein_id: str, ode_func: torch.nn.Module, optimizer: torch.optim.Optimizer,
+                                 scaler: GradScaler, args: argparse.Namespace) -> Dict:
+    """Train using block striding - use every nth block"""
 
-    # If test single step mode is active
-    if args.test_single_step:
-        epochs_to_run = 1
-        if args.test_protein:
-            if args.test_protein.lower() == "all":
-                # Test on all proteins in the dataset
-                dataset_to_process = dataset
-                print(f"Testing all {len(dataset)} proteins in dataset")
-            elif args.test_protein in dataset:
-                dataset_to_process = [args.test_protein]
-                print(f"Testing single protein: {args.test_protein}")
-            else:
-                print(f"Error: Protein {args.test_protein} not found in dataset")
-                print(f"Available proteins: {dataset}")
-                return
+    # Find all available blocks
+    protein_dir = os.path.join(args.data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+    available_blocks = []
+    for i in range(args.max_blocks):
+        m_path = os.path.join(protein_dir, f"m_block_{i}.pt")
+        z_path = os.path.join(protein_dir, f"z_block_{i}.pt")
+        if os.path.exists(m_path) and os.path.exists(z_path):
+            available_blocks.append(i)
         else:
-            dataset_to_process = dataset[:1]
-            print(f"Testing first protein: {dataset_to_process[0]}")
+            break
+
+    # Select blocks with stride (ensure we include first and last)
+    stride = args.block_stride
+    selected_blocks = []
+
+    # Always include block 0
+    selected_blocks.append(available_blocks[0])
+
+    # Add strided blocks
+    for i in range(stride, len(available_blocks), stride):
+        selected_blocks.append(available_blocks[i])
+
+    # Ensure we include the last block if not already included
+    if available_blocks[-1] not in selected_blocks:
+        selected_blocks.append(available_blocks[-1])
+
+    print(f"Strided: {len(selected_blocks)}/{len(available_blocks)} blocks, stride={stride}")
+
+    # Load initial state
+    m_init, z_init = load_protein_block(
+        protein_id, selected_blocks[0], args.data_dir, args.device, args.reduced_cluster_size
+    )
+
+    # Create time grid
+    t_grid = torch.linspace(0.0, 1.0, len(selected_blocks)).to(args.device)
+
+    optimizer.zero_grad()
+
+    with autocast(enabled=args.use_amp):
+        # Solve ODE for selected blocks
+        trajectory = odeint(
+            ode_func,
+            (m_init, z_init),
+            t_grid,
+            method=args.integrator,
+            rtol=1e-4,
+            atol=1e-5
+        )
+
+        # Compute loss against selected blocks
+        total_loss = 0
+        valid_steps = 0
+
+        for i, block_idx in enumerate(selected_blocks[1:], 1):  # Skip first block
+            m_target, z_target = load_protein_block(
+                protein_id, block_idx, args.data_dir, args.device, args.reduced_cluster_size
+            )
+
+            m_pred = trajectory[0][i]
+            z_pred = trajectory[1][i]
+
+            loss_dict = compute_adaptive_loss(m_pred, m_target, z_pred, z_target)
+            total_loss += loss_dict['total']
+            valid_steps += 1
+
+        total_loss = total_loss / valid_steps
+
+    # Backward pass
+    if args.use_amp:
+        scaler.scale(total_loss).backward()
+        scaler.unscale_(optimizer)
+        torch.nn.utils.clip_grad_norm_(ode_func.parameters(), max_norm=1.0)
+        scaler.step(optimizer)
+        scaler.update()
     else:
-        epochs_to_run = args.epochs  # Use configurable epochs parameter
-        dataset_to_process = dataset
+        total_loss.backward()
+        torch.nn.utils.clip_grad_norm_(ode_func.parameters(), max_norm=1.0)
+        optimizer.step()
 
-    for epoch in range(epochs_to_run):
-        clear_memory()
+    # Store loss value before deletion
+    total_loss_value = total_loss.item()
 
-        epoch_loss = 0
-        max_mem_allocated = 0
-        max_mem_reserved = 0
+    # AGGRESSIVE MEMORY CLEARING
+    del trajectory, total_loss, loss_dict, m_pred, z_pred, m_target, z_target, m_init, z_init
+    clear_memory(args.device)
+    if args.device == 'cuda':
+        torch.cuda.synchronize()
 
-        for step_idx, protein_id in enumerate(dataset_to_process):
-            try:
-                print(f"Processing protein {protein_id} - Step {step_idx + 1}/{len(dataset_to_process)}")
-                loss = train_step(protein_id, step_idx)
-                epoch_loss += loss
-                print(f"  - Loss: {loss}")
-
-                # Track maximum memory usage across all proteins
-                if device == "cuda":
-                    curr_mem_allocated = torch.cuda.max_memory_allocated() / 1024 ** 2
-                    curr_mem_reserved = torch.cuda.max_memory_reserved() / 1024 ** 2
-                    max_mem_allocated = max(max_mem_allocated, curr_mem_allocated)
-                    max_mem_reserved = max(max_mem_reserved, curr_mem_reserved)
-
-                #print_memory_stats(f"After protein {protein_id}")
-
-            except RuntimeError as e:
-                if device == "cuda" and "CUDA out of memory" in str(e):
-                    print(f"CUDA OOM for protein {protein_id}. Skipping...")
-                    # Print memory usage when OOM occurs
-                    print_memory_stats("At OOM error")
-                    clear_memory()
-                    continue
-                else:
-                    raise e
-
-        print(f"Epoch {epoch + 1} - Average Loss: {epoch_loss / len(dataset_to_process)}")
-
-        # Print maximum memory usage across all proteins
-        if len(dataset_to_process) > 1:
-            print(f"Maximum Memory Usage Across All Proteins:")
-            if device == "cuda":
-                print(f"  Max Memory Allocated: {max_mem_allocated:.2f} MiB")
-                print(f"  Max Memory Reserved: {max_mem_reserved:.2f} MiB")
-            else:
-                print("  Memory tracking not available in CPU mode")
-
-        # Only save checkpoints in full training mode
-        if not args.test_single_step:
-            # Save checkpoint
-            checkpoint_path = os.path.join(OUTPUT_DIR, f"evoformer_ode_epoch_{epoch + 1}.pt")
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': ode_func.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'loss': epoch_loss,
-            }, checkpoint_path)
-            print(f"Checkpoint saved to {checkpoint_path}")
+    return {
+        'protein': protein_id,
+        'approach': 'strided',
+        'num_blocks': len(selected_blocks),
+        'total_available': len(available_blocks),
+        'stride': stride,
+        'selected_blocks': selected_blocks,
+        'total_loss': total_loss_value
+    }
 
 
-# === Main Entry Point ===
-if __name__ == "__main__":
-    try:
-        # Enable memory profiling if available
-        try:
-            from pytorch_memlab import MemReporter
+def main():
+    parser = argparse.ArgumentParser(description='Simplified Neural ODE Training')
 
-            reporter = None
+    # Core settings
+    parser.add_argument('--data_dir', type=str, required=True, help='Data directory')
+    parser.add_argument('--output_dir', type=str, default=None, help='Path to output directory')
+    parser.add_argument('--experiment_name', type=str, default=None, help='Experiment name for logging')
+    parser.add_argument('--device', type=str, default='cuda', help='Device (cuda/cpu)')
+    parser.add_argument('--epochs', type=int, default=5, help='Number of epochs')
+    parser.add_argument('--learning_rate', type=float, default=1e-4, help='Learning rate')
 
-            if device == "cuda" and args.monitor_memory:
-                reporter = MemReporter()
-                # Profile initial memory state silently
-                reporter.report()
-        except ImportError:
-            reporter = None
-            if args.monitor_memory:
-                print("pytorch_memlab not available, detailed memory monitoring disabled")
+    # Model settings
+    parser.add_argument('--use_fast_ode', action='store_true', help='Use fast ODE implementation')
+    parser.add_argument('--reduced_cluster_size', type=int, default=64, help='Max cluster size')
+    parser.add_argument('--hidden_dim', type=int, default=64, help='Hidden dimension')
+    parser.add_argument('--integrator', choices=['dopri5', 'rk4', 'euler'], default='rk4', help='ODE integrator')
 
-        # Choose whether to train or test configurations based on the argument
-        if args.test_configs:
-            print("\n=== Configuration testing is handled by memory_config_tester.py ===")
-            print("Please run memory_config_tester.py directly for configuration testing.")
-            sys.exit(0)
+    # Timestep control - choose ONE approach
+    parser.add_argument('--batch_size', type=int, default=None, help='Batch size for temporal batching (1-10)')
+    parser.add_argument('--block_stride', type=int, default=None, help='Use every nth block (must divide 48)')
+    parser.add_argument('--max_blocks', type=int, default=49, help='Maximum blocks to use total')
+
+    # Optimization settings
+    parser.add_argument('--use_amp', action='store_true', help='Use automatic mixed precision')
+    parser.add_argument('--test_single_protein', type=str, default=None, help='Test on single protein')
+    parser.add_argument('--max_residues', type=int, default=None, help='Skip proteins with more than N residues')
+
+    args = parser.parse_args()
+
+    # Device setup
+    if args.device == 'cuda' and not torch.cuda.is_available():
+        print("CUDA not available, switching to CPU")
+        args.device = 'cpu'
+
+    if args.device == 'cpu':
+        args.use_amp = False  # AMP only works on CUDA
+
+    print(f"🚀 Starting Neural ODE Training")
+    print(f"📁 Data directory: {args.data_dir}")
+    print(f"💻 Device: {args.device}")
+    print(f"🔧 Settings: LR={args.learning_rate}, Fast ODE={args.use_fast_ode}, AMP={args.use_amp}")
+
+    # Initialize CUDA if using GPU
+    if args.device == 'cuda':
+        torch.cuda.init()
+        print(f"🚀 CUDA initialized: {torch.cuda.get_device_name(0)}")
+        print(f"💾 GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024 ** 3:.1f} GB")
+
+    # Load dataset
+    dataset = get_dataset(args.data_dir)
+    if not dataset:
+        print(f"❌ No proteins found in {args.data_dir}")
+        return
+
+    if args.test_single_protein:
+        if args.test_single_protein in dataset:
+            dataset = [args.test_single_protein]
         else:
-            # Run normal training
-            train(DATA_DIR)
+            print(f"❌ Protein {args.test_single_protein} not found")
+            return
 
-        # Profile final memory state
-        if reporter is not None and args.monitor_memory:
-            print("\n=== FINAL MEMORY PROFILE ===")
-            reporter.report()
+    print(f"🧬 Found {len(dataset)} proteins: {dataset}")
 
-    except Exception as e:
-        print(f"Error during training: {e}")
-        import traceback
+    # Initialize model
+    c_m = 256  # MSA embedding dimension
+    c_z = 128  # Pair embedding dimension
 
-        traceback.print_exc()
-        # Print final memory stats
-        print_memory_stats("Error state")
+    if args.use_fast_ode:
+        ode_func = EvoformerODEFuncFast(c_m, c_z, args.hidden_dim).to(args.device)
+    else:
+        ode_func = EvoformerODEFunc(c_m, c_z, args.hidden_dim).to(args.device)
+
+    optimizer = optim.Adam(ode_func.parameters(), lr=args.learning_rate)
+    scaler = GradScaler(enabled=args.use_amp)
+
+    print(f"🤖 Model initialized: {sum(p.numel() for p in ode_func.parameters())} parameters")
+
+    # FIXED: Initialize training logger properly
+    logger = None
+    if args.experiment_name and args.output_dir:
+        try:
+            os.makedirs(args.output_dir, exist_ok=True)
+            logger = TrainingLogger(args.output_dir, args.experiment_name)
+
+            # Log configuration
+            model_info = {
+                'total_params': sum(p.numel() for p in ode_func.parameters()),
+                'model_type': 'EvoformerODEFuncFast' if args.use_fast_ode else 'EvoformerODEFunc',
+                'loss_function': 'Adaptive MSE (variance-scaled)',
+            }
+
+            optimizer_info = {
+                'learning_rate': args.learning_rate,
+            }
+
+            logger.log_configuration(args, model_info, optimizer_info)
+            print(f"📝 Training logger initialized: {args.experiment_name}")
+            print(f"📊 Reports will be saved to: {args.output_dir}/{args.experiment_name}")
+        except Exception as e:
+            print(f"⚠️ Warning: Could not initialize logger: {e}")
+            logger = None
+
+    # Training loop
+    previous_losses = []
+    for epoch in range(args.epochs):
+        print(f"\n📈 Epoch {epoch + 1}/{args.epochs}")
+
+        # FIXED: Log epoch start
+        if logger:
+            logger.log_epoch_start(epoch + 1, args.epochs, dataset)
+
+        epoch_losses = []
+        successful_proteins = 0
+        epoch_start_time = time.time()
+
+        for protein_idx, protein_id in enumerate(dataset):
+            print(f"  [{protein_idx + 1}/{len(dataset)}] Processing {protein_id}... ", end='', flush=True)
+
+            protein_start_time = time.time()
+
+            # Optional: Skip large proteins to avoid OOM
+            if args.max_residues is not None:
+                try:
+                    protein_dir = os.path.join(args.data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+                    m_test = torch.load(os.path.join(protein_dir, "m_block_0.pt"), map_location='cpu')
+                    num_residues = m_test.shape[-2] if m_test.dim() == 4 else m_test.shape[-2]
+                    if num_residues > args.max_residues:
+                        print(f"⏭️  SKIPPED ({num_residues} residues > {args.max_residues} limit)")
+                        del m_test
+                        continue
+                    del m_test
+                except:
+                    pass  # If we can't check size, proceed anyway
+
+            # Choose training approach
+            if args.batch_size is not None:
+                step_info = train_single_protein_batched(protein_id, ode_func, optimizer, scaler, args)
+            else:
+                step_info = train_single_protein_strided(protein_id, ode_func, optimizer, scaler, args)
+
+            protein_time = time.time() - protein_start_time
+            epoch_losses.append(step_info['total_loss'])
+            successful_proteins += 1
+            print(f"✅ Loss: {step_info['total_loss']:.3f}")
+
+            # FIXED: Log protein step
+            if logger:
+                logger.log_protein_step(
+                    protein_id=protein_id,
+                    step_idx=protein_idx,
+                    loss=step_info['total_loss'],
+                    step_info=step_info,
+                    time_taken=protein_time
+                )
+
+            # Show detailed metrics for first protein of first epoch
+            if epoch == 0 and protein_idx == 0:
+                if step_info['approach'] == 'batched':
+                    print(f"      📦 Batches: {step_info['num_batches']}, batch_size: {step_info['batch_size']}")
+                else:
+                    print(f"      🔢 Stride: {step_info['stride']}, blocks: {step_info['selected_blocks']}")
+                print(f"      📊 Using {step_info['num_blocks']} blocks")
+
+            # FINAL CLEANUP after each protein
+            clear_memory(args.device)
+            if args.device == 'cuda':
+                torch.cuda.synchronize()
+
+        # FIXED: Log epoch end
+        if logger:
+            logger.log_epoch_end()
+
+        # Epoch summary
+        if epoch_losses:
+            avg_loss = sum(epoch_losses) / len(epoch_losses)
+            epoch_time = time.time() - epoch_start_time
+
+            print(f"📊 Epoch {epoch + 1} Summary:")
+            print(f"    Average Loss: {avg_loss:.3f}")
+            print(f"    Successful proteins: {successful_proteins}/{len(dataset)}")
+            print(f"    Loss range: [{min(epoch_losses):.3f}, {max(epoch_losses):.3f}]")
+            print(f"    Epoch time: {epoch_time:.1f} seconds")
+
+            # Check for learning progress
+            if epoch > 0 and len(previous_losses) > 0:
+                prev_avg = sum(previous_losses) / len(previous_losses)
+                improvement = (prev_avg - avg_loss) / prev_avg * 100
+                if improvement > 0:
+                    print(f"    📈 Improvement: {improvement:.1f}% better than previous epoch")
+                else:
+                    print(f"    📉 Change: {abs(improvement):.1f}% worse than previous epoch")
+
+            previous_losses = epoch_losses[:]
+
+    # FIXED: Save final model and close logger
+    if logger:
+        # Save final model
+        model_path = os.path.join(args.output_dir, f"{args.experiment_name}_final_model.pt")
+        torch.save({
+            'model_state_dict': ode_func.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'config': vars(args),
+            'final_loss': avg_loss if epoch_losses else None
+        }, model_path)
+
+        logger.log_training_complete(model_path)
+        print(f"📊 Training complete! Full report saved to: {args.output_dir}/{args.experiment_name}")
+        print(f"🤖 Final model saved to: {model_path}")
+
+    print(f"\n🎯 Training completed!")
+
+
+if __name__ == "__main__":
+    main()
