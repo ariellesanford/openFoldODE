@@ -8,8 +8,7 @@ from typing import Dict, List, Any
 
 class TrainingLogger:
     """
-    Simplified logger - only saves one log file with both structured data and console output
-    Updated to handle train/validation splits properly
+    Fixed logger that properly tracks training start and completion times
     """
 
     def __init__(self, output_dir: str, experiment_name: str = None):
@@ -25,6 +24,10 @@ class TrainingLogger:
         self.training_history = []
         self.protein_results = {}
         self.epoch_summaries = []
+
+        # FIXED: Track timing properly
+        self.training_start_time = None
+        self.training_end_time = None
 
         # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
@@ -47,7 +50,6 @@ class TrainingLogger:
             'epochs': getattr(args, 'epochs', 'N/A'),
             'learning_rate': optimizer_info.get('learning_rate', 'N/A'),
             'batch_size': getattr(args, 'batch_size', 'N/A'),
-            'block_stride': getattr(args, 'block_stride', 'N/A'),
             'integrator': getattr(args, 'integrator', 'N/A'),
             'use_amp': getattr(args, 'use_amp', False),
             'max_residues': getattr(args, 'max_residues', 'N/A'),
@@ -69,8 +71,16 @@ class TrainingLogger:
                 'total_gpu_memory': f"{torch.cuda.get_device_properties(0).total_memory / 1024 ** 3:.1f} GB"
             })
 
+    def log_training_start(self):
+        """FIXED: Log actual training start time"""
+        self.training_start_time = datetime.datetime.now()
+
     def log_epoch_start(self, epoch: int, total_epochs: int, proteins: List[str]):
         """Log the start of an epoch"""
+        # FIXED: Set training start time on first epoch if not already set
+        if self.training_start_time is None:
+            self.training_start_time = datetime.datetime.now()
+
         self.current_epoch = {
             'epoch': epoch,
             'total_epochs': total_epochs,
@@ -101,12 +111,6 @@ class TrainingLogger:
                     'batch_size': step_info.get('batch_size'),
                     'num_batches': step_info.get('num_batches'),
                     'batch_losses': step_info.get('batch_losses', [])
-                })
-            elif step_info['approach'] == 'strided':
-                protein_result.update({
-                    'stride': step_info.get('stride'),
-                    'selected_blocks': step_info.get('selected_blocks', []),
-                    'total_available': step_info.get('total_available')
                 })
 
         self.current_epoch['protein_results'][protein_id] = protein_result
@@ -140,8 +144,9 @@ class TrainingLogger:
         self._update_log_file()
 
     def log_training_complete(self, final_model_path: str = None):
-        """Log training completion and generate final report"""
-        self.training_complete_time = datetime.datetime.now()
+        """FIXED: Log training completion with proper timing"""
+        # FIXED: Set training end time when called, not when report is generated
+        self.training_end_time = datetime.datetime.now()
         self.final_model_path = final_model_path
         self._write_final_report()
 
@@ -155,7 +160,7 @@ class TrainingLogger:
             f.write("EVOFORMER NEURAL ODE TRAINING REPORT\n")
             f.write("=" * 50 + "\n\n")
             f.write(f"Experiment: {self.experiment_name}\n")
-            f.write(f"Started: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            f.write(f"Report initialized: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
     def _update_log_file(self):
         """Update the log file with current progress"""
@@ -173,11 +178,29 @@ class TrainingLogger:
         f.write("EVOFORMER NEURAL ODE TRAINING REPORT\n")
         f.write("=" * 50 + "\n\n")
 
-        # Experiment info
+        # Experiment info with FIXED timing
         f.write(f"Experiment: {self.experiment_name}\n")
-        f.write(f"Started: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        if final and hasattr(self, 'training_complete_time'):
-            f.write(f"Completed: {self.training_complete_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+
+        # FIXED: Show proper start/end times
+        if self.training_start_time:
+            f.write(f"Started: {self.training_start_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+
+        if final and self.training_end_time:
+            f.write(f"Completed: {self.training_end_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+
+            # FIXED: Calculate actual training duration
+            if self.training_start_time:
+                actual_duration = self.training_end_time - self.training_start_time
+                duration_minutes = actual_duration.total_seconds() / 60
+                f.write(f"Total Training Time: {duration_minutes:.1f} minutes ({duration_minutes / 60:.1f} hours)\n")
+        elif not final:
+            f.write(f"Status: Training in progress...\n")
+            if self.training_start_time:
+                current_duration = datetime.datetime.now() - self.training_start_time
+                duration_minutes = current_duration.total_seconds() / 60
+                f.write(f"Current Runtime: {duration_minutes:.1f} minutes\n")
+
+        f.write(f"Report generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write("\n")
 
         # Configuration
@@ -259,36 +282,36 @@ class TrainingLogger:
                 f.write("\n")
 
         # Detailed results for each epoch
-        f.write("DETAILED EPOCH RESULTS\n")
-        f.write("=" * 50 + "\n\n")
+        if self.epoch_summaries:
+            f.write("DETAILED EPOCH RESULTS\n")
+            f.write("=" * 50 + "\n\n")
 
-        for epoch_data in self.epoch_summaries:
-            f.write(f"Epoch {epoch_data['epoch']}:\n")
-            f.write(f"  Duration: {epoch_data['duration']:.1f} seconds\n")
-            f.write(f"  Training Loss: {epoch_data['average_loss']:.4f}\n")
+            for epoch_data in self.epoch_summaries:
+                f.write(f"Epoch {epoch_data['epoch']}:\n")
+                f.write(f"  Duration: {epoch_data['duration']:.1f} seconds\n")
+                f.write(f"  Training Loss: {epoch_data['average_loss']:.4f}\n")
 
-            if 'validation' in epoch_data and epoch_data['validation']:
-                val = epoch_data['validation']
-                f.write(f"  Validation Loss: {val['avg_loss']:.4f} ({val['num_proteins']} proteins)\n")
-                if 'min_loss' in val and 'max_loss' in val:
-                    f.write(f"    Val range: [{val['min_loss']:.4f}, {val['max_loss']:.4f}]\n")
+                if 'validation' in epoch_data and epoch_data['validation']:
+                    val = epoch_data['validation']
+                    f.write(f"  Validation Loss: {val['avg_loss']:.4f} ({val['num_proteins']} proteins)\n")
+                    if 'min_loss' in val and 'max_loss' in val:
+                        f.write(f"    Val range: [{val['min_loss']:.4f}, {val['max_loss']:.4f}]\n")
 
-            if 'best_protein' in epoch_data:
-                f.write(f"  Best: {epoch_data['best_protein']['id']} ({epoch_data['best_protein']['loss']:.2f})\n")
-                f.write(f"  Worst: {epoch_data['worst_protein']['id']} ({epoch_data['worst_protein']['loss']:.2f})\n")
+                if 'best_protein' in epoch_data:
+                    f.write(f"  Best: {epoch_data['best_protein']['id']} ({epoch_data['best_protein']['loss']:.2f})\n")
+                    f.write(
+                        f"  Worst: {epoch_data['worst_protein']['id']} ({epoch_data['worst_protein']['loss']:.2f})\n")
 
-            f.write(f"  Training Proteins:\n")
-            for protein_id, result in epoch_data['protein_results'].items():
-                approach_info = f"{result['approach']}"
-                if result['approach'] == 'batched' and 'batch_size' in result:
-                    approach_info += f" (batch_size={result['batch_size']})"
-                elif result['approach'] == 'strided' and 'stride' in result:
-                    approach_info += f" (stride={result['stride']})"
+                f.write(f"  Training Proteins:\n")
+                for protein_id, result in epoch_data['protein_results'].items():
+                    approach_info = f"{result['approach']}"
+                    if result['approach'] == 'batched' and 'batch_size' in result:
+                        approach_info += f" (batch_size={result['batch_size']})"
 
-                f.write(
-                    f"    {protein_id}: {result['total_loss']:.2f} ({approach_info}, {result['num_blocks']} blocks)\n")
+                    f.write(
+                        f"    {protein_id}: {result['total_loss']:.2f} ({approach_info}, {result['num_blocks']} blocks)\n")
 
-            f.write("\n")
+                f.write("\n")
 
         # Final model information
         if final and hasattr(self, 'final_model_path') and self.final_model_path:
@@ -300,4 +323,3 @@ class TrainingLogger:
             f.write("\n")
 
         f.write("=" * 50 + "\n")
-        f.write(f"Report generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")

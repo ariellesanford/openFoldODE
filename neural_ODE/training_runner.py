@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Fixed simple runner - captures subprocess output properly
-Updated for proper train/validation splits
+Updated training runner - no console output file generation
+Focuses on real-time console output and structured training logs only
 """
 
 import os
@@ -55,6 +55,13 @@ def main():
         'experiment_name': experiment_name,
         'batch_size': 10,
         'max_residues': 200,
+        # Enhanced features
+        'lr_patience': 3,
+        'lr_factor': 0.5,
+        'min_lr': 1e-6,
+        'early_stopping_patience': 7,
+        'early_stopping_min_delta': 0.001,
+        'restore_best_weights': True
     }
 
     # Parse command line arguments
@@ -65,14 +72,11 @@ def main():
         config['device'] = 'cuda'
         config['use_amp'] = torch.cuda.is_available()
 
-    if '--batch' in sys.argv:
+    # Adjust batch size if specified
+    if '--small-batch' in sys.argv:
         config['batch_size'] = 2
-        if 'block_stride' in config:
-            del config['block_stride']
-    elif '--stride' in sys.argv:
-        config['block_stride'] = 8
-        if 'batch_size' in config:
-            del config['batch_size']
+    elif '--large-batch' in sys.argv:
+        config['batch_size'] = 20
 
     # Add mode handling
     if '--test' in sys.argv:
@@ -100,20 +104,19 @@ def main():
         else:
             cmd.extend([f'--{key}', str(value)])
 
-    print("🚀 Starting Neural ODE Training")
+    print("🚀 Starting Enhanced Neural ODE Training")
     print(f"📁 Data: {config['data_dir']}")
     print(f"📂 Splits: {config['splits_dir']}")
     print(f"🎯 Mode: {config['mode']}")
     print(f"💻 Device: {config['device']}")
     print(f"🔧 Config: LR={config['learning_rate']}, Epochs={config['epochs']}")
-    print(f"📊 Reports will be saved to: {output_dir}/{experiment_name}")
+    print(f"📉 LR Scheduling: patience={config['lr_patience']}, factor={config['lr_factor']}")
+    print(f"🛑 Early Stopping: patience={config['early_stopping_patience']}")
+    print(f"📊 Reports will be saved to: {output_dir}/{experiment_name}.txt")
     print("=" * 50)
 
-    # FIXED: Stream output in real-time to console, save to file at end
-    console_output_file = output_dir / f"{experiment_name}_console_output.txt"
-
     try:
-        # Start the process with streaming output
+        # Start the process with real-time output streaming
         process = subprocess.Popen(
             cmd,
             cwd=script_dir,
@@ -124,49 +127,64 @@ def main():
             universal_newlines=True
         )
 
-        # Collect output while streaming to console
-        output_lines = []
+        # Stream output to console in real-time (no file saving)
         for line in process.stdout:
             print(line, end='')  # Print to console immediately
-            output_lines.append(line)  # Collect for file
 
         # Wait for process to complete
         result_code = process.wait()
 
-        # Write collected output to file
-        with open(console_output_file, 'w') as f:
-            f.writelines(output_lines)
-
         print("\n" + "=" * 50)
         if result_code == 0:
             print("✅ Training completed successfully!")
-            print(f"📊 Detailed training report: {output_dir}/{experiment_name}")
-            print(f"📄 Console output: {console_output_file}")
+            print(f"📊 Detailed training report: {output_dir}/{experiment_name}.txt")
 
-            # Show validation results if available
+            # Show training results if available
             training_log = output_dir / f"{experiment_name}.txt"
             if training_log.exists():
                 print(f"📈 Training log: {training_log}")
-                # Try to extract final validation loss from log
+                # Try to extract key results from log
                 try:
                     with open(training_log, 'r') as f:
                         content = f.read()
-                        if 'Validation Loss:' in content:
-                            print("🔍 Training included validation - check log for train/val curves")
+
+                        # Look for early stopping or final results
+                        if '🛑 Early stopping triggered' in content:
+                            print("🛑 Training stopped early due to validation criteria")
+                        elif 'Best validation loss:' in content:
+                            # Try to extract best validation loss
+                            lines = content.split('\n')
+                            for line in lines:
+                                if 'Best validation loss:' in line:
+                                    print(f"🏆 {line.strip()}")
+                                    break
+
+                        if 'Learning rate reductions:' in content:
+                            lines = content.split('\n')
+                            for line in lines:
+                                if 'Learning rate reductions:' in line:
+                                    print(f"📉 {line.strip()}")
+                                elif 'Final learning rate:' in line:
+                                    print(f"🎛️  {line.strip()}")
+                                    break
                 except:
                     pass
         else:
             print("❌ Training failed!")
-            print(f"📄 Check console output: {console_output_file}")
+            print(f"🔍 Check the training log for details: {output_dir}/{experiment_name}.txt")
 
-        # List all files created
+        # List key files created (excluding console output)
         print(f"\n📁 Files created in {output_dir}:")
         for file in sorted(output_dir.glob(f"{experiment_name}*")):
+            # Skip console output files
+            if "_console_output.txt" in file.name:
+                continue
+
             size_mb = file.stat().st_size / 1024 / 1024
             if file.suffix == '.pt':
                 print(f"  - {file.name} ({size_mb:.1f} MB) [Model checkpoint]")
             elif file.suffix == '.txt':
-                print(f"  - {file.name} ({size_mb:.1f} MB) [Training log/Console output]")
+                print(f"  - {file.name} ({size_mb:.1f} MB) [Training log]")
             else:
                 print(f"  - {file.name} ({size_mb:.1f} MB)")
 
@@ -181,15 +199,22 @@ def main():
 
 
 if __name__ == "__main__":
-    print("Neural ODE Training Runner (Fixed)")
+    print("Enhanced Neural ODE Training Runner")
+    print("Features: LR Scheduling, Early Stopping, Real-time Monitoring")
+    print("")
     print("Usage:")
     print("  python training_runner.py                # Training mode with validation")
     print("  python training_runner.py --test         # Testing mode")
-    print("  python training_runner.py --batch        # Batched approach")
-    print("  python training_runner.py --stride       # Strided approach")
+    print("  python training_runner.py --small-batch  # Use smaller batch size (2)")
+    print("  python training_runner.py --large-batch  # Use larger batch size (20)")
     print("  python training_runner.py cpu            # Force CPU")
     print("")
-    print("📊 Training mode automatically includes validation after each epoch")
+    print("🎯 Features:")
+    print("  📦 Temporal batching approach (simplified)")
+    print("  📉 Automatic learning rate reduction on validation plateau")
+    print("  🛑 Early stopping with best model weight restoration")
+    print("  📊 Real-time validation monitoring")
+    print("  💾 Structured training logs (no console output files)")
     print("")
 
     sys.exit(main())
