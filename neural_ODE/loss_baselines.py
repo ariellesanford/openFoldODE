@@ -1,7 +1,9 @@
-#!/usr/bin/env python3
+
 """
 Enhanced Loss Analysis Script for Evoformer Neural ODE Training
-Now includes hyperparameter search for memory-critical parameters
+Two modes:
+1. baselines_only: Compute loss baselines on validation data (block 0→48 and incremental)
+2. hyperparameter_search: Test hyperparameter configurations with training
 """
 
 import os
@@ -11,13 +13,14 @@ import numpy as np
 import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
-import matplotlib.pyplot as plt
 import json
 from datetime import datetime
 import gc
-import traceback
-from torchdiffeq import odeint
-import torch.optim as optim
+import subprocess
+import sys
+import random
+from itertools import product
+import copy
 
 
 def load_protein_block(protein_id: str, block_idx: int, data_dir: str, reduced_cluster_size: int = None) -> Tuple[
@@ -82,11 +85,7 @@ def load_split_proteins(splits_dir: str, mode: str) -> List[str]:
         'testing': 'testing_chains.txt'
     }
 
-    if mode not in split_files:
-        raise ValueError(f"Invalid mode: {mode}. Must be one of {list(split_files.keys())}")
-
     split_file = os.path.join(splits_dir, split_files[mode])
-
     if not os.path.exists(split_file):
         raise FileNotFoundError(f"Split file not found: {split_file}")
 
@@ -94,7 +93,7 @@ def load_split_proteins(splits_dir: str, mode: str) -> List[str]:
     with open(split_file, 'r') as f:
         for line in f:
             protein_id = line.strip()
-            if protein_id:  # Skip empty lines
+            if protein_id:
                 proteins.append(protein_id)
 
     return proteins
@@ -102,7 +101,6 @@ def load_split_proteins(splits_dir: str, mode: str) -> List[str]:
 
 def get_available_proteins(data_dir: str, splits_dir: str, mode: str) -> List[str]:
     """Get list of available protein IDs for the specified mode"""
-    # Load proteins from split file
     split_proteins = load_split_proteins(splits_dir, mode)
 
     # Check which ones actually exist in data_dir
@@ -115,55 +113,88 @@ def get_available_proteins(data_dir: str, splits_dir: str, mode: str) -> List[st
     return available_proteins
 
 
-def filter_proteins_by_size(proteins: List[str], data_dir: str, max_residues: int = None) -> Tuple[
-    List[str], List[str]]:
-    """Filter proteins by residue count, return (valid_proteins, oversized_proteins)"""
-    if max_residues is None:
-        return proteins, []
-
-    valid_proteins = []
-    oversized_proteins = []
-
-    for protein_id in proteins:
-        try:
-            protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
-            m_path = os.path.join(protein_dir, "m_block_0.pt")
-
-            if os.path.exists(m_path):
-                m_test = torch.load(m_path, map_location='cpu')
-                num_residues = m_test.shape[-2] if m_test.dim() == 4 else m_test.shape[-2]
-                del m_test  # Free memory immediately
-
-                if num_residues <= max_residues:
-                    valid_proteins.append(protein_id)
-                else:
-                    oversized_proteins.append(protein_id)
-            else:
-                oversized_proteins.append(protein_id)
-
-        except Exception as e:
-            oversized_proteins.append(protein_id)
-
-    return valid_proteins, oversized_proteins
-
-
-def analyze_baseline_losses(protein_id: str, data_dir: str, reduced_cluster_size: int = 64,
-                            max_residues: int = None) -> Dict:
-    """Analyze different baseline prediction strategies for a protein"""
+def get_protein_info(protein_id: str, data_dir: str) -> Dict:
+    """Get basic info about a protein"""
     try:
-        # Load consecutive blocks
-        m0, z0 = load_protein_block(protein_id, 0, data_dir, reduced_cluster_size)
-        m1, z1 = load_protein_block(protein_id, 1, data_dir, reduced_cluster_size)
+        m0, _ = load_protein_block(protein_id, 0, data_dir)
+        num_residues = m0.shape[-2]
+        num_sequences = m0.shape[0]
 
-        # Find available blocks for this protein
+        # Count available blocks
         protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
-        available_blocks = []
-        for i in range(50):  # Check up to block 50
+        available_blocks = 0
+        for i in range(50):  # Check up to block 49
             m_path = os.path.join(protein_dir, f"m_block_{i}.pt")
             if os.path.exists(m_path):
-                available_blocks.append(i)
+                available_blocks += 1
             else:
                 break
+
+        return {
+            'protein_id': protein_id,
+            'num_residues': num_residues,
+            'num_sequences': num_sequences,
+            'available_blocks': available_blocks
+        }
+    except Exception as e:
+        return None
+
+
+def compute_incremental_baseline_loss(protein_id: str, data_dir: str, baseline_type: str,
+                                      reduced_cluster_size: int = None) -> float:
+    """Compute incremental baseline loss across all blocks (like current training)"""
+    total_loss = 0
+    num_comparisons = 0
+
+    # Load initial block
+    m_prev, z_prev = load_protein_block(protein_id, 0, data_dir, reduced_cluster_size)
+
+    # Iterate through all subsequent blocks
+    for block_idx in range(1, 49):  # blocks 1 through 48
+        try:
+            m_target, z_target = load_protein_block(protein_id, block_idx, data_dir, reduced_cluster_size)
+
+            # Generate baseline prediction
+            if baseline_type == 'identity':
+                m_pred, z_pred = m_prev, z_prev
+            elif baseline_type == 'zero':
+                m_pred = torch.zeros_like(m_target)
+                z_pred = torch.zeros_like(z_target)
+            elif baseline_type == 'mean':
+                m_pred = torch.full_like(m_target, m_target.mean())
+                z_pred = torch.full_like(z_target, z_target.mean())
+            elif baseline_type == 'random':
+                m_pred = torch.randn_like(m_target) * m_target.std() + m_target.mean()
+                z_pred = torch.randn_like(z_target) * z_target.std() + z_target.mean()
+            elif baseline_type == 'small_perturbation':
+                noise_scale = 0.01
+                m_pred = m_prev + torch.randn_like(m_prev) * noise_scale
+                z_pred = z_prev + torch.randn_like(z_prev) * noise_scale
+
+            # Compute loss for this step
+            loss_dict = compute_adaptive_loss(m_pred, m_target, z_pred, z_target)
+            total_loss += loss_dict['total']
+            num_comparisons += 1
+
+            # Update previous for next iteration (for identity baseline)
+            m_prev, z_prev = m_target, z_target
+
+        except FileNotFoundError:
+            break  # Stop if we run out of blocks
+
+    return total_loss / max(num_comparisons, 1)
+
+
+def analyze_baseline_losses(protein_id: str, data_dir: str, reduced_cluster_size: int = 64) -> Dict:
+    """Analyze different baseline prediction strategies for a protein"""
+    try:
+        # Load initial and final blocks
+        m0, z0 = load_protein_block(protein_id, 0, data_dir, reduced_cluster_size)
+        m48, z48 = load_protein_block(protein_id, 48, data_dir, reduced_cluster_size)
+
+        protein_info = get_protein_info(protein_id, data_dir)
+        if not protein_info:
+            return None
 
         results = {
             'protein_id': protein_id,
@@ -171,104 +202,125 @@ def analyze_baseline_losses(protein_id: str, data_dir: str, reduced_cluster_size
             'num_residues': m0.shape[-2],
             'msa_channels': m0.shape[2],
             'pair_channels': z0.shape[2],
-            'available_blocks': len(available_blocks),
+            'available_blocks': protein_info['available_blocks'],
             'reduced_cluster_size': reduced_cluster_size,
-            'max_residues': max_residues,
-            'baselines': {}
+            'baselines_0_to_48': {},
+            'baselines_incremental': {}
         }
 
-        # 1. Identity baseline (predict block 0 as block 1)
-        identity_loss = compute_adaptive_loss(m0, m1, z0, z1)
-        results['baselines']['identity'] = identity_loss
+        baseline_types = ['identity', 'zero', 'mean', 'random', 'small_perturbation']
 
-        # 2. Zero prediction baseline
-        zero_m = torch.zeros_like(m1)
-        zero_z = torch.zeros_like(z1)
-        zero_loss = compute_adaptive_loss(zero_m, m1, zero_z, z1)
-        results['baselines']['zero'] = zero_loss
+        # Compute 0→48 baselines
+        for baseline_type in baseline_types:
+            if baseline_type == 'identity':
+                m_pred, z_pred = m0, z0
+            elif baseline_type == 'zero':
+                m_pred = torch.zeros_like(m48)
+                z_pred = torch.zeros_like(z48)
+            elif baseline_type == 'mean':
+                m_pred = torch.full_like(m48, m48.mean())
+                z_pred = torch.full_like(z48, z48.mean())
+            elif baseline_type == 'random':
+                m_pred = torch.randn_like(m48) * m48.std() + m48.mean()
+                z_pred = torch.randn_like(z48) * z48.std() + z48.mean()
+            elif baseline_type == 'small_perturbation':
+                noise_scale = 0.01
+                m_pred = m0 + torch.randn_like(m0) * noise_scale
+                z_pred = z0 + torch.randn_like(z0) * noise_scale
 
-        # 3. Mean prediction baseline
-        mean_m = torch.full_like(m1, m1.mean())
-        mean_z = torch.full_like(z1, z1.mean())
-        mean_loss = compute_adaptive_loss(mean_m, m1, mean_z, z1)
-        results['baselines']['mean'] = mean_loss
+            loss_dict = compute_adaptive_loss(m_pred, m48, z_pred, z48)
+            results['baselines_0_to_48'][baseline_type] = loss_dict
 
-        # 4. Random prediction baseline (Gaussian noise)
-        random_m = torch.randn_like(m1) * m1.std() + m1.mean()
-        random_z = torch.randn_like(z1) * z1.std() + z1.mean()
-        random_loss = compute_adaptive_loss(random_m, m1, random_z, z1)
-        results['baselines']['random'] = random_loss
+        # Compute incremental baselines
+        for baseline_type in baseline_types:
+            incremental_loss = compute_incremental_baseline_loss(protein_id, data_dir, baseline_type,
+                                                                 reduced_cluster_size)
+            results['baselines_incremental'][baseline_type] = {'total': incremental_loss}
 
-        # 5. Small perturbation baseline (identity + small noise)
-        noise_scale = 0.01
-        perturb_m = m0 + torch.randn_like(m0) * noise_scale
-        perturb_z = z0 + torch.randn_like(z0) * noise_scale
-        perturb_loss = compute_adaptive_loss(perturb_m, m1, perturb_z, z1)
-        results['baselines']['small_perturbation'] = perturb_loss
-
-        # 6. Linear interpolation baseline (if enough blocks available)
-        if len(available_blocks) >= 3:
-            m2, z2 = load_protein_block(protein_id, 2, data_dir, reduced_cluster_size)
-            interp_m = 0.5 * (m0 + m2)  # Interpolate between 0 and 2 to predict 1
-            interp_z = 0.5 * (z0 + z2)
-            interp_loss = compute_adaptive_loss(interp_m, m1, interp_z, z1)
-            results['baselines']['interpolation'] = interp_loss
-
-        # 7. Data statistics
+        # Data statistics
         results['data_stats'] = {
             'm0_mean': m0.mean().item(),
             'm0_std': m0.std().item(),
-            'm0_min': m0.min().item(),
-            'm0_max': m0.max().item(),
-            'm1_mean': m1.mean().item(),
-            'm1_std': m1.std().item(),
-            'm1_min': m1.min().item(),
-            'm1_max': m1.max().item(),
+            'm48_mean': m48.mean().item(),
+            'm48_std': m48.std().item(),
             'z0_mean': z0.mean().item(),
             'z0_std': z0.std().item(),
-            'z0_min': z0.min().item(),
-            'z0_max': z0.max().item(),
-            'z1_mean': z1.mean().item(),
-            'z1_std': z1.std().item(),
-            'z1_min': z1.min().item(),
-            'z1_max': z1.max().item(),
+            'z48_mean': z48.mean().item(),
+            'z48_std': z48.std().item(),
         }
 
         # Clean up memory
-        del m0, z0, m1, z1, zero_m, zero_z, mean_m, mean_z, random_m, random_z, perturb_m, perturb_z
-        if len(available_blocks) >= 3:
-            del m2, z2, interp_m, interp_z
+        del m0, z0, m48, z48, m_pred, z_pred
         gc.collect()
 
         return results
 
     except Exception as e:
+        print(f"Error analyzing {protein_id}: {e}")
         return None
 
 
-def analyze_multiple_proteins(data_dir: str, proteins: List[str], reduced_cluster_size: int = 64,
-                              max_residues: int = None) -> Dict:
-    """Analyze baseline losses across multiple proteins"""
+def run_baselines_analysis(data_dir: str, splits_dir: str, num_val_proteins: int, reduced_cluster_size: int) -> Dict:
+    """Mode 1: Run baseline analysis on validation data"""
+    print(f"\n🔬 MODE 1: BASELINE ANALYSIS")
+    print("=" * 50)
+
+    # Get validation proteins
+    val_proteins = get_available_proteins(data_dir, splits_dir, 'validation')
+    print(f"📋 Found {len(val_proteins)} validation proteins")
+
+    # Randomly sample proteins (reproducible)
+    random.seed(42)
+    selected_proteins = random.sample(val_proteins, min(num_val_proteins, len(val_proteins)))
+
+    print(f"🔀 Randomly selected {len(selected_proteins)} proteins for analysis")
+    print(f"🧬 Selected proteins:")
+
+    # Print protein info
+    for protein_id in selected_proteins:
+        info = get_protein_info(protein_id, data_dir)
+        if info:
+            print(f"   {protein_id}: {info['num_residues']} residues, {info['num_sequences']} sequences")
+
+    print(f"\n📊 Running baseline analysis...")
+
     all_results = []
-    baseline_stats = {
+    baseline_stats_0_to_48 = {
         'identity': [],
         'zero': [],
         'mean': [],
         'random': [],
-        'small_perturbation': [],
-        'interpolation': []
+        'small_perturbation': []
+    }
+    baseline_stats_incremental = {
+        'identity': [],
+        'zero': [],
+        'mean': [],
+        'random': [],
+        'small_perturbation': []
     }
 
-    for protein_id in proteins:
-        result = analyze_baseline_losses(protein_id, data_dir, reduced_cluster_size, max_residues)
+    for i, protein_id in enumerate(selected_proteins):
+        print(f"  [{i + 1}/{len(selected_proteins)}] Analyzing {protein_id}... ", end='', flush=True)
+
+        result = analyze_baseline_losses(protein_id, data_dir, reduced_cluster_size)
 
         if result:
             all_results.append(result)
 
-            # Collect baseline statistics
-            for baseline_name, baseline_data in result['baselines'].items():
-                if baseline_name in baseline_stats:
-                    baseline_stats[baseline_name].append(baseline_data['total'])
+            # Collect statistics for 0→48
+            for baseline_name, baseline_data in result['baselines_0_to_48'].items():
+                if baseline_name in baseline_stats_0_to_48:
+                    baseline_stats_0_to_48[baseline_name].append(baseline_data['total'])
+
+            # Collect statistics for incremental
+            for baseline_name, baseline_data in result['baselines_incremental'].items():
+                if baseline_name in baseline_stats_incremental:
+                    baseline_stats_incremental[baseline_name].append(baseline_data['total'])
+
+            print("✅")
+        else:
+            print("❌")
 
     # Calculate summary statistics
     summary = {
@@ -276,15 +328,29 @@ def analyze_multiple_proteins(data_dir: str, proteins: List[str], reduced_cluste
         'proteins_analyzed': [r['protein_id'] for r in all_results],
         'config': {
             'reduced_cluster_size': reduced_cluster_size,
-            'max_residues': max_residues,
-            'total_proteins_provided': len(proteins)
+            'num_val_proteins_requested': num_val_proteins,
+            'total_val_proteins_available': len(val_proteins)
         },
-        'baseline_summary': {}
+        'baseline_summary_0_to_48': {},
+        'baseline_summary_incremental': {}
     }
 
-    for baseline_name, losses in baseline_stats.items():
+    # Summarize 0→48 baselines
+    for baseline_name, losses in baseline_stats_0_to_48.items():
         if losses:
-            summary['baseline_summary'][baseline_name] = {
+            summary['baseline_summary_0_to_48'][baseline_name] = {
+                'mean': np.mean(losses),
+                'std': np.std(losses),
+                'min': np.min(losses),
+                'max': np.max(losses),
+                'median': np.median(losses),
+                'count': len(losses)
+            }
+
+    # Summarize incremental baselines
+    for baseline_name, losses in baseline_stats_incremental.items():
+        if losses:
+            summary['baseline_summary_incremental'][baseline_name] = {
                 'mean': np.mean(losses),
                 'std': np.std(losses),
                 'min': np.min(losses),
@@ -300,770 +366,586 @@ def analyze_multiple_proteins(data_dir: str, proteins: List[str], reduced_cluste
     }
 
 
-def test_memory_feasibility(data_dir: str, memory_config: Dict, test_proteins: List[str]) -> Dict:
-    """Simple data loading test - kept for compatibility but simplified"""
-    max_residues = memory_config.get('max_residues')
-    reduced_cluster_size = memory_config.get('reduced_cluster_size', 64)
+def filter_proteins_by_size(proteins: List[str], data_dir: str, max_residues: int) -> List[str]:
+    """Filter proteins by residue count"""
+    valid_proteins = []
 
-    if not test_proteins:
-        return {
-            'feasible': False,
-            'error': 'No test proteins available',
-            'proteins_tested': 0,
-            'max_memory_mb': 0
-        }
-
-    try:
-        # Just test if we can load one protein's data
-        for protein_id in test_proteins[:1]:
-            m0, z0 = load_protein_block(protein_id, 0, data_dir, reduced_cluster_size)
-            m1, z1 = load_protein_block(protein_id, 1, data_dir, reduced_cluster_size)
-
-            # Quick size check
-            if max_residues and m0.shape[-2] > max_residues:
-                continue
-
-            # Clean up immediately
-            del m0, z0, m1, z1
-
-            return {
-                'feasible': True,
-                'error': None,
-                'proteins_tested': 1,
-                'max_memory_mb': 0  # Not tracking for simple test
-            }
-
-        return {
-            'feasible': False,
-            'error': 'No suitable proteins found',
-            'proteins_tested': 0,
-            'max_memory_mb': 0
-        }
-
-    except Exception as e:
-        return {
-            'feasible': False,
-            'error': str(e),
-            'proteins_tested': 0,
-            'max_memory_mb': 0
-        }
-
-
-def test_single_protein_training_memory(data_dir: str, memory_config: Dict, target_residue_range: Tuple[int, int],
-                                        available_proteins: List[str]) -> Dict:
-    """Test training memory on a single protein within a specific residue range"""
-
-    min_residues, max_residues = target_residue_range
-    reduced_cluster_size = memory_config.get('reduced_cluster_size', 64)
-    batch_size = memory_config.get('batch_size', 10)
-    use_fast_ode = memory_config.get('use_fast_ode', True)
-    hidden_dim = memory_config.get('hidden_dim', 64)
-    integrator = memory_config.get('integrator', 'rk4')
-
-    print(f"    🎯 Looking for protein with {min_residues}-{max_residues} residues...")
-
-    # Find a protein in the target residue range
-    target_protein = None
-    actual_residues = 0
-
-    for protein_id in available_proteins:
+    for protein_id in proteins:
         try:
-            protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
-            m_path = os.path.join(protein_dir, "m_block_0.pt")
-
-            if os.path.exists(m_path):
-                m_test = torch.load(m_path, map_location='cpu')
-                num_residues = m_test.shape[-2] if m_test.dim() == 4 else m_test.shape[-2]
-                del m_test
-
-                if min_residues <= num_residues <= max_residues:
-                    target_protein = protein_id
-                    actual_residues = num_residues
-                    break
+            info = get_protein_info(protein_id, data_dir)
+            if info and info['num_residues'] <= max_residues:
+                valid_proteins.append(protein_id)
         except:
             continue
 
-    if not target_protein:
-        return {
-            'feasible': False,
-            'error': f'No protein found with {min_residues}-{max_residues} residues',
-            'protein_tested': None,
-            'protein_residues': 0,
-            'max_memory_mb': 0,
-            'config_tested': memory_config
-        }
+    return valid_proteins
 
-    print(f"    🧬 Testing: {target_protein} ({actual_residues} residues)")
+
+def run_hyperparameter_search(data_dir: str, splits_dir: str, num_train_proteins: int, num_val_proteins: int,
+                              epochs: int, loss_mode: str = 'incremental') -> Dict:
+    """Mode 2: Test hyperparameter configurations with training"""
+
+    print(f"\n🚀 MODE 2: HYPERPARAMETER SEARCH")
+    print("=" * 50)
+
+    # Get all available train and validation proteins
+    all_train_proteins = get_available_proteins(data_dir, splits_dir, 'training')
+    all_val_proteins = get_available_proteins(data_dir, splits_dir, 'validation')
+
+    print(f"📋 Found {len(all_train_proteins)} total training proteins")
+    print(f"📋 Found {len(all_val_proteins)} total validation proteins")
     print(
-        f"    ⚙️  Config: batch_size={batch_size}, cluster_size={reduced_cluster_size}, {'Fast' if use_fast_ode else 'Full'} ODE, hidden_dim={hidden_dim}")
-
-    try:
-        # Import ODE functions
-        try:
-            from evoformer_ode import EvoformerODEFunc, EvoformerODEFuncFast
-        except ImportError:
-            return {
-                'feasible': False,
-                'error': 'Could not import evoformer_ode module',
-                'protein_tested': target_protein,
-                'protein_residues': actual_residues,
-                'max_memory_mb': 0,
-                'config_tested': memory_config
-            }
-
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        max_memory_mb = 0
-
-        # Initialize model
-        c_m = 256  # MSA embedding dimension
-        c_z = 128  # Pair embedding dimension
-
-        if use_fast_ode:
-            ode_func = EvoformerODEFuncFast(c_m, c_z, hidden_dim).to(device)
-        else:
-            ode_func = EvoformerODEFunc(c_m, c_z, hidden_dim).to(device)
-
-        optimizer = optim.Adam(ode_func.parameters(), lr=1e-3)
-
-        if device == 'cuda':
-            current_memory = torch.cuda.memory_allocated() / 1024 / 1024
-            max_memory_mb = max(max_memory_mb, current_memory)
-            print(f"    📊 Model loaded: {current_memory:.0f} MB")
-
-        # Load protein data
-        m0, z0 = load_protein_block(target_protein, 0, data_dir, reduced_cluster_size)
-        m1, z1 = load_protein_block(target_protein, 1, data_dir, reduced_cluster_size)
-
-        print(f"    📦 Data shapes: MSA {m0.shape}, Pair {z0.shape}")
-
-        m0, z0, m1, z1 = m0.to(device), z0.to(device), m1.to(device), z1.to(device)
-
-        if device == 'cuda':
-            current_memory = torch.cuda.memory_allocated() / 1024 / 1024
-            max_memory_mb = max(max_memory_mb, current_memory)
-            print(f"    📊 Data loaded: {current_memory:.0f} MB")
-
-        # Run 1 epoch simulation (simplified)
-        print(f"    🏋️  Running training simulation...")
-
-        optimizer.zero_grad()
-
-        # Create time grid for batch processing
-        t_grid = torch.linspace(0.0, 1.0, batch_size).to(device)
-
-        print(f"    ⏰ Time grid: {batch_size} steps")
-
-        # Forward pass through ODE
-        trajectory = odeint(
-            ode_func,
-            (m0, z0),
-            t_grid,
-            method=integrator,
-            rtol=1e-4,
-            atol=1e-5
-        )
-
-        if device == 'cuda':
-            current_memory = torch.cuda.memory_allocated() / 1024 / 1024
-            max_memory_mb = max(max_memory_mb, current_memory)
-            print(f"    📊 Forward pass: {current_memory:.0f} MB")
-
-        # Compute loss
-        m_pred = trajectory[0][-1]  # Final MSA state
-        z_pred = trajectory[1][-1]  # Final pair state
-
-        loss = F.mse_loss(m_pred, m1) + F.mse_loss(z_pred, z1)
-
-        if device == 'cuda':
-            current_memory = torch.cuda.memory_allocated() / 1024 / 1024
-            max_memory_mb = max(max_memory_mb, current_memory)
-            print(f"    📊 Loss computed: {current_memory:.0f} MB")
-
-        # Backward pass
-        loss.backward()
-
-        if device == 'cuda':
-            current_memory = torch.cuda.memory_allocated() / 1024 / 1024
-            max_memory_mb = max(max_memory_mb, current_memory)
-            print(f"    📊 Backward pass: {current_memory:.0f} MB")
-
-        # Optimizer step
-        optimizer.step()
-
-        if device == 'cuda':
-            current_memory = torch.cuda.memory_allocated() / 1024 / 1024
-            max_memory_mb = max(max_memory_mb, current_memory)
-            print(f"    📊 Optimizer step: {current_memory:.0f} MB")
-
-        print(f"    ✅ Training simulation successful!")
-        print(f"    💾 Peak memory usage: {max_memory_mb:.0f} MB")
-
-        # Clean up
-        del ode_func, optimizer, m0, z0, m1, z1, trajectory, m_pred, z_pred, loss
-        if device == 'cuda':
-            torch.cuda.empty_cache()
-
-        return {
-            'feasible': True,
-            'error': None,
-            'protein_tested': target_protein,
-            'protein_residues': actual_residues,
-            'max_memory_mb': max_memory_mb,
-            'config_tested': memory_config
-        }
-
-    except Exception as e:
-        error_msg = str(e)
-
-        # Clean up on error
-        try:
-            if device == 'cuda':
-                torch.cuda.empty_cache()
-            gc.collect()
-        except:
-            pass
-
-        # Check if it's OOM
-        is_oom = "CUDA out of memory" in error_msg or "out of memory" in error_msg
-
-        print(f"    ❌ Training failed: {error_msg}")
-        if is_oom:
-            print(f"    💀 OUT OF MEMORY at {max_memory_mb:.0f} MB")
-
-        return {
-            'feasible': False,
-            'error': error_msg,
-            'protein_tested': target_protein,
-            'protein_residues': actual_residues,
-            'max_memory_mb': max_memory_mb,
-            'config_tested': memory_config,
-            'is_oom': is_oom
-        }
-
-    finally:
-        # Ensure cleanup
-        gc.collect()
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
+        f"🎯 Loss mode for training: {loss_mode} ({'0→48 loss' if loss_mode == 'end_to_end' else 'incremental loss'} guides learning)")
+    print(f"📊 Dual reporting: Both incremental and 0→48 losses will be computed and reported")
 
 
-def hyperparameter_search_memory_critical(data_dir: str, splits_dir: str, max_proteins: int = 5) -> Dict:
-    """Test memory-critical hyperparameter combinations"""
-    print(f"\n🚀 HYPERPARAMETER SEARCH - MEMORY CRITICAL PARAMETERS")
-    print("=" * 60)
+    # Default base (core) values
+    base_config = {
+        'max_residues': 200,
+        'batch_size': 10,
+        'reduced_cluster_size': 64,
+        'use_fast_ode': True,  # varies in defaults
+        'hidden_dim': 64,
+        'learning_rate': 1e-3,
+        'loss_mode': 'incremental',  # varies in defaults
+        'integrator': 'rk4'
+    }
 
-    # Get validation proteins and filter once
-    print(f"📋 Loading validation proteins from splits...")
-    try:
-        val_proteins = get_available_proteins(data_dir, splits_dir, 'validation')
-        print(f"🔍 Found {len(val_proteins)} validation proteins")
-    except Exception as e:
-        print(f"❌ Could not load validation split: {e}")
-        print(f"📁 Falling back to scanning data directory...")
-        # Fallback: scan data directory
-        all_proteins = []
-        for item in Path(data_dir).iterdir():
-            if item.is_dir() and item.name.endswith('_evoformer_blocks'):
-                protein_id = item.name.replace('_evoformer_blocks', '')
-                all_proteins.append(protein_id)
-        val_proteins = sorted(all_proteins)
-        print(f"🔍 Found {len(val_proteins)} total proteins")
+    # Values that generate the 4 default configs
+    use_fast_ode_options = [True, False]
+    loss_mode_options = ['incremental', 'end_to_end']
 
-    # Shuffle proteins to avoid alphabetical bias
-    import random
-    random.shuffle(val_proteins)
-    print(f"🔀 Shuffled protein order")
+    # Exploratory variations (one change per config)
+    exploratory_variants = {
+        'max_residues': [150],
+        'batch_size': [5],
+        'reduced_cluster_size': [32, 128],
+        'hidden_dim': [32, 128],
+        'integrator': ['dopri5']
+    }
 
-    # Define memory-critical parameter combinations to test
-    memory_configs = [
-        # Add default hidden_dim and integrator for training test
-        {'max_residues': 500, 'batch_size': 5, 'reduced_cluster_size': 128, 'use_fast_ode': True, 'hidden_dim': 64,
-         'integrator': 'rk4'},
-        {'max_residues': 400, 'batch_size': 8, 'reduced_cluster_size': 128, 'use_fast_ode': True, 'hidden_dim': 64,
-         'integrator': 'rk4'},
-        {'max_residues': 300, 'batch_size': 10, 'reduced_cluster_size': 128, 'use_fast_ode': True, 'hidden_dim': 64,
-         'integrator': 'rk4'},
-        {'max_residues': 300, 'batch_size': 8, 'reduced_cluster_size': 128, 'use_fast_ode': False, 'hidden_dim': 64,
-         'integrator': 'rk4'},  # Full ODE
-        {'max_residues': 250, 'batch_size': 10, 'reduced_cluster_size': 128, 'use_fast_ode': False, 'hidden_dim': 64,
-         'integrator': 'rk4'},
-        {'max_residues': 200, 'batch_size': 15, 'reduced_cluster_size': 128, 'use_fast_ode': True, 'hidden_dim': 64,
-         'integrator': 'rk4'},
-        {'max_residues': 200, 'batch_size': 10, 'reduced_cluster_size': 128, 'use_fast_ode': False, 'hidden_dim': 64,
-         'integrator': 'rk4'},
-        {'max_residues': 150, 'batch_size': 20, 'reduced_cluster_size': 128, 'use_fast_ode': False, 'hidden_dim': 64,
-         'integrator': 'rk4'},
+    # 1. Generate the 4 default configurations
+    default_configs = []
+    for use_fast_ode, loss_mode in product(use_fast_ode_options, loss_mode_options):
+        cfg = base_config.copy()
+        cfg['use_fast_ode'] = use_fast_ode
+        cfg['loss_mode'] = loss_mode
+        default_configs.append(cfg)
 
-        # Medium memory configurations
-        {'max_residues': 400, 'batch_size': 10, 'reduced_cluster_size': 64, 'use_fast_ode': True, 'hidden_dim': 64,
-         'integrator': 'rk4'},
-        {'max_residues': 300, 'batch_size': 15, 'reduced_cluster_size': 64, 'use_fast_ode': False, 'hidden_dim': 64,
-         'integrator': 'rk4'},
-        {'max_residues': 200, 'batch_size': 20, 'reduced_cluster_size': 64, 'use_fast_ode': False, 'hidden_dim': 64,
-         'integrator': 'rk4'},
+    # 2. Generate 7 exploratory configs for each default
+    exploratory_configs = []
 
-        # Conservative configurations (should always work)
-        {'max_residues': 150, 'batch_size': 10, 'reduced_cluster_size': 64, 'use_fast_ode': True, 'hidden_dim': 64,
-         'integrator': 'rk4'},
-        {'max_residues': 100, 'batch_size': 20, 'reduced_cluster_size': 64, 'use_fast_ode': False, 'hidden_dim': 64,
-         'integrator': 'rk4'},
-    ]
+    for default in default_configs:
+        for field, variant_values in exploratory_variants.items():
+            for val in variant_values:
+                new_cfg = default.copy()
+                new_cfg[field] = val
+                exploratory_configs.append(new_cfg)
+
+    # Combine
+    hyperparameter_configs = default_configs + exploratory_configs
+    # Ensure all configs are unique
+
+    print(f"\n🧪 Generated {len(hyperparameter_configs)} hyperparameter configurations:")
+    print(f"• {len(default_configs)}  default configs")
+    print(f"• {len(exploratory_configs)} exploratory configs")
+
+    # Create temp directory for splits
+    temp_dir = Path("temp_splits")
+    temp_dir.mkdir(exist_ok=True)
 
     results = {
         'search_date': datetime.now().isoformat(),
-        'total_configs_tested': len(memory_configs),
-        'feasible_configs': [],
-        'infeasible_configs': [],
-        'baseline_analyses': {},
-        'summary': {}
+        'config': {
+            'num_train_proteins_requested': num_train_proteins,
+            'num_val_proteins_requested': num_val_proteins,
+            'epochs': epochs,
+            'total_configs': len(hyperparameter_configs)
+        },
+        'successful_configs': [],
+        'failed_configs': []
     }
 
-    print(f"🧪 Testing {len(memory_configs)} memory configurations...")
+    for i, config in enumerate(hyperparameter_configs):
+        print(f"\n[{i + 1}/{len(hyperparameter_configs)}] Testing config:")
+        print(f"   max_residues={config['max_residues']}, batch_size={config['batch_size']}")
+        print(f"   cluster_size={config['reduced_cluster_size']}, fast_ode={config['use_fast_ode']}")
+        print(f"   hidden_dim={config['hidden_dim']}, lr={config['learning_rate']}, loss_mode={config['loss_mode']}")
 
-    for i, config in enumerate(memory_configs):
-        print(f"\n[{i + 1}/{len(memory_configs)}] Testing config: {config}")
+        # Filter proteins by max_residues for this config
+        valid_train_proteins = filter_proteins_by_size(all_train_proteins, data_dir, config['max_residues'])
+        valid_val_proteins = filter_proteins_by_size(all_val_proteins, data_dir, config['max_residues'])
 
-        # Filter proteins by size for this config
-        if config['max_residues']:
-            valid_proteins, oversized = filter_proteins_by_size(val_proteins, data_dir, config['max_residues'])
-            print(f"  🔍 {len(valid_proteins)} proteins ≤ {config['max_residues']} residues (filtered {len(oversized)})")
-        else:
-            valid_proteins = val_proteins
+        print(
+            f"   📏 Proteins ≤ {config['max_residues']} residues: {len(valid_train_proteins)} train, {len(valid_val_proteins)} val")
 
-        if not valid_proteins:
-            print(f"  ❌ No valid proteins for this configuration")
+        # Check if we have enough proteins
+        if len(valid_train_proteins) < num_train_proteins or len(valid_val_proteins) < num_val_proteins:
+            print(f"   ❌ Insufficient proteins (need {num_train_proteins} train, {num_val_proteins} val)")
             config_result = {
                 'config': config,
-                'feasibility': {'feasible': False, 'error': 'No valid proteins', 'proteins_tested': 0,
-                                'max_memory_mb': 0},
-                'baseline_analysis': None
+                'success': False,
+                'error': f'Insufficient proteins: {len(valid_train_proteins)} train, {len(valid_val_proteins)} val available',
+                'is_oom': False,
+                'experiment_name': None
             }
-            results['infeasible_configs'].append(config_result)
+            results['failed_configs'].append(config_result)
             continue
 
-        # Test memory feasibility on first few proteins
-        feasibility = test_memory_feasibility(data_dir, config, valid_proteins)
+        # Randomly sample proteins for this config (reproducible)
+        random.seed(42)
+        selected_train = random.sample(valid_train_proteins, num_train_proteins)
+        selected_val = random.sample(valid_val_proteins, num_val_proteins)
 
-        config_result = {
-            'config': config,
-            'feasibility': feasibility,
-            'baseline_analysis': None
-        }
+        print(f"   🔀 Selected {len(selected_train)} training proteins:")
+        for protein_id in selected_train:
+            info = get_protein_info(protein_id, data_dir)
+            if info:
+                print(f"      {protein_id}: {info['num_residues']} residues")
 
-        if feasibility['feasible']:
-            print(f"  ✅ Memory test passed ({feasibility['proteins_tested']} proteins)")
-            if feasibility['max_memory_mb'] > 0:
-                print(f"  💾 Peak GPU memory: {feasibility['max_memory_mb']:.0f} MB")
+        print(f"   🔀 Selected {len(selected_val)} validation proteins:")
+        for protein_id in selected_val:
+            info = get_protein_info(protein_id, data_dir)
+            if info:
+                print(f"      {protein_id}: {info['num_residues']} residues")
 
-            # Run baseline analysis for this configuration
-            try:
-                print(f"  📊 Running baseline analysis...")
+        # Create temporary splits files for this config
+        temp_train_file = temp_dir / f"training_chains_{i}.txt"
+        temp_val_file = temp_dir / f"validation_chains_{i}.txt"
 
-                # Use subset of valid proteins for baseline analysis
-                analysis_proteins = valid_proteins[:max_proteins]
+        with open(temp_train_file, 'w') as f:
+            for protein in selected_train:
+                f.write(f"{protein}\n")
 
-                baseline_analysis = analyze_multiple_proteins(
-                    data_dir=data_dir,
-                    proteins=analysis_proteins,
-                    reduced_cluster_size=config['reduced_cluster_size'],
-                    max_residues=config['max_residues']
-                )
+        with open(temp_val_file, 'w') as f:
+            for protein in selected_val:
+                f.write(f"{protein}\n")
 
-                config_result['baseline_analysis'] = baseline_analysis
-                results['feasible_configs'].append(config_result)
+        # Create temporary experiment name
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        experiment_name = f"hyperparam_test_{i}_{timestamp}"
 
-                # Store baseline analysis with config key for easy access
-                config_key = f"res{config['max_residues']}_batch{config['batch_size']}_cluster{config['reduced_cluster_size']}_fast{config['use_fast_ode']}"
-                results['baseline_analyses'][config_key] = baseline_analysis
+        # Build command for train_evoformer_ode.py
+        cmd = [
+            sys.executable,
+            "train_evoformer_ode.py",
+            "--data_dir", data_dir,
+            "--splits_dir", str(temp_dir),
+            "--mode", "training",
+            "--epochs", str(epochs),
+            "--output_dir", "temp_outputs",
+            "--experiment_name", experiment_name,
+            "--device", "cuda" if torch.cuda.is_available() else "cpu",
+            "--learning_rate", str(config['learning_rate']),
+            "--reduced_cluster_size", str(config['reduced_cluster_size']),
+            "--hidden_dim", str(config['hidden_dim']),
+            "--batch_size", str(config['batch_size']),
+            "--max_residues", str(config['max_residues']),
+            "--loss_mode", config['loss_mode'],  # Add loss mode parameter
+            "--integrator", str(config['integrator']),
+            "--lr_patience", "2",
+            "--early_stopping_patience", "7"
+        ]
 
-                print(f"  ✅ Baseline analysis complete ({baseline_analysis['summary']['num_proteins']} proteins)")
+        # Override splits file names for this config
+        cmd.extend(["--splits_dir", str(temp_dir)])
 
-            except Exception as e:
-                print(f"  ❌ Baseline analysis failed: {str(e)}")
-                config_result['baseline_analysis'] = {'error': str(e)}
-                results['infeasible_configs'].append(config_result)
+        if config['use_fast_ode']:
+            cmd.append("--use_fast_ode")
 
-        else:
-            print(f"  ❌ Memory test failed: {feasibility['error']}")
-            results['infeasible_configs'].append(config_result)
+        if torch.cuda.is_available():
+            cmd.append("--use_amp")
 
-    # Generate summary
-    results['summary'] = {
-        'feasible_count': len(results['feasible_configs']),
-        'infeasible_count': len(results['infeasible_configs']),
-        'success_rate': len(results['feasible_configs']) / len(memory_configs) * 100,
-    }
+        try:
+            print(f"   🏋️ Running training...")
 
-    if results['feasible_configs']:
-        # Find the most aggressive feasible config
-        feasible_configs = [r['config'] for r in results['feasible_configs']]
-        max_residues_feasible = max(c['max_residues'] for c in feasible_configs)
-        max_batch_feasible = max(
-            c['batch_size'] for c in feasible_configs if c['max_residues'] == max_residues_feasible)
+            # Temporarily rename split files to standard names
+            standard_train_file = temp_dir / "training_chains.txt"
+            standard_val_file = temp_dir / "validation_chains.txt"
 
-        results['summary']['max_feasible_residues'] = max_residues_feasible
-        results['summary']['max_feasible_batch_at_max_residues'] = max_batch_feasible
+            # Move config-specific files to standard names
+            temp_train_file.rename(standard_train_file)
+            temp_val_file.rename(standard_val_file)
 
-        # Separate by use_fast_ode
-        fast_configs = [c for c in feasible_configs if c['use_fast_ode']]
-        full_configs = [c for c in feasible_configs if not c['use_fast_ode']]
+            # Run training
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=3600,  # 1 hour timeout
+                cwd=os.getcwd()
+            )
 
-        results['summary']['fast_ode_configs'] = len(fast_configs)
-        results['summary']['full_ode_configs'] = len(full_configs)
+            if result.returncode == 0:
+                print(f"   ✅ Training completed successfully")
 
-        if fast_configs:
-            results['summary']['max_residues_fast_ode'] = max(c['max_residues'] for c in fast_configs)
-        if full_configs:
-            results['summary']['max_residues_full_ode'] = max(c['max_residues'] for c in full_configs)
+                # Try to extract both final validation losses from output
+                final_val_loss_primary = None
+                final_val_loss_0_to_48 = None
+                final_val_loss_incremental = None
+
+                output_lines = result.stdout.split('\n')
+                for line in reversed(output_lines):
+                    # Look for validation summary with both losses
+                    if 'Primary Loss' in line and 'Validation Summary' in output_lines[max(0, output_lines.index(
+                            line) - 5):output_lines.index(line) + 1]:
+                        try:
+                            # Extract primary loss (used for LR scheduling)
+                            if 'Primary Loss' in line:
+                                final_val_loss_primary = float(line.split(':')[1].strip().split()[0])
+                        except:
+                            continue
+                    elif 'Loss 0→48:' in line:
+                        try:
+                            final_val_loss_0_to_48 = float(line.split(':')[1].strip().split()[0])
+                        except:
+                            continue
+                    elif 'Loss Incremental:' in line:
+                        try:
+                            final_val_loss_incremental = float(line.split(':')[1].strip().split()[0])
+                        except:
+                            continue
+
+                    # Break if we found all three losses
+                    if all(x is not None for x in
+                           [final_val_loss_primary, final_val_loss_0_to_48, final_val_loss_incremental]):
+                        break
+
+                config_result = {
+                    'config': config,
+                    'success': True,
+                    'final_validation_loss_primary': final_val_loss_primary,
+                    'final_validation_loss_0_to_48': final_val_loss_0_to_48,
+                    'final_validation_loss_incremental': final_val_loss_incremental,
+                    'experiment_name': experiment_name,
+                    'selected_train_proteins': selected_train,
+                    'selected_val_proteins': selected_val
+                }
+                results['successful_configs'].append(config_result)
+
+                print(f"   📊 Final validation losses:")
+                if final_val_loss_primary is not None:
+                    print(f"      Primary ({config['loss_mode']}): {final_val_loss_primary:.4f}")
+                if final_val_loss_0_to_48 is not None:
+                    print(f"      0→48: {final_val_loss_0_to_48:.4f}")
+                if final_val_loss_incremental is not None:
+                    print(f"      Incremental: {final_val_loss_incremental:.4f}")
+
+                if final_val_loss_primary is None:
+                    print(f"   ⚠️  Could not extract primary validation loss")
+
+            else:
+                print(f"   ❌ Training failed")
+                error_msg = result.stderr[-500:] if result.stderr else "Unknown error"
+
+                # Check if it's OOM
+                is_oom = "CUDA out of memory" in error_msg or "out of memory" in error_msg
+
+                config_result = {
+                    'config': config,
+                    'success': False,
+                    'error': error_msg,
+                    'is_oom': is_oom,
+                    'experiment_name': experiment_name,
+                    'selected_train_proteins': selected_train,
+                    'selected_val_proteins': selected_val
+                }
+                results['failed_configs'].append(config_result)
+
+                if is_oom:
+                    print(f"   💀 OUT OF MEMORY")
+                else:
+                    print(f"   💥 Error: {error_msg[:100]}...")
+
+        except subprocess.TimeoutExpired:
+            print(f"   ⏰ Timeout after 1 hour")
+            config_result = {
+                'config': config,
+                'success': False,
+                'error': 'Timeout after 1 hour',
+                'is_oom': False,
+                'experiment_name': experiment_name,
+                'selected_train_proteins': selected_train,
+                'selected_val_proteins': selected_val
+            }
+            results['failed_configs'].append(config_result)
+
+        except Exception as e:
+            print(f"   💥 Exception: {str(e)}")
+            config_result = {
+                'config': config,
+                'success': False,
+                'error': str(e),
+                'is_oom': False,
+                'experiment_name': experiment_name,
+                'selected_train_proteins': selected_train,
+                'selected_val_proteins': selected_val
+            }
+            results['failed_configs'].append(config_result)
+
+        finally:
+            # Clean up temp files for this config
+            for f in [standard_train_file, standard_val_file, temp_train_file, temp_val_file]:
+                f.unlink(missing_ok=True)
+
+    # Clean up temp directory
+    temp_dir.rmdir()
 
     return results
 
 
-def print_memory_search_summary(search_results: Dict):
-    """Print a comprehensive summary of the memory search results"""
-    print(f"\n" + "=" * 60)
-    print(f"📊 MEMORY-CRITICAL HYPERPARAMETER SEARCH SUMMARY")
-    print(f"=" * 60)
+def print_baseline_results(baseline_results: Dict):
+    """Print baseline analysis results"""
+    print(f"\n📊 BASELINE ANALYSIS RESULTS")
+    print("=" * 50)
 
-    summary = search_results['summary']
+    summary = baseline_results['summary']
 
-    print(f"\n🧪 Search Results:")
-    print(f"  Total configurations tested: {search_results['total_configs_tested']}")
-    print(f"  ✅ Feasible configurations: {summary['feasible_count']}")
-    print(f"  ❌ Infeasible configurations: {summary['infeasible_count']}")
-    print(f"  📈 Success rate: {summary['success_rate']:.1f}%")
+    print(f"Proteins analyzed: {summary['num_proteins']}")
+    print(f"Configuration: cluster_size={summary['config']['reduced_cluster_size']}")
 
-    if summary['feasible_count'] > 0:
-        print(f"\n🚀 Memory Limits Found:")
-        print(f"  Max residues (any config): {summary.get('max_feasible_residues', 'N/A')}")
+    print(f"\n📈 BLOCK 0 → 48 BASELINES:")
+    print(f"{'Baseline':<20} {'Mean':<8} {'Std':<8} {'Min':<8} {'Max':<8}")
+    print("-" * 60)
 
-        if 'max_residues_fast_ode' in summary:
-            print(f"  Max residues (fast ODE): {summary['max_residues_fast_ode']}")
-        if 'max_residues_full_ode' in summary:
-            print(f"  Max residues (full ODE): {summary['max_residues_full_ode']}")
+    baseline_order = ['identity', 'small_perturbation', 'mean', 'zero', 'random']
+    for baseline_name in baseline_order:
+        if baseline_name in summary['baseline_summary_0_to_48']:
+            stats = summary['baseline_summary_0_to_48'][baseline_name]
+            print(
+                f"{baseline_name:<20} {stats['mean']:<8.3f} {stats['std']:<8.3f} {stats['min']:<8.3f} {stats['max']:<8.3f}")
 
-        print(f"\n🔧 ODE Implementation Split:")
-        print(f"  Fast ODE feasible configs: {summary.get('fast_ode_configs', 0)}")
-        print(f"  Full ODE feasible configs: {summary.get('full_ode_configs', 0)}")
+    print(f"\n📈 INCREMENTAL BASELINES (like current training):")
+    print(f"{'Baseline':<20} {'Mean':<8} {'Std':<8} {'Min':<8} {'Max':<8}")
+    print("-" * 60)
 
-        print(f"\n✅ FEASIBLE CONFIGURATIONS (PASSED TRAINING TEST):")
-        for i, result in enumerate(search_results['feasible_configs'], 1):
+    for baseline_name in baseline_order:
+        if baseline_name in summary['baseline_summary_incremental']:
+            stats = summary['baseline_summary_incremental'][baseline_name]
+            print(
+                f"{baseline_name:<20} {stats['mean']:<8.3f} {stats['std']:<8.3f} {stats['min']:<8.3f} {stats['max']:<8.3f}")
+
+    # Loss interpretation
+    identity_0_48 = summary['baseline_summary_0_to_48'].get('identity', {}).get('mean', float('inf'))
+    identity_incr = summary['baseline_summary_incremental'].get('identity', {}).get('mean', float('inf'))
+
+    print(f"\n💡 TRAINING LOSS INTERPRETATION:")
+    print(f"🎯 Block 0→48 Loss Targets:")
+    print(f"   • Excellent:  < {identity_0_48 * 0.5:.3f} (much better than identity)")
+    print(f"   • Good:       < {identity_0_48 * 0.8:.3f} (better than identity)")
+    print(f"   • Acceptable: < {identity_0_48 * 1.2:.3f} (close to identity)")
+
+    print(f"🎯 Incremental Loss Targets (current training approach):")
+    print(f"   • Excellent:  < {identity_incr * 0.5:.3f} (much better than identity)")
+    print(f"   • Good:       < {identity_incr * 0.8:.3f} (better than identity)")
+    print(f"   • Acceptable: < {identity_incr * 1.2:.3f} (close to identity)")
+
+
+def print_hyperparameter_results(hyperparam_results: Dict):
+    """Print hyperparameter search results"""
+    print(f"\n🚀 HYPERPARAMETER SEARCH RESULTS")
+    print("=" * 50)
+
+    config = hyperparam_results['config']
+    successful = hyperparam_results['successful_configs']
+    failed = hyperparam_results['failed_configs']
+
+    print(f"Training proteins: {config['num_train_proteins_requested']}")
+    print(f"Validation proteins: {config['num_val_proteins_requested']}")
+    print(f"Epochs per test: {config['epochs']}")
+    print(f"Total configs tested: {config['total_configs']}")
+
+    print(f"\n📊 Results Summary:")
+    print(f"✅ Successful configs: {len(successful)}")
+    print(f"❌ Failed configs: {len(failed)}")
+    print(f"📈 Success rate: {len(successful) / (len(successful) + len(failed)) * 100:.1f}%")
+
+    if successful:
+        print(f"\n✅ SUCCESSFUL CONFIGURATIONS:")
+        # Sort by primary validation loss if available
+        successful_sorted = sorted(successful, key=lambda x: x.get('final_validation_loss_primary', float('inf')))
+
+        for i, result in enumerate(successful_sorted, 1):
             config = result['config']
-            training_result = result['training_result']
-
+            primary_loss = result.get('final_validation_loss_primary', 'N/A')
+            loss_0_to_48 = result.get('final_validation_loss_0_to_48', 'N/A')
+            loss_incremental = result.get('final_validation_loss_incremental', 'N/A')
             ode_type = "Fast ODE" if config['use_fast_ode'] else "Full ODE"
 
+            print(f"  {i}. max_res={config['max_residues']}, batch={config['batch_size']}, "
+                  f"cluster={config['reduced_cluster_size']}, {ode_type}")
             print(
-                f"  {i}. {config['max_residues']} res, batch={config['batch_size']}, cluster={config['reduced_cluster_size']}, {ode_type}")
-            print(
-                f"     🧬 Tested on: {training_result['protein_tested']} ({training_result['protein_residues']} residues)")
-            print(f"     💾 Peak memory: {training_result['max_memory_mb']:.0f} MB")
+                f"     lr={config['learning_rate']}, hidden_dim={config['hidden_dim']}, loss_mode={config['loss_mode']}")
 
-            # Show baseline performance if available
-            if result['baseline_analysis'] and 'summary' in result['baseline_analysis']:
-                baseline_summary = result['baseline_analysis']['summary']['baseline_summary']
-                if 'identity' in baseline_summary:
-                    identity_loss = baseline_summary['identity']['mean']
-                    print(f"     📊 Identity baseline: {identity_loss:.3f}")
+            print(f"     📊 Final validation losses:")
+            if primary_loss != 'N/A':
+                print(f"        Primary ({config['loss_mode']}): {primary_loss:.4f}")
+            if loss_0_to_48 != 'N/A':
+                print(f"        0→48: {loss_0_to_48:.4f}")
+            if loss_incremental != 'N/A':
+                print(f"        Incremental: {loss_incremental:.4f}")
 
-        print(f"\n❌ INFEASIBLE CONFIGURATIONS:")
-        for i, result in enumerate(search_results['infeasible_configs'], 1):
+            print(f"     🧪 Experiment: {result['experiment_name']}")
+
+    if failed:
+        print(f"\n❌ FAILED CONFIGURATIONS:")
+        oom_count = sum(1 for r in failed if r.get('is_oom', False))
+        print(f"   💀 Out of memory failures: {oom_count}")
+        print(f"   💥 Other failures: {len(failed) - oom_count}")
+
+        for i, result in enumerate(failed, 1):
             config = result['config']
-            training_result = result['training_result']
             ode_type = "Fast ODE" if config['use_fast_ode'] else "Full ODE"
 
-            print(
-                f"  {i}. {config['max_residues']} res, batch={config['batch_size']}, cluster={config['reduced_cluster_size']}, {ode_type}")
+            print(f"  {i}. max_res={config['max_residues']}, batch={config['batch_size']}, "
+                  f"cluster={config['reduced_cluster_size']}, {ode_type}, loss_mode={config['loss_mode']}")
 
-            if training_result['protein_tested']:
-                print(
-                    f"     🧬 Tested on: {training_result['protein_tested']} ({training_result['protein_residues']} residues)")
-                print(f"     💾 Peak memory: {training_result['max_memory_mb']:.0f} MB")
+            if result.get('is_oom', False):
+                print(f"     💀 OUT OF MEMORY")
+            else:
+                error_msg = result.get('error', 'Unknown error')
+                print(f"     💥 Error: {error_msg[:50]}...")
 
-            print(f"     💀 Error: {training_result['error']}")
-            if training_result.get('is_oom', False):
-                print(f"     🔥 CUDA OUT OF MEMORY")
+    # Recommendations
+    if successful:
+        # Find best config for each loss type
+        best_primary = min(successful, key=lambda x: x.get('final_validation_loss_primary', float('inf')))
+        best_0_to_48 = min(successful, key=lambda x: x.get('final_validation_loss_0_to_48', float('inf')))
+        best_incremental = min(successful, key=lambda x: x.get('final_validation_loss_incremental', float('inf')))
 
-    else:
-        print(f"\n💀 NO FEASIBLE CONFIGURATIONS FOUND!")
-        print(f"   All tested configurations failed memory requirements.")
-        print(f"   Consider:")
-        print(f"   - Reducing max_residues further")
-        print(f"   - Using smaller batch_size")
-        print(f"   - Using smaller max_cluster_size")
-        print(f"   - Using fast_ode=True")
-        print(f"   - Using a machine with more GPU memory")
+        print(f"\n🏆 BEST CONFIGURATIONS BY LOSS TYPE:")
+
+        if best_primary.get('final_validation_loss_primary') is not None:
+            config = best_primary['config']
+            print(f"   Primary Loss ({config['loss_mode']}):")
+            print(f"     max_residues={config['max_residues']}, batch_size={config['batch_size']}")
+            print(f"     cluster_size={config['reduced_cluster_size']}, use_fast_ode={config['use_fast_ode']}")
+            print(f"     hidden_dim={config['hidden_dim']}, learning_rate={config['learning_rate']}")
+            print(f"     📊 Primary loss: {best_primary['final_validation_loss_primary']:.4f}")
+
+        if best_0_to_48.get('final_validation_loss_0_to_48') is not None:
+            config = best_0_to_48['config']
+            print(f"   0→48 Loss:")
+            print(f"     max_residues={config['max_residues']}, batch_size={config['batch_size']}")
+            print(f"     cluster_size={config['reduced_cluster_size']}, use_fast_ode={config['use_fast_ode']}")
+            print(f"     hidden_dim={config['hidden_dim']}, learning_rate={config['learning_rate']}")
+            print(f"     📊 0→48 loss: {best_0_to_48['final_validation_loss_0_to_48']:.4f}")
+
+        if best_incremental.get('final_validation_loss_incremental') is not None:
+            config = best_incremental['config']
+            print(f"   Incremental Loss:")
+            print(f"     max_residues={config['max_residues']}, batch_size={config['batch_size']}")
+            print(f"     cluster_size={config['reduced_cluster_size']}, use_fast_ode={config['use_fast_ode']}")
+            print(f"     hidden_dim={config['hidden_dim']}, learning_rate={config['learning_rate']}")
+            print(f"     📊 Incremental loss: {best_incremental['final_validation_loss_incremental']:.4f}")
 
 
-def save_search_results(search_results: Dict, output_file: str):
-    """Save search results to JSON file"""
-    with open(output_file, 'w') as f:
-        json.dump(search_results, f, indent=2)
-    print(f"📄 Full search results saved to: {output_file}")
+def main():
+    parser = argparse.ArgumentParser(description='Enhanced Loss Analysis for Evoformer Neural ODE')
 
+    # Core arguments
+    parser.add_argument('--data_dir', type=str, required=True,
+                        help='Directory containing protein evoformer blocks')
+    parser.add_argument('--splits_dir', type=str, required=True,
+                        help='Directory containing data splits')
+    parser.add_argument('--mode', type=str, choices=['baselines_only', 'hyperparameter_search'],
+                        default='baselines_only',
+                        help='Analysis mode')
 
-def main(args_dict=None):
-    if args_dict is None:
-        parser = argparse.ArgumentParser(
-            description='Enhanced Loss Analysis with Memory-Critical Hyperparameter Search')
+    # Mode 1 arguments (baselines_only)
+    parser.add_argument('--num_val_proteins', type=int, default=10,
+                        help='Number of validation proteins to analyze (mode 1)')
+    parser.add_argument('--reduced_cluster_size', type=int, default=64,
+                        help='Maximum cluster size (mode 1)')
 
-        parser.add_argument('--data_dir', type=str, required=True,
-                            help='Directory containing protein evoformer blocks')
-        parser.add_argument('--splits_dir', type=str, default=None,
-                            help='Directory containing data splits (for validation proteins)')
-        parser.add_argument('--max_proteins', type=int, default=5,
-                            help='Maximum number of proteins to analyze for each config')
-        parser.add_argument('--reduced_cluster_size', type=int, default=64,
-                            help='Maximum cluster size (for baseline-only mode)')
-        parser.add_argument('--max_residues', type=int, default=None,
-                            help='Maximum residues (for baseline-only mode)')
-        parser.add_argument('--output_file', type=str, default=None,
-                            help='Output JSON file for results')
-        parser.add_argument('--mode', type=str, choices=['baselines_only', 'memory_search'],
-                            default='memory_search',
-                            help='Analysis mode: baselines_only or memory_search')
+    # Mode 2 arguments (hyperparameter_search)
+    parser.add_argument('--num_train_proteins', type=int, default=20,
+                        help='Number of training proteins to use (mode 2)')
+    parser.add_argument('--epochs', type=int, default=2,
+                        help='Number of epochs for hyperparameter testing (mode 2)')
 
-        args = parser.parse_args()
-    else:
-        # Parse from dictionary (used when calling main() directly)
-        class Args:
-            pass
+    # Output
+    parser.add_argument('--output_file', type=str, default=None,
+                        help='Output JSON file for results')
 
-        args = Args()
-        args.data_dir = args_dict.get("data_dir")
-        args.max_proteins = args_dict.get("max_proteins", 5)
-        args.reduced_cluster_size = args_dict.get("reduced_cluster_size", 64)
-        args.max_residues = args_dict.get("max_residues", None)
-        args.output_file = args_dict.get("output_file", None)
-        args.mode = args_dict.get("mode", "memory_search")
-        args.splits_dir = args_dict.get("splits_dir", None)
+    args = parser.parse_args()
 
     if args.output_file is None:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        if args.mode == 'memory_search':
-            args.output_file = f"memory_search_results_{timestamp}.json"
+        if args.mode == 'hyperparameter_search':
+            args.output_file = f"hyperparameter_search_{timestamp}.json"
         else:
-            args.output_file = f"loss_analysis_{timestamp}.json"
+            args.output_file = f"baseline_analysis_{timestamp}.json"
 
-    print("🔬 ENHANCED EVOFORMER NEURAL ODE LOSS ANALYZER")
+    print("🔬 EVOFORMER NEURAL ODE LOSS ANALYZER")
     print("=" * 50)
     print(f"📁 Data directory: {args.data_dir}")
+    print(f"📂 Splits directory: {args.splits_dir}")
     print(f"🎯 Mode: {args.mode}")
-    print(f"🔢 Max proteins per config: {args.max_proteins}")
 
     if args.mode == 'baselines_only':
+        print(f"🔢 Validation proteins: {args.num_val_proteins}")
         print(f"📏 Reduced cluster size: {args.reduced_cluster_size}")
-        print(f"📐 Max residues: {args.max_residues}")
 
-        if not args.splits_dir:
-            print("⚠️  No splits_dir provided - scanning all proteins in data directory")
-            # Fallback: scan data directory
-            all_proteins = []
-            for item in Path(data_dir).iterdir():
-                if item.is_dir() and item.name.endswith('_evoformer_blocks'):
-                    protein_id = item.name.replace('_evoformer_blocks', '')
-                    all_proteins.append(protein_id)
-
-            # Filter by size if specified
-            if args.max_residues is not None:
-                valid_proteins, oversized = filter_proteins_by_size(all_proteins, args.data_dir, args.max_residues)
-                print(f"🔍 {len(valid_proteins)} proteins ≤ {args.max_residues} residues (filtered {len(oversized)})")
-            else:
-                valid_proteins = all_proteins
-
-            # Shuffle and limit
-            import random
-            random.shuffle(valid_proteins)
-            analysis_proteins = valid_proteins[:args.max_proteins]
-        else:
-            # Use validation split
-            val_proteins = get_available_proteins(args.data_dir, args.splits_dir, 'validation')
-            if args.max_residues is not None:
-                valid_proteins, oversized = filter_proteins_by_size(val_proteins, args.data_dir, args.max_residues)
-                print(
-                    f"🔍 {len(valid_proteins)} validation proteins ≤ {args.max_residues} residues (filtered {len(oversized)})")
-            else:
-                valid_proteins = val_proteins
-
-            import random
-            random.shuffle(valid_proteins)
-            analysis_proteins = valid_proteins[:args.max_proteins]
-
-        print(f"📊 Analyzing: {analysis_proteins}")
-        print("")
-
-        # Run baseline analysis only
-        analysis_results = analyze_multiple_proteins(
+        # Run baseline analysis
+        baseline_results = run_baselines_analysis(
             args.data_dir,
-            analysis_proteins,
-            args.reduced_cluster_size,
-            args.max_residues
+            args.splits_dir,
+            args.num_val_proteins,
+            args.reduced_cluster_size
         )
 
-        # Determine thresholds and print analysis (reuse existing functions)
-        thresholds = determine_loss_thresholds(analysis_results)
-        print_loss_analysis(analysis_results, thresholds)
+        # Print results
+        print_baseline_results(baseline_results)
 
         # Save results
         output_data = {
-            'analysis_results': analysis_results,
-            'thresholds': thresholds,
             'mode': 'baselines_only',
-            'config': {
-                'reduced_cluster_size': args.reduced_cluster_size,
-                'max_residues': args.max_residues,
-                'max_proteins': args.max_proteins
-            },
+            'results': baseline_results,
             'metadata': {
-                'script_version': '2.0',
+                'script_version': '3.0',
                 'analysis_date': datetime.now().isoformat(),
-                'description': 'Evoformer Neural ODE Loss Analysis - Baselines Only'
+                'description': 'Evoformer Neural ODE Baseline Analysis - Block 0→48 and Incremental'
             }
         }
 
         with open(args.output_file, 'w') as f:
             json.dump(output_data, f, indent=2)
 
-        print(f"📄 Analysis saved to: {args.output_file}")
+        print(f"\n📄 Results saved to: {args.output_file}")
 
-    elif args.mode == 'memory_search':
-        if not args.splits_dir:
-            print("⚠️  No splits_dir provided - will fall back to scanning data directory")
+    elif args.mode == 'hyperparameter_search':
+        print(f"🔢 Training proteins: {args.num_train_proteins}")
+        print(f"🔢 Validation proteins: {args.num_val_proteins}")
+        print(f"📈 Epochs per test: {args.epochs}")
 
-        print(f"🧪 Testing memory-critical hyperparameter combinations...")
-        print("")
-
-        # Run memory-critical hyperparameter search
-        search_results = hyperparameter_search_memory_critical(
+        # Run hyperparameter search
+        hyperparam_results = run_hyperparameter_search(
             args.data_dir,
             args.splits_dir,
-            args.max_proteins
+            args.num_train_proteins,
+            args.num_val_proteins,
+            args.epochs
         )
 
-        # Print comprehensive summary
-        print_memory_search_summary(search_results)
+        # Print results
+        print_hyperparameter_results(hyperparam_results)
 
-        # Save detailed results
-        save_search_results(search_results, args.output_file)
-
-        print(f"\n✅ Memory search complete!")
-        print(f"📊 Found {search_results['summary']['feasible_count']} feasible configurations")
-        print(f"💡 Use feasible configs for next phase of hyperparameter search")
-
-        # Quick recommendations
-        if search_results['summary']['feasible_count'] > 0:
-            print(f"\n🎯 RECOMMENDATIONS FOR NEXT PHASE:")
-            print(
-                f"  1. Focus on the {min(3, search_results['summary']['feasible_count'])} most aggressive feasible configs")
-            print(f"  2. Test learning_rate variations: [1e-4, 5e-4, 1e-3, 2e-3]")
-            print(f"  3. Test hidden_dim variations: [32, 64, 128]")
-            print(f"  4. Test integrator variations: ['rk4', 'dopri5']")
-            print(f"  5. Return these results for the next search phase")
-
-
-def determine_loss_thresholds(analysis_results: Dict) -> Dict:
-    """Determine what constitutes good vs bad loss based on baseline analysis"""
-    print(f"\n🎯 Determining loss thresholds...")
-
-    baselines = analysis_results['summary']['baseline_summary']
-
-    # Extract key baseline values
-    identity_mean = baselines.get('identity', {}).get('mean', float('inf'))
-    zero_mean = baselines.get('zero', {}).get('mean', float('inf'))
-    mean_mean = baselines.get('mean', {}).get('mean', float('inf'))
-    random_mean = baselines.get('random', {}).get('mean', float('inf'))
-    perturb_mean = baselines.get('small_perturbation', {}).get('mean', float('inf'))
-
-    # Define thresholds based on baseline performance
-    thresholds = {
-        'excellent': {
-            'threshold': identity_mean * 0.5,
-            'description': 'Much better than identity mapping',
-            'color': '🟢'
-        },
-        'good': {
-            'threshold': identity_mean * 0.8,
-            'description': 'Better than identity mapping',
-            'color': '🟡'
-        },
-        'acceptable': {
-            'threshold': identity_mean * 1.2,
-            'description': 'Close to identity mapping',
-            'color': '🟠'
-        },
-        'poor': {
-            'threshold': max(zero_mean, mean_mean) * 0.8,
-            'description': 'Approaching trivial baselines',
-            'color': '🔴'
-        },
-        'terrible': {
-            'threshold': random_mean,
-            'description': 'Worse than random predictions',
-            'color': '💀'
+        # Save results
+        output_data = {
+            'mode': 'hyperparameter_search',
+            'results': hyperparam_results,
+            'metadata': {
+                'script_version': '3.0',
+                'analysis_date': datetime.now().isoformat(),
+                'description': 'Evoformer Neural ODE Hyperparameter Search with Training'
+            }
         }
-    }
 
-    # Add reference baselines
-    thresholds['baselines'] = {
-        'identity': identity_mean,
-        'zero': zero_mean,
-        'mean': mean_mean,
-        'random': random_mean,
-        'small_perturbation': perturb_mean
-    }
+        with open(args.output_file, 'w') as f:
+            json.dump(output_data, f, indent=2)
 
-    return thresholds
-
-
-def print_loss_analysis(analysis_results: Dict, thresholds: Dict):
-    """Print comprehensive loss analysis"""
-    print(f"\n" + "=" * 60)
-    print(f"📊 LOSS ANALYSIS REPORT")
-    print(f"=" * 60)
-
-    summary = analysis_results['summary']
-    baselines = summary['baseline_summary']
-
-    print(f"\n🧬 Dataset Summary:")
-    print(f"  Proteins analyzed: {summary['num_proteins']}")
-    print(
-        f"  Config: cluster_size={summary['config']['reduced_cluster_size']}, max_residues={summary['config']['max_residues']}")
-    print(f"  Proteins: {', '.join(summary['proteins_analyzed'][:5])}")
-    if len(summary['proteins_analyzed']) > 5:
-        print(f"           ... and {len(summary['proteins_analyzed']) - 5} more")
-
-    print(f"\n📊 Baseline Performance (Adaptive Loss):")
-    print(f"{'Baseline':<20} {'Mean':<8} {'Std':<8} {'Min':<8} {'Max':<8}")
-    print(f"-" * 60)
-
-    baseline_order = ['identity', 'small_perturbation', 'interpolation', 'mean', 'zero', 'random']
-    for baseline_name in baseline_order:
-        if baseline_name in baselines:
-            stats = baselines[baseline_name]
-            print(
-                f"{baseline_name:<20} {stats['mean']:<8.3f} {stats['std']:<8.3f} {stats['min']:<8.3f} {stats['max']:<8.3f}")
-
-    print(f"\n🎯 LOSS QUALITY THRESHOLDS:")
-    print(f"{'Quality':<12} {'Threshold':<10} {'Description'}")
-    print(f"-" * 50)
-
-    for quality, info in thresholds.items():
-        if quality != 'baselines':
-            print(f"{info['color']} {quality:<10} < {info['threshold']:<9.3f} {info['description']}")
-
-    print(f"\n📈 TRAINING LOSS INTERPRETATION:")
-    print(f"🟢 EXCELLENT  (< {thresholds['excellent']['threshold']:.3f}): Your model is learning very well!")
-    print(f"🟡 GOOD       (< {thresholds['good']['threshold']:.3f}): Model is learning, continue training")
-    print(f"🟠 ACCEPTABLE (< {thresholds['acceptable']['threshold']:.3f}): Model is barely learning")
-    print(f"🔴 POOR       (< {thresholds['poor']['threshold']:.3f}): Model is struggling, check hyperparameters")
-    print(f"💀 TERRIBLE   (> {thresholds['terrible']['threshold']:.3f}): Model is broken, major issues!")
-
-    print(f"\n💡 RECOMMENDATIONS:")
-    print(
-        f"• If your loss > {thresholds['baselines']['identity']:.1f}: Model worse than identity - reduce learning rate")
-    print(f"• If your loss > {thresholds['baselines']['zero']:.1f}: Model worse than zeros - check data/model")
-    print(f"• If your loss > {thresholds['baselines']['random']:.1f}: Model completely broken - restart")
-    print(f"• Target loss for good training: < {thresholds['good']['threshold']:.3f}")
+        print(f"\n📄 Results saved to: {args.output_file}")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Updated training runner - no console output file generation
+Updated training runner with loss mode selection
 Focuses on real-time console output and structured training logs only
 """
 
@@ -54,9 +54,10 @@ def main():
         'output_dir': str(output_dir),
         'experiment_name': experiment_name,
         'batch_size': 10,
-        'max_residues': 200,
+        'max_residues': 150,
+        'loss_mode': 'incremental',  # Default loss mode
         # Enhanced features
-        'lr_patience': 3,
+        'lr_patience': 2,
         'lr_factor': 0.5,
         'min_lr': 1e-6,
         'early_stopping_patience': 7,
@@ -77,6 +78,14 @@ def main():
         config['batch_size'] = 2
     elif '--large-batch' in sys.argv:
         config['batch_size'] = 20
+
+    # NEW: Loss mode selection
+    if '--loss-mode-end-to-end' in sys.argv or '--end-to-end' in sys.argv:
+        config['loss_mode'] = 'end_to_end'
+        print("🎯 Using end-to-end loss mode (0→48)")
+    elif '--loss-mode-incremental' in sys.argv or '--incremental' in sys.argv:
+        config['loss_mode'] = 'incremental'
+        print("🎯 Using incremental loss mode (original)")
 
     # Add mode handling
     if '--test' in sys.argv:
@@ -104,7 +113,7 @@ def main():
         else:
             cmd.extend([f'--{key}', str(value)])
 
-    print("🚀 Starting Enhanced Neural ODE Training")
+    print("🚀 Starting Enhanced Neural ODE Training with Dual Loss")
     print(f"📁 Data: {config['data_dir']}")
     print(f"📂 Splits: {config['splits_dir']}")
     print(f"🎯 Mode: {config['mode']}")
@@ -112,6 +121,8 @@ def main():
     print(f"🔧 Config: LR={config['learning_rate']}, Epochs={config['epochs']}")
     print(f"📉 LR Scheduling: patience={config['lr_patience']}, factor={config['lr_factor']}")
     print(f"🛑 Early Stopping: patience={config['early_stopping_patience']}")
+    print(f"🎯 Loss Mode: {config['loss_mode']} ({'0→48 loss' if config['loss_mode'] == 'end_to_end' else 'incremental loss'} guides learning)")
+    print(f"📊 Dual Reporting: Both incremental and 0→48 losses will be computed and reported")
     print(f"📊 Reports will be saved to: {output_dir}/{experiment_name}.txt")
     print("=" * 50)
 
@@ -167,6 +178,14 @@ def main():
                                 elif 'Final learning rate:' in line:
                                     print(f"🎛️  {line.strip()}")
                                     break
+
+                        # Look for dual loss information
+                        if 'Loss Mode:' in content:
+                            lines = content.split('\n')
+                            for line in lines:
+                                if 'Loss Mode:' in line:
+                                    print(f"🎯 {line.strip()}")
+                                    break
                 except:
                     pass
         else:
@@ -199,21 +218,29 @@ def main():
 
 
 if __name__ == "__main__":
-    print("Enhanced Neural ODE Training Runner")
-    print("Features: LR Scheduling, Early Stopping, Real-time Monitoring")
+    print("Enhanced Neural ODE Training Runner with Dual Loss")
+    print("Features: LR Scheduling, Early Stopping, Real-time Monitoring, Dual Loss Computation")
     print("")
     print("Usage:")
-    print("  python training_runner.py                # Training mode with validation")
-    print("  python training_runner.py --test         # Testing mode")
-    print("  python training_runner.py --small-batch  # Use smaller batch size (2)")
-    print("  python training_runner.py --large-batch  # Use larger batch size (20)")
-    print("  python training_runner.py cpu            # Force CPU")
+    print("  python training_runner.py                        # Training mode with validation, incremental loss")
+    print("  python training_runner.py --end-to-end           # Training mode with end-to-end loss (0→48)")
+    print("  python training_runner.py --incremental          # Training mode with incremental loss (default)")
+    print("  python training_runner.py --test                 # Testing mode")
+    print("  python training_runner.py --small-batch          # Use smaller batch size (2)")
+    print("  python training_runner.py --large-batch          # Use larger batch size (20)")
+    print("  python training_runner.py cpu                    # Force CPU")
+    print("")
+    print("🎯 Loss Mode Options:")
+    print("  --incremental     : Use incremental loss (original approach, default)")
+    print("  --end-to-end      : Use end-to-end loss (0→48 transformation)")
     print("")
     print("🎯 Features:")
     print("  📦 Temporal batching approach (simplified)")
     print("  📉 Automatic learning rate reduction on validation plateau")
     print("  🛑 Early stopping with best model weight restoration")
     print("  📊 Real-time validation monitoring")
+    print("  🎯 Dual loss computation: Both incremental and 0→48 losses computed and reported")
+    print("  🔄 Loss mode selection: Choose which loss guides learning")
     print("  💾 Structured training logs (no console output files)")
     print("")
 

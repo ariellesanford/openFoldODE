@@ -1,5 +1,7 @@
 """
 Enhanced Neural ODE training for Evoformer with:
+- Both incremental and 0→48 loss computation and reporting
+- Choice of which loss guides learning (--loss_mode parameter)
 - Smart learning rate scheduling based on validation loss
 - Early stopping with validation loss monitoring
 - Improved training stability
@@ -296,9 +298,108 @@ def compute_adaptive_loss(pred_m: torch.Tensor, target_m: torch.Tensor,
     }
 
 
+def compute_dual_losses(protein_id: str, ode_func: torch.nn.Module, args: argparse.Namespace) -> Dict:
+    """Compute both incremental and 0→48 losses for a protein"""
+
+    # Load initial and final blocks
+    m0, z0 = load_protein_block(protein_id, 0, args.data_dir, args.device, args.reduced_cluster_size)
+    m48, z48 = load_protein_block(protein_id, 48, args.data_dir, args.device, args.reduced_cluster_size)
+
+    # 1. Compute 0→48 loss
+    with torch.no_grad():
+        trajectory_0_48 = odeint(
+            ode_func,
+            (m0, z0),
+            torch.tensor([0.0, 1.0]).to(args.device),
+            method=args.integrator,
+            rtol=1e-4,
+            atol=1e-5
+        )
+
+        m_pred_48 = trajectory_0_48[0][-1]
+        z_pred_48 = trajectory_0_48[1][-1]
+
+        loss_0_to_48 = compute_adaptive_loss(m_pred_48, m48, z_pred_48, z48)
+
+    # 2. Compute incremental loss
+    # Find all available blocks
+    protein_dir = os.path.join(args.data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+    available_blocks = []
+    for i in range(args.max_blocks):
+        m_path = os.path.join(protein_dir, f"m_block_{i}.pt")
+        z_path = os.path.join(protein_dir, f"z_block_{i}.pt")
+        if os.path.exists(m_path) and os.path.exists(z_path):
+            available_blocks.append(i)
+        else:
+            break
+
+    num_blocks = len(available_blocks)
+    batch_size = args.batch_size
+
+    # Process in batches for incremental loss
+    m_current, z_current = m0, z0
+    total_incremental_loss = 0
+    total_batches = 0
+
+    for batch_start in range(0, num_blocks - 1, batch_size):
+        batch_end = min(batch_start + batch_size, num_blocks - 1)
+        batch_blocks = available_blocks[batch_start:batch_end + 1]
+        t_grid = torch.linspace(0.0, 1.0, len(batch_blocks)).to(args.device)
+
+        with torch.no_grad():
+            trajectory = odeint(
+                ode_func,
+                (m_current, z_current),
+                t_grid,
+                method=args.integrator,
+                rtol=1e-4,
+                atol=1e-5
+            )
+
+            batch_loss = 0
+            valid_steps = 0
+
+            for i, block_idx in enumerate(batch_blocks[1:], 1):  # Skip first (initial state)
+                m_target, z_target = load_protein_block(
+                    protein_id, block_idx, args.data_dir, args.device, args.reduced_cluster_size
+                )
+
+                m_pred = trajectory[0][i]
+                z_pred = trajectory[1][i]
+
+                loss_dict = compute_adaptive_loss(m_pred, m_target, z_pred, z_target)
+                batch_loss += loss_dict['total'].item()
+                valid_steps += 1
+
+            batch_loss = batch_loss / valid_steps
+            total_incremental_loss += batch_loss
+            total_batches += 1
+
+            # Update current state for next batch
+            if batch_end < num_blocks - 1:
+                m_current = trajectory[0][-1].detach()
+                z_current = trajectory[1][-1].detach()
+
+            # Clean up
+            del trajectory, m_target, z_target, m_pred, z_pred
+
+    avg_incremental_loss = total_incremental_loss / total_batches
+
+    # Clean up
+    del m0, z0, m48, z48, trajectory_0_48, m_pred_48, z_pred_48
+    clear_memory(args.device)
+
+    return {
+        'loss_0_to_48': loss_0_to_48['total'].item(),
+        'loss_incremental': avg_incremental_loss,
+        'num_blocks': num_blocks,
+        'num_batches': total_batches
+    }
+
+
 def train_single_protein_batched(protein_id: str, ode_func: torch.nn.Module, optimizer: torch.optim.Optimizer,
                                  scaler: GradScaler, args: argparse.Namespace) -> Dict:
-    """Train using temporal batching - break sequence into smaller chunks"""
+    """Train using temporal batching with dual loss computation"""
 
     # Find all available blocks
     protein_dir = os.path.join(args.data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
@@ -314,7 +415,38 @@ def train_single_protein_batched(protein_id: str, ode_func: torch.nn.Module, opt
     num_blocks = len(available_blocks)
     batch_size = args.batch_size
 
-    print(f"Batched: {num_blocks} blocks, batch_size={batch_size}")
+    print(f"Training: {num_blocks} blocks, batch_size={batch_size}, loss_mode={args.loss_mode}")
+
+    # Choose training loss based on loss_mode
+    if args.loss_mode == 'incremental':
+        # Use existing incremental training approach
+        training_loss = train_incremental_loss(protein_id, ode_func, optimizer, scaler, args, available_blocks)
+    elif args.loss_mode == 'end_to_end':
+        # Use 0→48 training approach
+        training_loss = train_end_to_end_loss(protein_id, ode_func, optimizer, scaler, args)
+    else:
+        raise ValueError(f"Unknown loss_mode: {args.loss_mode}")
+
+    # Compute both losses for reporting (no gradients)
+    dual_losses = compute_dual_losses(protein_id, ode_func, args)
+
+    return {
+        'protein': protein_id,
+        'approach': 'batched',
+        'num_blocks': num_blocks,
+        'batch_size': batch_size,
+        'loss_mode': args.loss_mode,
+        'training_loss': training_loss,  # Loss used for learning
+        'loss_0_to_48': dual_losses['loss_0_to_48'],  # Always computed
+        'loss_incremental': dual_losses['loss_incremental'],  # Always computed
+    }
+
+
+def train_incremental_loss(protein_id: str, ode_func: torch.nn.Module, optimizer: torch.optim.Optimizer,
+                          scaler: GradScaler, args: argparse.Namespace, available_blocks: List[int]) -> float:
+    """Train using incremental loss (original approach)"""
+    num_blocks = len(available_blocks)
+    batch_size = args.batch_size
 
     # Load initial state
     m_current, z_current = load_protein_block(
@@ -323,20 +455,16 @@ def train_single_protein_batched(protein_id: str, ode_func: torch.nn.Module, opt
 
     total_loss = 0
     total_batches = 0
-    all_losses = []
 
     # Process in batches
     for batch_start in range(0, num_blocks - 1, batch_size):
         batch_end = min(batch_start + batch_size, num_blocks - 1)
-
-        # Create time grid for this batch
         batch_blocks = available_blocks[batch_start:batch_end + 1]
         t_grid = torch.linspace(0.0, 1.0, len(batch_blocks)).to(args.device)
 
         optimizer.zero_grad()
 
         with autocast(enabled=args.use_amp):
-            # Solve ODE for this batch
             trajectory = odeint(
                 ode_func,
                 (m_current, z_current),
@@ -346,7 +474,6 @@ def train_single_protein_batched(protein_id: str, ode_func: torch.nn.Module, opt
                 atol=1e-5
             )
 
-            # Compute loss for this batch
             batch_loss = 0
             valid_steps = 0
 
@@ -364,7 +491,7 @@ def train_single_protein_batched(protein_id: str, ode_func: torch.nn.Module, opt
 
             batch_loss = batch_loss / valid_steps
 
-        # Backward pass for this batch
+        # Backward pass
         if args.use_amp:
             scaler.scale(batch_loss).backward()
             scaler.unscale_(optimizer)
@@ -378,118 +505,93 @@ def train_single_protein_batched(protein_id: str, ode_func: torch.nn.Module, opt
 
         total_loss += batch_loss.item()
         total_batches += 1
-        all_losses.append(batch_loss.item())
 
-        # Update current state for next batch (detached from computation graph)
-        if batch_end < num_blocks - 1:  # Not the last batch
+        # Update current state for next batch
+        if batch_end < num_blocks - 1:
             m_current = trajectory[0][-1].detach()
             z_current = trajectory[1][-1].detach()
 
-        # AGGRESSIVE MEMORY CLEARING
+        # Clean up
         del trajectory, batch_loss, loss_dict, m_pred, z_pred, m_target, z_target
         clear_memory(args.device)
-        if args.device == 'cuda':
-            torch.cuda.synchronize()
 
-    avg_loss = total_loss / total_batches
-
-    return {
-        'protein': protein_id,
-        'approach': 'batched',
-        'num_blocks': num_blocks,
-        'batch_size': batch_size,
-        'num_batches': total_batches,
-        'total_loss': avg_loss,
-        'batch_losses': all_losses
-    }
+    return total_loss / total_batches
 
 
-def validate_single_protein_batched(protein_id: str, ode_func: torch.nn.Module, args: argparse.Namespace) -> Dict:
-    """Validate using temporal batching - no gradient updates"""
-    # Find all available blocks
-    protein_dir = os.path.join(args.data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
-    available_blocks = []
-    for i in range(args.max_blocks):
-        m_path = os.path.join(protein_dir, f"m_block_{i}.pt")
-        z_path = os.path.join(protein_dir, f"z_block_{i}.pt")
-        if os.path.exists(m_path) and os.path.exists(z_path):
-            available_blocks.append(i)
-        else:
-            break
+def train_end_to_end_loss(protein_id: str, ode_func: torch.nn.Module, optimizer: torch.optim.Optimizer,
+                         scaler: GradScaler, args: argparse.Namespace) -> float:
+    """Train using end-to-end loss (0→48)"""
 
-    num_blocks = len(available_blocks)
-    batch_size = args.batch_size
+    # Load initial and final states
+    m0, z0 = load_protein_block(protein_id, 0, args.data_dir, args.device, args.reduced_cluster_size)
+    m48, z48 = load_protein_block(protein_id, 48, args.data_dir, args.device, args.reduced_cluster_size)
 
-    # Load initial state
-    m_current, z_current = load_protein_block(
-        protein_id, available_blocks[0], args.data_dir, args.device, args.reduced_cluster_size
-    )
+    optimizer.zero_grad()
 
-    total_loss = 0
-    total_batches = 0
-
-    # Process in batches
-    for batch_start in range(0, num_blocks - 1, batch_size):
-        batch_end = min(batch_start + batch_size, num_blocks - 1)
-
-        # Create time grid for this batch
-        batch_blocks = available_blocks[batch_start:batch_end + 1]
-        t_grid = torch.linspace(0.0, 1.0, len(batch_blocks)).to(args.device)
-
-        # Solve ODE for this batch
+    with autocast(enabled=args.use_amp):
+        # Solve ODE from 0 to 1 (representing 0→48 transformation)
         trajectory = odeint(
             ode_func,
-            (m_current, z_current),
-            t_grid,
+            (m0, z0),
+            torch.tensor([0.0, 1.0]).to(args.device),
             method=args.integrator,
             rtol=1e-4,
             atol=1e-5
         )
 
-        # Compute loss for this batch
-        batch_loss = 0
-        valid_steps = 0
+        # Get final prediction
+        m_pred = trajectory[0][-1]
+        z_pred = trajectory[1][-1]
 
-        for i, block_idx in enumerate(batch_blocks[1:], 1):  # Skip first (initial state)
-            m_target, z_target = load_protein_block(
-                protein_id, block_idx, args.data_dir, args.device, args.reduced_cluster_size
-            )
+        # Compute loss
+        loss_dict = compute_adaptive_loss(m_pred, m48, z_pred, z48)
+        loss = loss_dict['total']
 
-            m_pred = trajectory[0][i]
-            z_pred = trajectory[1][i]
+    # Backward pass
+    if args.use_amp:
+        scaler.scale(loss).backward()
+        scaler.unscale_(optimizer)
+        torch.nn.utils.clip_grad_norm_(ode_func.parameters(), max_norm=1.0)
+        scaler.step(optimizer)
+        scaler.update()
+    else:
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(ode_func.parameters(), max_norm=1.0)
+        optimizer.step()
 
-            loss_dict = compute_adaptive_loss(m_pred, m_target, z_pred, z_target)
-            batch_loss += loss_dict['total'].item()  # Convert to scalar immediately
-            valid_steps += 1
+    loss_value = loss.item()
 
-        batch_loss = batch_loss / valid_steps
-        total_loss += batch_loss
-        total_batches += 1
+    # Clean up
+    del m0, z0, m48, z48, trajectory, m_pred, z_pred, loss, loss_dict
+    clear_memory(args.device)
 
-        # Update current state for next batch (detached)
-        if batch_end < num_blocks - 1:  # Not the last batch
-            m_current = trajectory[0][-1].detach()
-            z_current = trajectory[1][-1].detach()
+    return loss_value
 
-        # Clean up
-        del trajectory, m_target, z_target, m_pred, z_pred
-        clear_memory(args.device)
 
-    avg_loss = total_loss / total_batches
+def validate_single_protein_batched(protein_id: str, ode_func: torch.nn.Module, args: argparse.Namespace) -> Dict:
+    """Validate with dual loss computation"""
+    dual_losses = compute_dual_losses(protein_id, ode_func, args)
+
+    # Return the loss that matches the training mode for LR scheduling
+    validation_loss = dual_losses['loss_0_to_48'] if args.loss_mode == 'end_to_end' else dual_losses['loss_incremental']
+
     return {
         'protein': protein_id,
         'approach': 'batched',
-        'num_blocks': num_blocks,
-        'batch_size': batch_size,
-        'num_batches': total_batches,
-        'total_loss': avg_loss
+        'validation_loss': validation_loss,  # Used for LR scheduling
+        'loss_0_to_48': dual_losses['loss_0_to_48'],
+        'loss_incremental': dual_losses['loss_incremental'],
+        'num_blocks': dual_losses['num_blocks'],
+        'num_batches': dual_losses['num_batches']
     }
 
 
 def validate_model(ode_func: torch.nn.Module, val_proteins: List[str], args: argparse.Namespace) -> Dict:
-    """Run validation on validation set using batched approach"""
+    """Run validation on validation set with dual loss reporting"""
     ode_func.eval()
     val_losses = []
+    val_losses_0_to_48 = []
+    val_losses_incremental = []
     successful_validations = 0
 
     with torch.no_grad():
@@ -498,9 +600,13 @@ def validate_model(ode_func: torch.nn.Module, val_proteins: List[str], args: arg
 
             try:
                 step_info = validate_single_protein_batched(protein_id, ode_func, args)
-                val_losses.append(step_info['total_loss'])
+
+                val_losses.append(step_info['validation_loss'])
+                val_losses_0_to_48.append(step_info['loss_0_to_48'])
+                val_losses_incremental.append(step_info['loss_incremental'])
                 successful_validations += 1
-                print(f"✅ Loss: {step_info['total_loss']:.3f}")
+
+                print(f"✅ Loss_0→48: {step_info['loss_0_to_48']:.3f}, Loss_incr: {step_info['loss_incremental']:.3f}")
 
             except Exception as e:
                 print(f"❌ Error: {str(e)[:50]}...")
@@ -508,31 +614,33 @@ def validate_model(ode_func: torch.nn.Module, val_proteins: List[str], args: arg
 
             # Memory cleanup after each validation protein
             clear_memory(args.device)
-            if args.device == 'cuda':
-                torch.cuda.synchronize()
 
     ode_func.train()  # Switch back to training mode
 
     if val_losses:
         return {
-            'avg_loss': sum(val_losses) / len(val_losses),
-            'min_loss': min(val_losses),
-            'max_loss': max(val_losses),
+            'avg_loss': sum(val_losses) / len(val_losses),  # Used for LR scheduling
+            'avg_loss_0_to_48': sum(val_losses_0_to_48) / len(val_losses_0_to_48),
+            'avg_loss_incremental': sum(val_losses_incremental) / len(val_losses_incremental),
+            'min_loss_0_to_48': min(val_losses_0_to_48),
+            'max_loss_0_to_48': max(val_losses_0_to_48),
+            'min_loss_incremental': min(val_losses_incremental),
+            'max_loss_incremental': max(val_losses_incremental),
             'num_proteins': len(val_losses),
             'successful_validations': successful_validations,
-            'skipped_validations': 0
         }
     else:
         return {
             'avg_loss': float('inf'),
+            'avg_loss_0_to_48': float('inf'),
+            'avg_loss_incremental': float('inf'),
             'num_proteins': 0,
             'successful_validations': 0,
-            'skipped_validations': 0
         }
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Enhanced Neural ODE Training with LR Scheduling and Early Stopping')
+    parser = argparse.ArgumentParser(description='Enhanced Neural ODE Training with Dual Loss Computation')
 
     # Core settings
     parser.add_argument('--data_dir', type=str, required=True, help='Data directory')
@@ -544,6 +652,11 @@ def main():
     parser.add_argument('--device', type=str, default='cuda', help='Device (cuda/cpu)')
     parser.add_argument('--epochs', type=int, default=20, help='Maximum number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='Initial learning rate')
+
+    # NEW: Loss mode selection
+    parser.add_argument('--loss_mode', type=str, choices=['incremental', 'end_to_end'],
+                        default='incremental',
+                        help='Loss function for training: incremental (original) or end_to_end (0→48)')
 
     # Learning rate scheduling
     parser.add_argument('--lr_patience', type=int, default=3,
@@ -586,13 +699,15 @@ def main():
     if args.device == 'cpu':
         args.use_amp = False  # AMP only works on CUDA
 
-    print(f"🚀 Starting Enhanced Neural ODE Training")
+    print(f"🚀 Starting Enhanced Neural ODE Training with Dual Loss")
     print(f"📁 Data directory: {args.data_dir}")
     if args.splits_dir:
         print(f"📂 Splits directory: {args.splits_dir}")
         print(f"🎯 Mode: {args.mode}")
     print(f"💻 Device: {args.device}")
     print(f"🔧 Settings: LR={args.learning_rate}, Fast ODE={args.use_fast_ode}, AMP={args.use_amp}")
+    print(f"🎯 Loss Mode: {args.loss_mode} ({'0→48 loss' if args.loss_mode == 'end_to_end' else 'incremental loss'} guides learning)")
+    print(f"📊 Reporting: Both incremental and 0→48 losses will be computed and reported")
     print(f"📉 LR Scheduling: patience={args.lr_patience}, factor={args.lr_factor}, min_lr={args.min_lr}")
     print(f"🛑 Early Stopping: patience={args.early_stopping_patience}, min_delta={args.early_stopping_min_delta}")
 
@@ -755,12 +870,13 @@ def main():
             model_info = {
                 'total_params': sum(p.numel() for p in ode_func.parameters()),
                 'model_type': 'EvoformerODEFuncFast' if args.use_fast_ode else 'EvoformerODEFunc',
-                'loss_function': 'Adaptive MSE (variance-scaled)',
+                'loss_function': f'Adaptive MSE ({args.loss_mode} mode)',
                 'mode': args.mode,
                 'train_proteins': len(train_dataset),
                 'val_proteins': len(val_dataset),
                 'lr_scheduling': lr_scheduler is not None,
-                'early_stopping': early_stopping is not None
+                'early_stopping': early_stopping is not None,
+                'loss_mode': args.loss_mode
             }
 
             optimizer_info = {
@@ -782,7 +898,7 @@ def main():
     previous_losses = []
     training_start_time = time.time()
 
-    # FIXED: Log training start time
+    # Log training start time
     if logger:
         logger.log_training_start()
 
@@ -798,6 +914,8 @@ def main():
             logger.log_epoch_start(epoch + 1, args.epochs, dataset)
 
         epoch_losses = []
+        epoch_losses_0_to_48 = []
+        epoch_losses_incremental = []
         successful_proteins = 0
         epoch_start_time = time.time()
 
@@ -806,33 +924,36 @@ def main():
 
             protein_start_time = time.time()
 
-            # Train using batched approach
+            # Train using batched approach with dual loss computation
             step_info = train_single_protein_batched(protein_id, ode_func, optimizer, scaler, args)
 
             protein_time = time.time() - protein_start_time
-            epoch_losses.append(step_info['total_loss'])
+
+            # Collect losses
+            epoch_losses.append(step_info['training_loss'])  # Loss used for training
+            epoch_losses_0_to_48.append(step_info['loss_0_to_48'])
+            epoch_losses_incremental.append(step_info['loss_incremental'])
             successful_proteins += 1
-            print(f"✅ Loss: {step_info['total_loss']:.3f}")
+
+            print(f"✅ Train: {step_info['training_loss']:.3f}, 0→48: {step_info['loss_0_to_48']:.3f}, Incr: {step_info['loss_incremental']:.3f}")
 
             # Log protein step
             if logger:
                 logger.log_protein_step(
                     protein_id=protein_id,
                     step_idx=protein_idx,
-                    loss=step_info['total_loss'],
+                    loss=step_info['training_loss'],
                     step_info=step_info,
                     time_taken=protein_time
                 )
 
             # Show detailed metrics for first protein of first epoch
             if epoch == 0 and protein_idx == 0:
-                print(f"      📦 Batches: {step_info['num_batches']}, batch_size: {step_info['batch_size']}")
-                print(f"      📊 Using {step_info['num_blocks']} blocks")
+                print(f"      🎯 Loss mode: {step_info['loss_mode']}")
+                print(f"      📊 Both losses computed for reporting")
 
             # Memory cleanup after each protein
             clear_memory(args.device)
-            if args.device == 'cuda':
-                torch.cuda.synchronize()
 
         # Run validation after each epoch if we have validation data
         val_results = None
@@ -843,8 +964,9 @@ def main():
             val_time = time.time() - val_start_time
 
             print(f"📊 Validation Summary:")
-            print(f"    Loss: {val_results['avg_loss']:.3f}")
-            print(f"    Range: [{val_results['min_loss']:.3f}, {val_results['max_loss']:.3f}]")
+            print(f"    Primary Loss ({args.loss_mode}): {val_results['avg_loss']:.3f}")
+            print(f"    Loss 0→48: {val_results['avg_loss_0_to_48']:.3f}")
+            print(f"    Loss Incremental: {val_results['avg_loss_incremental']:.3f}")
             print(f"    Successful: {val_results['successful_validations']}/{len(val_dataset)}")
             print(f"    Time: {val_time:.1f}s")
 
@@ -855,17 +977,21 @@ def main():
         # Compute epoch statistics
         if epoch_losses:
             avg_train_loss = sum(epoch_losses) / len(epoch_losses)
+            avg_train_loss_0_to_48 = sum(epoch_losses_0_to_48) / len(epoch_losses_0_to_48)
+            avg_train_loss_incremental = sum(epoch_losses_incremental) / len(epoch_losses_incremental)
             epoch_time = time.time() - epoch_start_time
 
-            print(f"📊 Epoch {epoch + 1} Summary:")
-            print(f"    Training Loss: {avg_train_loss:.3f}")
+            print(f"📊 Epoch {epoch + 1} Training Summary:")
+            print(f"    Primary Loss ({args.loss_mode}): {avg_train_loss:.3f}")
+            print(f"    Training Loss 0→48: {avg_train_loss_0_to_48:.3f}")
+            print(f"    Training Loss Incremental: {avg_train_loss_incremental:.3f}")
             if val_results:
-                print(f"    Validation Loss: {val_results['avg_loss']:.3f}")
+                print(f"    Validation Loss ({args.loss_mode}): {val_results['avg_loss']:.3f}")
+                print(f"    Validation Loss 0→48: {val_results['avg_loss_0_to_48']:.3f}")
+                print(f"    Validation Loss Incremental: {val_results['avg_loss_incremental']:.3f}")
                 val_success_rate = val_results['successful_validations'] / len(val_dataset) * 100
-                print(
-                    f"    Val Success Rate: {val_success_rate:.1f}% ({val_results['successful_validations']}/{len(val_dataset)})")
+                print(f"    Val Success Rate: {val_success_rate:.1f}% ({val_results['successful_validations']}/{len(val_dataset)})")
             print(f"    Successful proteins: {successful_proteins}/{len(dataset)}")
-            print(f"    Loss range: [{min(epoch_losses):.3f}, {max(epoch_losses):.3f}]")
             print(f"    Epoch time: {epoch_time:.1f} seconds")
 
             # Show training progress compared to previous epoch
@@ -891,8 +1017,7 @@ def main():
                     total_time = time.time() - training_start_time
                     print(f"\n🛑 Early stopping triggered after {epoch + 1} epochs!")
                     print(f"⏱️  Total training time: {total_time / 60:.1f} minutes")
-                    print(
-                        f"🎯 Best validation loss: {early_stopping.get_best_loss():.4f} (epoch {early_stopping.get_best_epoch()})")
+                    print(f"🎯 Best validation loss: {early_stopping.get_best_loss():.4f} (epoch {early_stopping.get_best_epoch()})")
                     break
 
             previous_losses = epoch_losses[:]
@@ -927,12 +1052,17 @@ def main():
                 'total_epochs': epoch + 1,
                 'total_time_minutes': total_training_time / 60,
                 'final_train_loss': avg_train_loss if epoch_losses else None,
+                'final_train_loss_0_to_48': avg_train_loss_0_to_48 if epoch_losses_0_to_48 else None,
+                'final_train_loss_incremental': avg_train_loss_incremental if epoch_losses_incremental else None,
                 'final_val_loss': val_results['avg_loss'] if val_results else None,
+                'final_val_loss_0_to_48': val_results['avg_loss_0_to_48'] if val_results else None,
+                'final_val_loss_incremental': val_results['avg_loss_incremental'] if val_results else None,
                 'best_val_loss': early_stopping.get_best_loss() if early_stopping else None,
                 'best_val_epoch': early_stopping.get_best_epoch() if early_stopping else None,
                 'lr_reductions': lr_scheduler.lr_reductions if lr_scheduler else 0,
                 'final_lr': lr_scheduler.get_last_lr() if lr_scheduler else args.learning_rate,
-                'early_stopped': early_stopping.should_stop if early_stopping else False
+                'early_stopped': early_stopping.should_stop if early_stopping else False,
+                'loss_mode': args.loss_mode
             }
         }
 
