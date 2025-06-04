@@ -54,7 +54,7 @@ def main():
         'output_dir': str(output_dir),
         'experiment_name': experiment_name,
         'batch_size': 10,
-        'max_residues': 150,
+        'max_residues': 100,
         'loss_mode': 'incremental',  # Default loss mode
         # Enhanced features
         'lr_patience': 2,
