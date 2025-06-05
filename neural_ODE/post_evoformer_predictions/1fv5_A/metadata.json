@@ -1,0 +1,9 @@
+{
+  "protein_id": "1fv5_A",
+  "num_residues": 36,
+  "num_sequences": 32,
+  "msa_channels": 256,
+  "pair_channels": 128,
+  "model_prediction": true,
+  "evoformer_complete": true
+}
