@@ -94,8 +94,6 @@ class EarlyStopping:
             if model is not None and self.restore_best_weights:
                 self.best_model_state = model.state_dict().copy()
 
-            if self.verbose:
-                print(f"🎯 New best validation loss: {val_loss:.4f} (epoch {epoch})")
 
         else:
             self.patience_counter += 1
@@ -169,17 +167,13 @@ def get_train_val_datasets(data_dir: str, splits_dir: str) -> Tuple[List[str], L
     return train_proteins, val_proteins
 
 
-def filter_proteins_by_size(proteins: List[str], data_dir: str, max_residues: int = None) -> Tuple[
-    List[str], List[str]]:
+def filter_proteins_by_size(proteins: List[str], data_dir: str, max_residues: int = None) -> Tuple[List[str], List[str]]:
     """Filter proteins by residue count"""
     if max_residues is None:
         return proteins, []
 
     valid_proteins = []
     oversized_proteins = []
-
-    print(f"🔍 Filtering {len(proteins)} proteins by size limit ({max_residues} residues)...")
-
     for protein_id in proteins:
         try:
             protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
@@ -199,15 +193,10 @@ def filter_proteins_by_size(proteins: List[str], data_dir: str, max_residues: in
 
         except Exception as e:
             oversized_proteins.append((protein_id, f"error: {e}"))
-
-    print(f"  ✅ Valid proteins: {len(valid_proteins)}")
-    print(f"  ⏭️  Oversized proteins: {len(oversized_proteins)}")
-
     return valid_proteins, [p[0] for p in oversized_proteins]
 
 
-def load_protein_blocks(protein_id: str, data_dir: str, device: str, max_cluster_size: int = None) -> Tuple[
-    torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+def load_protein_blocks(protein_id: str, data_dir: str, device: str, max_cluster_size: int = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Load M and Z tensors for blocks 0 and 48"""
     protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
 
@@ -264,7 +253,7 @@ def compute_adaptive_loss(pred_m: torch.Tensor, target_m: torch.Tensor,
 
 
 def train_single_protein(protein_id: str, ode_func: torch.nn.Module, optimizer: torch.optim.Optimizer,
-                         scaler: GradScaler, args: argparse.Namespace) -> Dict:
+                        scaler: GradScaler, args: argparse.Namespace) -> Dict:
     """Train using 0→48 transformation with adjoint method"""
 
     # Load initial and final states
@@ -364,7 +353,7 @@ def validate_model(ode_func: torch.nn.Module, val_proteins: List[str], args: arg
                 result = validate_single_protein(protein_id, ode_func, args)
                 val_losses.append(result['loss'])
                 successful_validations += 1
-                print(f"✅ Loss: {result['loss']:.3f}")
+                print(f"✅ Loss: {result['loss']:.5f}")
 
             except Exception as e:
                 print(f"❌ Error: {str(e)[:50]}...")
@@ -547,8 +536,6 @@ def main():
             verbose=True
         )
 
-        print(f"📉 LR Scheduler initialized")
-        print(f"🛑 Early Stopping initialized")
     else:
         print("⚠️  Running without LR scheduling and early stopping (no validation set)")
 
@@ -614,7 +601,7 @@ def main():
                 epoch_losses.append(result['loss'])
                 successful_proteins += 1
 
-                print(f"✅ Loss: {result['loss']:.3f}")
+                print(f"✅ Loss: {result['loss']:.5f}")
 
                 if logger:
                     protein_time = time.time() - protein_start_time
@@ -622,7 +609,7 @@ def main():
                         protein_id=protein_id,
                         step_idx=protein_idx,
                         loss=result['loss'],
-                        step_info={'approach': 'adjoint_0_to_48'},
+                        step_info={'approach': 'adjoint_0_to_48', 'num_blocks': 48},
                         time_taken=protein_time
                     )
 
@@ -641,8 +628,8 @@ def main():
             val_time = time.time() - val_start_time
 
             print(f"📊 Validation Summary:")
-            print(f"    Average Loss: {val_results['avg_loss']:.3f}")
-            print(f"    Range: [{val_results['min_loss']:.3f}, {val_results['max_loss']:.3f}]")
+            print(f"    Average Loss: {val_results['avg_loss']:.5f}")
+            print(f"    Range: [{val_results['min_loss']:.5f}, {val_results['max_loss']:.5f}]")
             print(f"    Successful: {val_results['successful_validations']}/{len(val_dataset)}")
             print(f"    Time: {val_time:.1f}s")
 
@@ -655,9 +642,9 @@ def main():
             epoch_time = time.time() - epoch_start_time
 
             print(f"📊 Epoch {epoch + 1} Summary:")
-            print(f"    Training Loss: {avg_train_loss:.3f}")
+            print(f"    Training Loss: {avg_train_loss:.5f}")
             if val_results:
-                print(f"    Validation Loss: {val_results['avg_loss']:.3f}")
+                print(f"    Validation Loss: {val_results['avg_loss']:.5f}")
             print(f"    Successful proteins: {successful_proteins}/{len(train_dataset)}")
             print(f"    Epoch time: {epoch_time:.1f} seconds")
 
@@ -675,8 +662,7 @@ def main():
                     total_time = time.time() - training_start_time
                     print(f"\n🛑 Early stopping triggered after {epoch + 1} epochs!")
                     print(f"⏱️  Total training time: {total_time / 60:.1f} minutes")
-                    print(
-                        f"🎯 Best validation loss: {early_stopping.get_best_loss():.4f} (epoch {early_stopping.get_best_epoch()})")
+                    print(f"🎯 Best validation loss: {early_stopping.get_best_loss():.4f} (epoch {early_stopping.get_best_epoch()})")
                     break
 
             previous_losses = epoch_losses[:]

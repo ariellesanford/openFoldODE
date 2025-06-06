@@ -224,8 +224,8 @@ class TrainingLogger:
 
             # Summary table
             f.write(
-                f"{'Epoch':<8} {'Train Loss':<12} {'Val Loss':<12} {'Best Loss':<12} {'Worst Loss':<12} {'Duration (s)':<12}\n")
-            f.write("-" * 80 + "\n")
+                f"{'Epoch':<8} {'Train Loss':<14} {'Val Loss':<14} {'Best Loss':<14} {'Worst Loss':<14} {'Duration (s)':<12}\n")
+            f.write("-" * 88 + "\n")
 
             for epoch_data in self.epoch_summaries:
                 epoch = epoch_data['epoch']
@@ -236,16 +236,16 @@ class TrainingLogger:
                 duration = epoch_data['duration']
 
                 if isinstance(val_loss, (int, float)):
-                    val_loss = f"{val_loss:.2f}"
+                    val_loss = f"{val_loss:.5f}"
                 if isinstance(best_loss, (int, float)):
-                    best_loss = f"{best_loss:.2f}"
+                    best_loss = f"{best_loss:.5f}"
                 if isinstance(worst_loss, (int, float)):
-                    worst_loss = f"{worst_loss:.2f}"
+                    worst_loss = f"{worst_loss:.5f}"
 
                 f.write(
-                    f"{epoch:<8} {train_loss:<12.2f} {val_loss:<12} {best_loss:<12} {worst_loss:<12} {duration:<12.1f}\n")
+                    f"{epoch:<8} {train_loss:<14.5f} {val_loss:<14} {best_loss:<14} {worst_loss:<14} {duration:<12.1f}\n")
 
-            f.write("-" * 80 + "\n\n")
+            f.write("-" * 88 + "\n\n")
 
             # Performance analysis
             if len(self.epoch_summaries) > 0:
@@ -254,8 +254,8 @@ class TrainingLogger:
 
                 f.write("PERFORMANCE ANALYSIS\n")
                 f.write("-" * 30 + "\n")
-                f.write(f"Best Training Epoch: {best_epoch['epoch']} (Loss: {best_epoch['average_loss']:.2f})\n")
-                f.write(f"Worst Training Epoch: {worst_epoch['epoch']} (Loss: {worst_epoch['average_loss']:.2f})\n")
+                f.write(f"Best Training Epoch: {best_epoch['epoch']} (Loss: {best_epoch['average_loss']:.5f})\n")
+                f.write(f"Worst Training Epoch: {worst_epoch['epoch']} (Loss: {worst_epoch['average_loss']:.5f})\n")
                 if worst_epoch['average_loss'] > 0:
                     improvement = worst_epoch['average_loss'] / best_epoch['average_loss']
                     f.write(f"Training Improvement: {improvement:.1f}x better from worst to best\n")
@@ -266,9 +266,9 @@ class TrainingLogger:
                     best_val_epoch = min(val_epochs, key=lambda x: x['validation']['avg_loss'])
                     worst_val_epoch = max(val_epochs, key=lambda x: x['validation']['avg_loss'])
                     f.write(
-                        f"Best Validation Epoch: {best_val_epoch['epoch']} (Loss: {best_val_epoch['validation']['avg_loss']:.2f})\n")
+                        f"Best Validation Epoch: {best_val_epoch['epoch']} (Loss: {best_val_epoch['validation']['avg_loss']:.5f})\n")
                     f.write(
-                        f"Worst Validation Epoch: {worst_val_epoch['epoch']} (Loss: {worst_val_epoch['validation']['avg_loss']:.2f})\n")
+                        f"Worst Validation Epoch: {worst_val_epoch['epoch']} (Loss: {worst_val_epoch['validation']['avg_loss']:.5f})\n")
 
                     # Check for overfitting
                     final_epoch = self.epoch_summaries[-1]
@@ -277,7 +277,7 @@ class TrainingLogger:
                         val_loss = final_epoch['validation']['avg_loss']
                         if val_loss > train_loss * 1.2:  # 20% worse validation
                             f.write(
-                                f"⚠️  Potential overfitting detected: Val loss ({val_loss:.2f}) >> Train loss ({train_loss:.2f})\n")
+                                f"⚠️  Potential overfitting detected: Val loss ({val_loss:.5f}) >> Train loss ({train_loss:.5f})\n")
 
                 f.write("\n")
 
@@ -289,27 +289,22 @@ class TrainingLogger:
             for epoch_data in self.epoch_summaries:
                 f.write(f"Epoch {epoch_data['epoch']}:\n")
                 f.write(f"  Duration: {epoch_data['duration']:.1f} seconds\n")
-                f.write(f"  Training Loss: {epoch_data['average_loss']:.4f}\n")
+                f.write(f"  Training Loss: {epoch_data['average_loss']:.5f}\n")
 
                 if 'validation' in epoch_data and epoch_data['validation']:
                     val = epoch_data['validation']
-                    f.write(f"  Validation Loss: {val['avg_loss']:.4f} ({val['num_proteins']} proteins)\n")
+                    f.write(f"  Validation Loss: {val['avg_loss']:.5f} ({val['num_proteins']} proteins)\n")
                     if 'min_loss' in val and 'max_loss' in val:
-                        f.write(f"    Val range: [{val['min_loss']:.4f}, {val['max_loss']:.4f}]\n")
+                        f.write(f"    Val range: [{val['min_loss']:.5f}, {val['max_loss']:.5f}]\n")
 
                 if 'best_protein' in epoch_data:
-                    f.write(f"  Best: {epoch_data['best_protein']['id']} ({epoch_data['best_protein']['loss']:.2f})\n")
+                    f.write(f"  Best: {epoch_data['best_protein']['id']} ({epoch_data['best_protein']['loss']:.5f})\n")
                     f.write(
-                        f"  Worst: {epoch_data['worst_protein']['id']} ({epoch_data['worst_protein']['loss']:.2f})\n")
+                        f"  Worst: {epoch_data['worst_protein']['id']} ({epoch_data['worst_protein']['loss']:.5f})\n")
 
                 f.write(f"  Training Proteins:\n")
                 for protein_id, result in epoch_data['protein_results'].items():
-                    approach_info = f"{result['approach']}"
-                    if result['approach'] == 'batched' and 'batch_size' in result:
-                        approach_info += f" (batch_size={result['batch_size']})"
-
-                    f.write(
-                        f"    {protein_id}: {result['total_loss']:.2f} ({approach_info}, {result['num_blocks']} blocks)\n")
+                    f.write(f"    {protein_id}: {result['total_loss']:.5f}\n")
 
                 f.write("\n")
 

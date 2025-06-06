@@ -44,7 +44,7 @@ def main():
         'data_dir': str(data_dir),
         'splits_dir': str(splits_dir),
         'device': 'cuda' if torch.cuda.is_available() else 'cpu',
-        'epochs': 100,
+        'epochs': 1000,
         'learning_rate': 1e-3,
         'reduced_cluster_size': 128,
         'hidden_dim': 128,
@@ -58,8 +58,8 @@ def main():
         'lr_patience': 3,
         'lr_factor': 0.5,
         'min_lr': 1e-6,
-        'early_stopping_patience': 7,
-        'early_stopping_min_delta': 0.001,
+        'early_stopping_patience': 10,
+        'early_stopping_min_delta': 0.0001,
         'restore_best_weights': True
     }
 
@@ -130,20 +130,6 @@ def main():
         else:
             cmd.extend([f'--{key}', str(value)])
 
-    print("🚀 Starting Simplified Neural ODE Training with Adjoint Method")
-    print(f"📁 Data: {config['data_dir']}")
-    print(f"📂 Splits: {config['splits_dir']}")
-    print(f"💻 Device: {config['device']}")
-    print(f"🔧 Config: LR={config['learning_rate']}, Epochs={config['epochs']}")
-    print(f"📦 Model: cluster_size={config['reduced_cluster_size']}, hidden_dim={config['hidden_dim']}")
-    print(f"🧮 Method: Adjoint method (automatic in torchdiffeq)")
-    print(f"🎯 Loss: Only blocks 0→48 transformation")
-    print(f"📏 Max residues: {config['max_residues']}")
-    print(f"🔄 Integrator: {config['integrator']}")
-    print(f"📉 LR Scheduling: patience={config['lr_patience']}, factor={config['lr_factor']}")
-    print(f"🛑 Early Stopping: patience={config['early_stopping_patience']}")
-    print(f"📊 Reports will be saved to: {output_dir}/{experiment_name}.txt")
-    print("=" * 50)
 
     try:
         # Start the process with real-time output streaming
@@ -248,14 +234,4 @@ if __name__ == "__main__":
     print("  python training_runner_june3.py --high-lr        # Use learning_rate=1e-2")
     print("  python training_runner_june3.py cpu              # Force CPU")
     print("")
-    print("🎯 Key Features:")
-    print("  🧮 Adjoint method for memory-efficient backpropagation")
-    print("  🎯 Only uses blocks 0 and 48 (simplified loss)")
-    print("  📉 Automatic learning rate reduction on validation plateau")
-    print("  🛑 Early stopping with best model weight restoration")
-    print("  📊 Real-time validation monitoring")
-    print("  💾 Structured training logs")
-    print("  🔄 Multiple ODE integrator options")
-    print("")
-
     sys.exit(main())

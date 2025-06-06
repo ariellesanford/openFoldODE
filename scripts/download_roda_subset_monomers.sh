@@ -16,7 +16,7 @@ set -e
 #    "8UQE_A", "9F6Q_A", "9F6P_A", "8WZS_A"]'
 
 #RAW_LIST='["1H2P_A", "1H2Q_A", "1K58_A", "1LFH_A"]'
-RAW_LIST='["4d0f_A"]'
+RAW_LIST='["7KDX_B"]'
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
 BASE_DIR="${ROOT_DIR}/neural_ODE/data"
