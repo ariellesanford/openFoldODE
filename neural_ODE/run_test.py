@@ -10,6 +10,7 @@ import subprocess
 from pathlib import Path
 import glob
 from datetime import datetime
+import re
 
 
 def find_latest_model(outputs_dir: Path) -> Path:
@@ -33,6 +34,22 @@ def find_latest_model(outputs_dir: Path) -> Path:
     model_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
 
     return model_files[0]
+
+
+def extract_timestamp_from_model_path(model_path: Path) -> str:
+    """Extract timestamp from model filename like adjoint_training_20250605_112329_final_model.pt"""
+    model_name = model_path.stem  # Remove .pt extension
+
+    # Look for pattern like: adjoint_training_20250605_112329_final_model
+    # Extract the date and time part (YYYYMMDD_HHMMSS)
+    pattern = r'(\d{8}_\d{6})'
+    match = re.search(pattern, model_name)
+
+    if match:
+        return match.group(1)
+    else:
+        # Fallback to current timestamp if pattern not found
+        return datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
 def main():
@@ -79,6 +96,14 @@ def main():
 
     print(f"📦 Found latest model: {latest_model.name}")
 
+    # Extract timestamp and create predictions directory name
+    timestamp = extract_timestamp_from_model_path(latest_model)
+    predictions_dir_name = f"predictions_{timestamp}"
+    predictions_dir = script_dir / "post_evoformer_predictions" / predictions_dir_name
+
+    print(f"📅 Using timestamp: {timestamp}")
+    print(f"📁 Predictions will be saved to: {predictions_dir}")
+
     # Show model info
     try:
         model_size_mb = latest_model.stat().st_size / 1024 / 1024
@@ -122,16 +147,13 @@ def main():
 
     # Add result saving
     if save_results:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         results_file = f"test_results_{timestamp}.json"
         cmd.extend(["--output_file", results_file])
         print(f"💾 Results will be saved to: {results_file}")
 
     # Add prediction saving (always save for structure module)
     cmd.append("--save_predictions")
-    predictions_dir = "post_evoformer_predictions"
-    cmd.extend(["--predictions_dir", predictions_dir])
-    print(f"📦 Predictions will be saved to: {predictions_dir}/")
+    cmd.extend(["--predictions_dir", str(predictions_dir)])
 
     print(f"\n🚀 Running test command:")
     print(f"   {' '.join(cmd)}")
@@ -147,15 +169,15 @@ def main():
             # Show what was created
             print(f"\n📁 Files created:")
             if save_results:
-                if Path(results_file).exists():
-                    size_mb = Path(results_file).stat().st_size / 1024 / 1024
-                    print(f"  - {results_file} ({size_mb:.1f} MB) [Test results]")
+                results_path = Path(f"test_results_{timestamp}.json")
+                if results_path.exists():
+                    size_mb = results_path.stat().st_size / 1024 / 1024
+                    print(f"  - {results_path.name} ({size_mb:.1f} MB) [Test results]")
 
             # Check predictions directory
-            pred_path = Path(predictions_dir)
-            if pred_path.exists():
-                protein_dirs = [d for d in pred_path.iterdir() if d.is_dir()]
-                print(f"  - {predictions_dir}/ ({len(protein_dirs)} proteins) [Structure module ready]")
+            if predictions_dir.exists():
+                protein_dirs = [d for d in predictions_dir.iterdir() if d.is_dir()]
+                print(f"  - {predictions_dir_name}/ ({len(protein_dirs)} proteins) [Structure module ready]")
 
                 # Show a few examples
                 for i, protein_dir in enumerate(protein_dirs[:3]):
@@ -169,7 +191,7 @@ def main():
                     print(f"        └── ... and {len(protein_dirs) - 3} more proteins")
 
             print(f"\n🎯 Ready for OpenFold structure module!")
-            print(f"   Use predictions in: {predictions_dir}/")
+            print(f"   Use predictions in: post_evoformer_predictions/{predictions_dir_name}/")
 
         else:
             print(f"\n❌ Testing failed with return code: {result.returncode}")
@@ -201,7 +223,7 @@ if __name__ == "__main__":
     print("  🧪 Tests on all proteins in test split")
     print("  📊 Comprehensive evaluation metrics")
     print("  💾 Saves predictions for OpenFold structure module")
-    print("  📁 Creates post_evoformer_predictions/ directory")
+    print("  📁 Creates timestamped predictions directory")
     print("")
 
     exit(main())

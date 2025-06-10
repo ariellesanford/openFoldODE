@@ -31,5 +31,6 @@ cd /home/visitor/PycharmProjects/openFold/openfold
   --config_preset model_1_ptm \
   --model_device "cuda:0" \
   --save_outputs \
+#  --save_intermediates
 
 #  --experiment_config_json "/home/visitor/PycharmProjects/openFold/custom_config.json" \

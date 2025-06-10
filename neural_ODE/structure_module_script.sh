@@ -21,8 +21,9 @@ PDB_ID="1fv5_A"  # Set to "all" to process all proteins in evoformer outputs
 # Paths based on your structure
 FASTA_DIR="${DATA_DIR}/fasta_data/${PDB_ID}"  # Directory containing .fasta files
 TEMPLATE_MMCIF_DIR="${DATA_DIR}/template_data/pdb70_mmcif/mmcif_files" # Template structures
-EVOFORMER_OUTPUTS_DIR="${ROOT_DIR}/neural_ODE/post_evoformer_predictions"  # Neural ODE outputs
+EVOFORMER_OUTPUTS_DIR="${ROOT_DIR}/neural_ODE/post_evoformer_predictions/predictions_20250605_183403"  # Neural ODE outputs
 OUTPUT_DIR="${ROOT_DIR}/neural_ODE/structure_predictions"  # Where to save structures
+PRECOMPUTED_ALIGNMENTS="${DATA_DIR}/alignments"
 
 # Model settings
 CONFIG_PRESET="model_1_ptm"  # OpenFold model preset
@@ -60,6 +61,7 @@ CMD=(
     "${TEMPLATE_MMCIF_DIR}"
     "--evoformer_outputs_dir" "${EVOFORMER_OUTPUTS_DIR}"
     "--output_dir" "${OUTPUT_DIR}"
+    "--use_precomputed_alignments" "${PRECOMPUTED_ALIGNMENTS}"
     "--model_device" "${MODEL_DEVICE}"
     "--config_preset" "${CONFIG_PRESET}"
 )
