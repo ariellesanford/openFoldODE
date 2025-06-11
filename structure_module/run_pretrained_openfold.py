@@ -353,8 +353,9 @@ def main(args):
                     lambda x: np.array(x[..., -1].cpu()),
                     processed_feature_dict
                 )
-                out = tensor_tree_map(lambda x: np.array(x.cpu()), out)
 
+                out = tensor_tree_map(lambda x: np.array(x.cpu()), out)
+                logger.info(f"Keys in outputs: {list(out.keys())}")
                 unrelaxed_protein = prep_output(
                     out,
                     processed_feature_dict,

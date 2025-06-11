@@ -17,7 +17,7 @@ def main():
     script_dir = Path(__file__).parent
     data_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
     splits_dir = script_dir / "data_splits" / "mini"
-    output_dir = script_dir / "outputs"
+    output_dir = script_dir / "trained_models"
     training_script = script_dir / "train_evoformer_ode.py"
 
     # Check if data directory exists
@@ -44,10 +44,10 @@ def main():
         'data_dir': str(data_dir),
         'splits_dir': str(splits_dir),
         'device': 'cuda' if torch.cuda.is_available() else 'cpu',
-        'epochs': 1000,
+        'epochs': 2,
         'learning_rate': 1e-3,
-        'reduced_cluster_size': 80,
-        'hidden_dim': 80,
+        'reduced_cluster_size': 64,
+        'hidden_dim': 64,
         'integrator': 'dopri5', #'rk4',
         'use_fast_ode': True,
         'use_amp': torch.cuda.is_available(),

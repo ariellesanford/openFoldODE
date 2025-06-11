@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-
 # =======================================================================================
 # CONFIGURATION SETTINGS - Modify these variables directly
 # =======================================================================================
@@ -33,6 +32,8 @@ MODEL_DEVICE="cuda:0"  # GPU device (will be set to 'cpu' if USE_CUDA=false)
 SKIP_RELAXATION=false  # Set to true to skip amber relaxation (faster)
 CIF_OUTPUT=false  # Set to true for ModelCIF format instead of PDB
 SAVE_OUTPUTS=false  # Set to true to save intermediate outputs
+LONG_SEQUENCE_INFERENCE=false  # Set to true for long sequence optimizations
+USE_DEEPSPEED_ATTENTION=false  # Set to true to use DeepSpeed attention
 
 # =======================================================================================
 # END OF CONFIGURATION SETTINGS - No need to modify below this line
@@ -53,6 +54,18 @@ else
     PYTHON_PATH=$(which python)
 fi
 
+echo "========================================"
+echo "Structure Module Processing Configuration"
+echo "========================================"
+echo "Root Directory: ${ROOT_DIR}"
+echo "FASTA Directory: ${FASTA_DIR}"
+echo "Evoformer Outputs: ${EVOFORMER_OUTPUTS_DIR}"
+echo "Output Directory: ${OUTPUT_DIR}"
+echo "Model Device: ${MODEL_DEVICE}"
+echo "Config Preset: ${CONFIG_PRESET}"
+echo "Protein ID: ${PDB_ID}"
+echo "========================================"
+
 # Build command
 CMD=(
     "${PYTHON_PATH}"
@@ -61,10 +74,15 @@ CMD=(
     "${TEMPLATE_MMCIF_DIR}"
     "--evoformer_outputs_dir" "${EVOFORMER_OUTPUTS_DIR}"
     "--output_dir" "${OUTPUT_DIR}"
-    "--use_precomputed_alignments" "${PRECOMPUTED_ALIGNMENTS}"
+    "--protein_id" "${PDB_ID}"
     "--model_device" "${MODEL_DEVICE}"
     "--config_preset" "${CONFIG_PRESET}"
 )
+
+# Add optional arguments
+if [ -n "${PRECOMPUTED_ALIGNMENTS}" ] && [ -d "${PRECOMPUTED_ALIGNMENTS}" ]; then
+    CMD+=("--use_precomputed_alignments" "${PRECOMPUTED_ALIGNMENTS}")
+fi
 
 if [ "$SKIP_RELAXATION" = true ]; then
     CMD+=("--skip_relaxation")
@@ -78,5 +96,24 @@ if [ "$SAVE_OUTPUTS" = true ]; then
     CMD+=("--save_outputs")
 fi
 
+if [ "$LONG_SEQUENCE_INFERENCE" = true ]; then
+    CMD+=("--long_sequence_inference")
+fi
+
+if [ "$USE_DEEPSPEED_ATTENTION" = true ]; then
+    CMD+=("--use_deepspeed_evoformer_attention")
+fi
+
+# Create output directory if it doesn't exist
+mkdir -p "${OUTPUT_DIR}"
+
+echo "Running command: ${CMD[*]}"
+echo "========================================"
+
 # Run the command
 "${CMD[@]}"
+
+echo "========================================"
+echo "Structure module processing completed!"
+echo "Check ${OUTPUT_DIR} for results"
+echo "========================================"
