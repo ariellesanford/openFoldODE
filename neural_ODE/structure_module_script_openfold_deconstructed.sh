@@ -20,8 +20,10 @@ PDB_ID="1fv5_A"  # Set to "all" to process all proteins in evoformer outputs
 # Paths based on your structure
 FASTA_DIR="${DATA_DIR}/fasta_data/${PDB_ID}"  # Directory containing .fasta files
 TEMPLATE_MMCIF_DIR="${DATA_DIR}/template_data/pdb70_mmcif/mmcif_files" # Template structures
-EVOFORMER_OUTPUTS_DIR="${ROOT_DIR}/neural_ODE/post_evoformer_predictions/predictions_20250605_183403"  # Neural ODE outputs
-OUTPUT_DIR="${ROOT_DIR}/neural_ODE/structure_predictions"  # Where to save structures
+#EVOFORMER_OUTPUTS_DIR="${ROOT_DIR}/neural_ODE/post_evoformer_predictions/predictions_20250605_183403"  # Neural ODE outputs
+MSA_PATH="${DATA_DIR}/complete_blocks/${PDB_ID}_evoformer_blocks/recycle_0/m_block_48.pt"
+PAIR_PATH="${DATA_DIR}/complete_blocks/${PDB_ID}_evoformer_blocks/recycle_0/z_block_48.pt"
+OUTPUT_DIR="${DATA_DIR}/structure_predictions/${PDB_ID}/openfold_deconstructed" # Where to save structures
 PRECOMPUTED_ALIGNMENTS="${DATA_DIR}/alignments"
 
 # Model settings
@@ -59,7 +61,6 @@ echo "Structure Module Processing Configuration"
 echo "========================================"
 echo "Root Directory: ${ROOT_DIR}"
 echo "FASTA Directory: ${FASTA_DIR}"
-echo "Evoformer Outputs: ${EVOFORMER_OUTPUTS_DIR}"
 echo "Output Directory: ${OUTPUT_DIR}"
 echo "Model Device: ${MODEL_DEVICE}"
 echo "Config Preset: ${CONFIG_PRESET}"
@@ -72,9 +73,9 @@ CMD=(
     "run_structure_module.py"
     "${FASTA_DIR}"
     "${TEMPLATE_MMCIF_DIR}"
-    "--evoformer_outputs_dir" "${EVOFORMER_OUTPUTS_DIR}"
+    "--msa_path" "${MSA_PATH}"
+    "--pair_path" "${PAIR_PATH}"
     "--output_dir" "${OUTPUT_DIR}"
-    "--protein_id" "${PDB_ID}"
     "--model_device" "${MODEL_DEVICE}"
     "--config_preset" "${CONFIG_PRESET}"
 )

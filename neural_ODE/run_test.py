@@ -55,10 +55,10 @@ def extract_timestamp_from_model_path(model_path: Path) -> str:
 def main():
     # Get script directory and set up paths
     script_dir = Path(__file__).parent
-    outputs_dir = script_dir / "outputs"
     data_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
     splits_dir = script_dir / "data_splits" / "mini"
     test_script = script_dir / "test_model.py"
+    outputs_dir = script_dir / "trained_models"
 
     print("🧪 NEURAL ODE MODEL TESTING RUNNER")
     print("=" * 50)
@@ -99,7 +99,7 @@ def main():
     # Extract timestamp and create predictions directory name
     timestamp = extract_timestamp_from_model_path(latest_model)
     predictions_dir_name = f"predictions_{timestamp}"
-    predictions_dir = script_dir / "post_evoformer_predictions" / predictions_dir_name
+    predictions_dir = data_dir / "post_evoformer_predictions" / predictions_dir_name
 
     print(f"📅 Using timestamp: {timestamp}")
     print(f"📁 Predictions will be saved to: {predictions_dir}")

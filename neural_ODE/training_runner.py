@@ -48,7 +48,7 @@ def main():
         'learning_rate': 1e-3,
         'reduced_cluster_size': 64,
         'hidden_dim': 64,
-        'integrator': 'dopri5', #'rk4',
+        'integrator': 'rk4', #'rk4',
         'use_fast_ode': True,
         'use_amp': torch.cuda.is_available(),
         'output_dir': str(output_dir),
@@ -152,13 +152,10 @@ def main():
 
         print("\n" + "=" * 50)
         if result_code == 0:
-            print("✅ Training completed successfully!")
-            print(f"📊 Detailed training report: {output_dir}/{experiment_name}.txt")
 
             # Show training results if available
             training_log = output_dir / f"{experiment_name}.txt"
             if training_log.exists():
-                print(f"📈 Training log: {training_log}")
                 # Try to extract key results from log
                 try:
                     with open(training_log, 'r') as f:
@@ -192,17 +189,6 @@ def main():
         else:
             print("❌ Training failed!")
             print(f"🔍 Check the training log for details: {output_dir}/{experiment_name}.txt")
-
-        # List key files created
-        print(f"\n📁 Files created in {output_dir}:")
-        for file in sorted(output_dir.glob(f"{experiment_name}*")):
-            size_mb = file.stat().st_size / 1024 / 1024
-            if file.suffix == '.pt':
-                print(f"  - {file.name} ({size_mb:.1f} MB) [Model checkpoint]")
-            elif file.suffix == '.txt':
-                print(f"  - {file.name} ({size_mb:.1f} MB) [Training log]")
-            else:
-                print(f"  - {file.name} ({size_mb:.1f} MB)")
 
         return result_code
 

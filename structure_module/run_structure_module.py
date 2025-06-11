@@ -22,38 +22,25 @@ from openfold.utils.tensor_utils import tensor_tree_map
 from openfold.np import protein
 
 
-def load_evoformer_outputs(evoformer_outputs_dir, protein_id):
-    """Load Evoformer outputs for a specific protein."""
-    protein_dir = os.path.join(evoformer_outputs_dir, protein_id)
-
-    if not os.path.exists(protein_dir):
-        raise FileNotFoundError(f"No Evoformer outputs found for {protein_id} in {evoformer_outputs_dir}")
-
-    msa_path = os.path.join(protein_dir, 'msa_representation.pt')
-    pair_path = os.path.join(protein_dir, 'pair_representation.pt')
-    single_path = os.path.join(protein_dir, 'single_representation.pt')
+def load_evoformer_outputs(msa_path, pair_path):
+    """Load Evoformer outputs from individual file paths."""
 
     if not os.path.exists(pair_path):
-        raise FileNotFoundError(f"Missing pair_representation.pt in {protein_dir}")
+        raise FileNotFoundError(f"Pair representation file not found: {pair_path}")
 
-    logger.info(f"Loading Evoformer outputs from {protein_dir}")
+    if not os.path.exists(msa_path):
+        raise FileNotFoundError(f"MSA representation file not found: {msa_path}")
 
+    logger.info(f"Loading pair representation from {pair_path}")
     pair = torch.load(pair_path, map_location='cpu')
     logger.info(f"Loaded pair representation: {pair.shape}")
 
-    if os.path.exists(single_path):
-        single = torch.load(single_path, map_location='cpu')
-        logger.info(f"Loaded single representation: {single.shape}")
-        msa = None
-    elif os.path.exists(msa_path):
-        msa = torch.load(msa_path, map_location='cpu')
-        logger.info(f"Loaded MSA representation: {msa.shape}")
-        single = None
-    else:
-        raise FileNotFoundError(f"Neither single_representation.pt nor msa_representation.pt found in {protein_dir}")
+    logger.info(f"Loading MSA representation from {msa_path}")
+    msa = torch.load(msa_path, map_location='cpu')
+    logger.info(f"Loaded MSA representation: {msa.shape}")
 
     return {
-        'single': single,
+        'single': None,
         'pair': pair,
         'msa': msa
     }
@@ -76,13 +63,27 @@ def generate_single_from_msa(msa_representation, model, device):
     return single_representation
 
 
-def process_protein(protein_id, args, config, model, data_processor, feature_processor):
+def squeeze_all_dims(tensor):
+    """Remove all singleton dimensions from a tensor."""
+    if torch.is_tensor(tensor):
+        while tensor.dim() > 0 and 1 in tensor.shape:
+            tensor = tensor.squeeze()
+        return tensor
+    return tensor
+
+
+def process_protein(args, config, model, data_processor, feature_processor):
     """Process a single protein."""
 
-    logger.info(f"Processing protein: {protein_id}")
+    logger.info(f"Processing protein with:")
+    logger.info(f"  Pair path: {args.pair_path}")
+    logger.info(f"  MSA path: {args.msa_path}")
 
     # Load Evoformer outputs
-    evoformer_outputs = load_evoformer_outputs(args.evoformer_outputs_dir, protein_id)
+    evoformer_outputs = load_evoformer_outputs(
+        msa_path=args.msa_path,
+        pair_path=args.pair_path
+    )
 
     # Load and process FASTA exactly like run_pretrained_openfold.py
     fasta_files = [f for f in os.listdir(args.fasta_dir) if f.endswith(('.fasta', '.fa'))]
@@ -295,26 +296,39 @@ def process_protein(protein_id, args, config, model, data_processor, feature_pro
                                                                                      torch.ones((len(
                                                                                          processed_feature_dict[
                                                                                              'aatype']), 37),
-                                                                                                dtype=torch.bool))
+                                                                                         dtype=torch.bool))
 
     # Add final_atom_positions (convert from atom14 to atom37 format)
     outputs["final_atom_positions"] = atom14_to_atom37(
         outputs["sm"]["positions"][-1], batch_for_atom_conversion
     )
 
-    # Remove extra dimensions that might have been added
-    if len(outputs["final_atom_positions"].shape) == 4:
-        outputs["final_atom_positions"] = outputs["final_atom_positions"].squeeze(-2)
-
     # Add final_atom_mask
     outputs["final_atom_mask"] = batch_for_atom_conversion['atom37_atom_exists']
-    if len(outputs["final_atom_mask"].shape) == 3:
-        outputs["final_atom_mask"] = outputs["final_atom_mask"].squeeze(-1)
 
     # Add final_affine_tensor
     outputs["final_affine_tensor"] = outputs["sm"]["frames"][-1]
 
-    logger.info(f"Added final processing:")
+    # **CRITICAL FIX**: Remove ALL singleton dimensions from arrays before converting to numpy
+    logger.info("Removing singleton dimensions from all outputs...")
+
+    def remove_singleton_dims(x):
+        if torch.is_tensor(x):
+            # Keep squeezing until no more singleton dimensions
+            original_shape = x.shape
+            while x.dim() > 0 and 1 in x.shape:
+                x = x.squeeze()
+            if len(original_shape) != len(x.shape):
+                logger.info(f"Squeezed tensor from {original_shape} to {x.shape}")
+            return x
+        return x
+
+    # Apply to all outputs
+    outputs = tensor_tree_map(remove_singleton_dims, outputs)
+    processed_feature_dict = tensor_tree_map(remove_singleton_dims, processed_feature_dict)
+    batch_for_atom_conversion = tensor_tree_map(remove_singleton_dims, batch_for_atom_conversion)
+
+    logger.info(f"After removing singleton dimensions:")
     logger.info(f"  final_atom_positions: {outputs['final_atom_positions'].shape}")
     logger.info(f"  final_atom_mask: {outputs['final_atom_mask'].shape}")
     logger.info(f"  final_affine_tensor: {outputs['final_affine_tensor'].shape}")
@@ -344,8 +358,6 @@ def process_protein(protein_id, args, config, model, data_processor, feature_pro
 
     # Save outputs
     output_name = f'{tag}_{args.config_preset}'
-    if args.output_postfix:
-        output_name = f'{output_name}_{args.output_postfix}'
 
     unrelaxed_file_suffix = "_unrelaxed.cif" if args.cif_output else "_unrelaxed.pdb"
     unrelaxed_output_path = os.path.join(args.output_dir, f'{output_name}{unrelaxed_file_suffix}')
@@ -373,7 +385,7 @@ def process_protein(protein_id, args, config, model, data_processor, feature_pro
         with open(output_dict_path, "wb") as fp:
             pickle.dump(outputs, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
-    logger.info(f"✅ Successfully processed {protein_id}")
+    logger.info(f"✅ Successfully processed")
 
 
 def main(args):
@@ -422,16 +434,8 @@ def main(args):
     )
     model, _ = next(model_generator)
 
-    # Get proteins to process
-    if args.protein_id != "all":
-        protein_ids = [args.protein_id]
-    else:
-        protein_ids = [d for d in os.listdir(args.evoformer_outputs_dir)
-                       if os.path.isdir(os.path.join(args.evoformer_outputs_dir, d))]
-
-    # Process proteins
-    for protein_id in protein_ids:
-        process_protein(protein_id, args, config, model, data_processor, feature_processor)
+    # Process the protein
+    process_protein(args, config, model, data_processor, feature_processor)
 
 
 if __name__ == "__main__":
@@ -439,10 +443,11 @@ if __name__ == "__main__":
 
     parser.add_argument("fasta_dir", type=str)
     parser.add_argument("template_mmcif_dir", type=str)
-    parser.add_argument("--evoformer_outputs_dir", type=str, required=True)
-    parser.add_argument("--protein_id", type=str, default="all")
+    parser.add_argument("--pair_path", type=str, required=True,
+                        help="Path to pair representation .pt file")
+    parser.add_argument("--msa_path", type=str, required=True,
+                        help="Path to MSA representation .pt file")
     parser.add_argument("--output_dir", type=str, default=os.getcwd())
-    parser.add_argument("--output_postfix", type=str, default=None)
     parser.add_argument("--model_device", type=str, default="cpu")
     parser.add_argument("--config_preset", type=str, default="model_1")
     parser.add_argument("--openfold_checkpoint_path", type=str, default=None)

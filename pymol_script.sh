@@ -6,7 +6,10 @@ PDB_PATH="/media/visitor/Extreme SSD/data/predictions/${PDB_ID}/predictions/${PD
 #PDB_PATH="/media/visitor/Extreme SSD/data/predictions/${PDB_ID}/predictions/${PDB_ID}_model_1_ptm_unrelaxed.pdb"
 #PDB_PATH="/media/visitor/Extreme SSD/data/predictions/${PDB_ID}/1tpg.pdb"
 PDB_PATH="/home/visitor/PycharmProjects/openFold/openfold/examples/monomer/sample_predictions/6KWC_1_model_1_ptm_relaxed.pdb"
-PDB_PATH="/media/visitor/Extreme SSD/data/predictions/6kwc/predictions/6KWC_1_model_1_ptm_relaxed.pdb"
+
+PDB_PATH="/media/visitor/Extreme SSD/data/structure_predictions/1fv5_A/openfold_0recycles/predictions/1fv5_A_model_1_ptm_relaxed.pdb"
+PDB_PATH="/media/visitor/Extreme SSD/data/structure_predictions/1fv5_A/openfold_deconstructed/1fv5_A_model_1_ptm_relaxed.pdb"
+PDB_PATH="/media/visitor/Extreme SSD/data/structure_predictions/1fv5_A/neuralODE/1fv5_A_model_1_ptm_relaxed.pdb"
 # Check if file exists
 if [ ! -f "$PDB_PATH" ]; then
   echo "PDB file not found: $PDB_PATH"
