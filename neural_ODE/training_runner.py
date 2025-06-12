@@ -44,23 +44,27 @@ def main():
         'data_dir': str(data_dir),
         'splits_dir': str(splits_dir),
         'device': 'cuda' if torch.cuda.is_available() else 'cpu',
-        'epochs': 2,
+        'epochs': 1000,
         'learning_rate': 1e-3,
         'reduced_cluster_size': 64,
         'hidden_dim': 64,
-        'integrator': 'rk4', #'rk4',
-        'use_fast_ode': True,
+        'integrator': 'rk4',
+        'use_fast_ode': False,
         'use_amp': torch.cuda.is_available(),
         'output_dir': str(output_dir),
         'experiment_name': experiment_name,
-        'max_residues': 1000,
+#        'max_residues': 100,
         # Enhanced features
         'lr_patience': 3,
         'lr_factor': 0.5,
         'min_lr': 1e-6,
         'early_stopping_patience': 10,
         'early_stopping_min_delta': 0.0001,
-        'restore_best_weights': True
+        'restore_best_weights': True,
+        'max_time_hours': 15.5,
+        # Memory optimizations
+        'use_sequential_loading': True,  # New memory optimization
+        'aggressive_cleanup': True  # New memory optimization
     }
 
     # Parse command line arguments
@@ -71,55 +75,19 @@ def main():
         config['device'] = 'cuda'
         config['use_amp'] = torch.cuda.is_available()
 
-    # Adjust cluster size if specified
-    if '--small-cluster' in sys.argv:
-        config['reduced_cluster_size'] = 16
-        print("🔧 Using small cluster size (16)")
-    elif '--large-cluster' in sys.argv:
-        config['reduced_cluster_size'] = 128
-        print("🔧 Using large cluster size (128)")
-
-    # Adjust max residues if specified
-    if '--small-proteins' in sys.argv:
-        config['max_residues'] = 100
-        print("🔧 Using small proteins (≤100 residues)")
-    elif '--medium-proteins' in sys.argv:
-        config['max_residues'] = 300
-        print("🔧 Using medium proteins (≤300 residues)")
-    elif '--large-proteins' in sys.argv:
-        config['max_residues'] = 500
-        print("🔧 Using large proteins (≤500 residues)")
-
-    # Adjust model size if specified
-    if '--small-model' in sys.argv:
-        config['hidden_dim'] = 32
-        print("🔧 Using small model (hidden_dim=32)")
-    elif '--large-model' in sys.argv:
-        config['hidden_dim'] = 128
-        print("🔧 Using large model (hidden_dim=128)")
-
-    # Adjust integrator if specified
-    if '--dopri5' in sys.argv:
-        config['integrator'] = 'dopri5'
-        print("🔧 Using dopri5 integrator")
-    elif '--euler' in sys.argv:
-        config['integrator'] = 'euler'
-        print("🔧 Using euler integrator")
-
-    # Adjust learning rate if specified
-    if '--low-lr' in sys.argv:
-        config['learning_rate'] = 1e-4
-        print("🔧 Using low learning rate (1e-4)")
-    elif '--high-lr' in sys.argv:
-        config['learning_rate'] = 1e-2
-        print("🔧 Using high learning rate (1e-2)")
-
     # Quick test mode
     if '--quick-test' in sys.argv:
         config['epochs'] = 3
         config['max_residues'] = 100
         config['reduced_cluster_size'] = 16
         print("🔧 Quick test mode: 3 epochs, small proteins, small clusters")
+
+    print("🚀 Neural ODE Training Runner")
+    print(f"📁 Data: {data_dir}")
+    print(f"💻 Device: {config['device']}")
+    print(
+        f"🔧 Memory: Sequential loading={config['use_sequential_loading']}, Aggressive cleanup={config['aggressive_cleanup']}")
+    print(f"🎯 Method: Adjoint backpropagation (0→48 blocks only)")
 
     # Build command
     cmd = [sys.executable, str(training_script)]
@@ -129,7 +97,6 @@ def main():
                 cmd.append(f'--{key}')
         else:
             cmd.extend([f'--{key}', str(value)])
-
 
     try:
         # Start the process with real-time output streaming
@@ -152,6 +119,7 @@ def main():
 
         print("\n" + "=" * 50)
         if result_code == 0:
+            print("✅ Training completed successfully!")
 
             # Show training results if available
             training_log = output_dir / f"{experiment_name}.txt"
@@ -186,6 +154,9 @@ def main():
                             print("🧮 Confirmed: Adjoint method used for 0→48 transformation")
                 except:
                     pass
+
+            print(f"\n📊 Training log: {output_dir}/{experiment_name}.txt")
+            print(f"🤖 Model saved to: {output_dir}/{experiment_name}_final_model.pt")
         else:
             print("❌ Training failed!")
             print(f"🔍 Check the training log for details: {output_dir}/{experiment_name}.txt")
@@ -201,23 +172,19 @@ def main():
 
 
 if __name__ == "__main__":
-    print("Simplified Neural ODE Training Runner with Adjoint Method")
-    print("Features: Blocks 0→48 only, Adjoint backprop, LR Scheduling, Early Stopping")
+    print("Neural ODE Training Runner with Memory Optimizations")
+    print("Features: Blocks 0→48 only, Adjoint backprop, LR Scheduling, Early Stopping, Memory optimized")
     print("")
     print("Usage:")
-    print("  python training_runner_june3.py                  # Default training")
-    print("  python training_runner_june3.py --quick-test     # Quick 3-epoch test")
-    print("  python training_runner_june3.py --small-proteins # Use proteins ≤100 residues")
-    print("  python training_runner_june3.py --medium-proteins# Use proteins ≤300 residues")
-    print("  python training_runner_june3.py --large-proteins # Use proteins ≤500 residues")
-    print("  python training_runner_june3.py --small-cluster  # Use cluster_size=16")
-    print("  python training_runner_june3.py --large-cluster  # Use cluster_size=128")
-    print("  python training_runner_june3.py --small-model    # Use hidden_dim=32")
-    print("  python training_runner_june3.py --large-model    # Use hidden_dim=128")
-    print("  python training_runner_june3.py --dopri5         # Use dopri5 integrator")
-    print("  python training_runner_june3.py --euler          # Use euler integrator")
-    print("  python training_runner_june3.py --low-lr         # Use learning_rate=1e-4")
-    print("  python training_runner_june3.py --high-lr        # Use learning_rate=1e-2")
-    print("  python training_runner_june3.py cpu              # Force CPU")
+    print("  python training_runner.py                  # Default training")
+    print("  python training_runner.py --quick-test     # Quick 3-epoch test")
+    print("  python training_runner.py cpu              # Force CPU")
+    print("  python training_runner.py cuda             # Force CUDA")
+    print("")
+    print("Memory optimizations:")
+    print("  - Sequential tensor loading (avoid 4x memory spike)")
+    print("  - Aggressive GPU memory cleanup")
+    print("  - Mixed precision training")
+    print("  - Immediate tensor deletion")
     print("")
     sys.exit(main())

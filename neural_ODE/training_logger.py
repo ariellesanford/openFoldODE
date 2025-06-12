@@ -9,6 +9,7 @@ from typing import Dict, List, Any
 class TrainingLogger:
     """
     Fixed logger that properly tracks training start and completion times
+    Now includes interrupt handling and success rate tracking
     """
 
     def __init__(self, output_dir: str, experiment_name: str = None):
@@ -25,9 +26,12 @@ class TrainingLogger:
         self.protein_results = {}
         self.epoch_summaries = []
 
-        # FIXED: Track timing properly
+        # Timing tracking
         self.training_start_time = None
         self.training_end_time = None
+
+        # Interrupt tracking
+        self.interrupted_at_epoch = None
 
         # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
@@ -56,6 +60,8 @@ class TrainingLogger:
             'loss_function': model_info.get('loss_function', 'Adaptive MSE'),
             'train_proteins': model_info.get('train_proteins', 'N/A'),
             'val_proteins': model_info.get('val_proteins', 'N/A'),
+            'use_sequential_loading': getattr(args, 'use_sequential_loading', False),
+            'aggressive_cleanup': getattr(args, 'aggressive_cleanup', False),
         }
 
         self.system_info = {
@@ -72,12 +78,11 @@ class TrainingLogger:
             })
 
     def log_training_start(self):
-        """FIXED: Log actual training start time"""
+        """Log actual training start time"""
         self.training_start_time = datetime.datetime.now()
 
     def log_epoch_start(self, epoch: int, total_epochs: int, proteins: List[str]):
         """Log the start of an epoch"""
-        # FIXED: Set training start time on first epoch if not already set
         if self.training_start_time is None:
             self.training_start_time = datetime.datetime.now()
 
@@ -88,6 +93,8 @@ class TrainingLogger:
             'start_time': datetime.datetime.now(),
             'protein_results': {},
             'total_loss': 0,
+            'successful_proteins': 0,
+            'total_proteins': len(proteins),
             'memory_stats': {},
             'validation': None
         }
@@ -115,6 +122,7 @@ class TrainingLogger:
 
         self.current_epoch['protein_results'][protein_id] = protein_result
         self.current_epoch['total_loss'] += loss
+        self.current_epoch['successful_proteins'] += 1
 
     def log_epoch_end(self, val_results: Dict = None):
         """Log the end of an epoch and compute summaries"""
@@ -127,8 +135,11 @@ class TrainingLogger:
             self.current_epoch['validation'] = val_results
 
         # Compute average loss
-        num_proteins = len(self.current_epoch['protein_results'])
-        self.current_epoch['average_loss'] = self.current_epoch['total_loss'] / max(num_proteins, 1)
+        if self.current_epoch['successful_proteins'] > 0:
+            self.current_epoch['average_loss'] = self.current_epoch['total_loss'] / self.current_epoch[
+                'successful_proteins']
+        else:
+            self.current_epoch['average_loss'] = float('inf')
 
         # Find best and worst performing proteins
         if self.current_epoch['protein_results']:
@@ -144,8 +155,7 @@ class TrainingLogger:
         self._update_log_file()
 
     def log_training_complete(self, final_model_path: str = None):
-        """FIXED: Log training completion with proper timing"""
-        # FIXED: Set training end time when called, not when report is generated
+        """Log training completion with proper timing"""
         self.training_end_time = datetime.datetime.now()
         self.final_model_path = final_model_path
         self._write_final_report()
@@ -174,21 +184,24 @@ class TrainingLogger:
 
     def _write_complete_report(self, f, final=False):
         """Write the complete report to file"""
-        # Header
+        # Header with interrupt information
         f.write("EVOFORMER NEURAL ODE TRAINING REPORT\n")
         f.write("=" * 50 + "\n\n")
 
-        # Experiment info with FIXED timing
+        # Check for interruption
+        if final and self.interrupted_at_epoch is not None:
+            f.write(f"⏰ INTERRUPTED AT {self.interrupted_at_epoch} EPOCHS (TIME LIMIT REACHED)\n")
+            f.write("=" * 50 + "\n\n")
+
+        # Experiment info with timing
         f.write(f"Experiment: {self.experiment_name}\n")
 
-        # FIXED: Show proper start/end times
         if self.training_start_time:
             f.write(f"Started: {self.training_start_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
 
         if final and self.training_end_time:
             f.write(f"Completed: {self.training_end_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
 
-            # FIXED: Calculate actual training duration
             if self.training_start_time:
                 actual_duration = self.training_end_time - self.training_start_time
                 duration_minutes = actual_duration.total_seconds() / 60
@@ -222,28 +235,29 @@ class TrainingLogger:
             f.write("TRAINING PROGRESS SUMMARY\n")
             f.write("=" * 50 + "\n\n")
 
-            # Summary table
+            # Summary table with success rates
             f.write(
-                f"{'Epoch':<8} {'Train Loss':<14} {'Val Loss':<14} {'Best Loss':<14} {'Worst Loss':<14} {'Duration (s)':<12}\n")
+                f"{'Epoch':<8} {'Train Loss':<14} {'Train Success':<14} {'Val Loss':<14} {'Val Success':<14} {'Duration (s)':<12}\n")
             f.write("-" * 88 + "\n")
 
             for epoch_data in self.epoch_summaries:
                 epoch = epoch_data['epoch']
                 train_loss = epoch_data['average_loss']
+                train_success = f"{epoch_data['successful_proteins']}/{epoch_data['total_proteins']}"
+
                 val_loss = epoch_data.get('validation', {}).get('avg_loss', 'N/A')
-                best_loss = epoch_data.get('best_protein', {}).get('loss', 'N/A')
-                worst_loss = epoch_data.get('worst_protein', {}).get('loss', 'N/A')
+                val_success = 'N/A'
+                if epoch_data.get('validation'):
+                    val_data = epoch_data['validation']
+                    val_success = f"{val_data.get('successful_validations', 0)}/{val_data.get('num_proteins', 0)}"
+
                 duration = epoch_data['duration']
 
                 if isinstance(val_loss, (int, float)):
                     val_loss = f"{val_loss:.5f}"
-                if isinstance(best_loss, (int, float)):
-                    best_loss = f"{best_loss:.5f}"
-                if isinstance(worst_loss, (int, float)):
-                    worst_loss = f"{worst_loss:.5f}"
 
                 f.write(
-                    f"{epoch:<8} {train_loss:<14.5f} {val_loss:<14} {best_loss:<14} {worst_loss:<14} {duration:<12.1f}\n")
+                    f"{epoch:<8} {train_loss:<14.5f} {train_success:<14} {val_loss:<14} {val_success:<14} {duration:<12.1f}\n")
 
             f.write("-" * 88 + "\n\n")
 
@@ -259,6 +273,17 @@ class TrainingLogger:
                 if worst_epoch['average_loss'] > 0:
                     improvement = worst_epoch['average_loss'] / best_epoch['average_loss']
                     f.write(f"Training Improvement: {improvement:.1f}x better from worst to best\n")
+
+                # Success rate analysis
+                if self.epoch_summaries:
+                    final_epoch = self.epoch_summaries[-1]
+                    train_success_rate = final_epoch['successful_proteins'] / final_epoch['total_proteins'] * 100
+                    f.write(f"Final Training Success Rate: {train_success_rate:.1f}%\n")
+
+                    if final_epoch.get('validation'):
+                        val_data = final_epoch['validation']
+                        val_success_rate = val_data['successful_validations'] / val_data['num_proteins'] * 100
+                        f.write(f"Final Validation Success Rate: {val_success_rate:.1f}%\n")
 
                 # Validation analysis if available
                 val_epochs = [e for e in self.epoch_summaries if 'validation' in e and e['validation']]
@@ -290,10 +315,13 @@ class TrainingLogger:
                 f.write(f"Epoch {epoch_data['epoch']}:\n")
                 f.write(f"  Duration: {epoch_data['duration']:.1f} seconds\n")
                 f.write(f"  Training Loss: {epoch_data['average_loss']:.5f}\n")
+                f.write(
+                    f"  Training Success: {epoch_data['successful_proteins']}/{epoch_data['total_proteins']} proteins\n")
 
                 if 'validation' in epoch_data and epoch_data['validation']:
                     val = epoch_data['validation']
                     f.write(f"  Validation Loss: {val['avg_loss']:.5f} ({val['num_proteins']} proteins)\n")
+                    f.write(f"  Validation Success: {val['successful_validations']}/{val['num_proteins']} proteins\n")
                     if 'min_loss' in val and 'max_loss' in val:
                         f.write(f"    Val range: [{val['min_loss']:.5f}, {val['max_loss']:.5f}]\n")
 
@@ -315,6 +343,11 @@ class TrainingLogger:
             f.write(f"Model saved to: {self.final_model_path}\n")
             f.write(f"Total parameters: {self.config.get('model_parameters', 'N/A')}\n")
             f.write(f"Model type: {self.config.get('model_type', 'N/A')}\n")
+
+            if self.interrupted_at_epoch is not None:
+                f.write(f"⏰ Training was interrupted at epoch {self.interrupted_at_epoch} due to time limit\n")
+                f.write(f"Model represents the best state found before timeout\n")
+
             f.write("\n")
 
         f.write("=" * 50 + "\n")

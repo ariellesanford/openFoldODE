@@ -1,6 +1,6 @@
 """
 Simplified Neural ODE training for Evoformer using only blocks 0 and 48
-Uses adjoint method from torchdiffeq as described in Neural ODEs paper sections 1-2
+Uses adjoint method from torchdiffeq with memory optimizations
 """
 
 import os
@@ -16,6 +16,16 @@ import torch.nn.functional as F
 import time
 from typing import Dict, List, Tuple
 from training_logger import TrainingLogger
+
+
+def aggressive_memory_cleanup():
+    """Aggressive GPU memory cleanup"""
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+        for _ in range(3):
+            torch.cuda.empty_cache()
 
 
 class LearningRateScheduler:
@@ -94,7 +104,6 @@ class EarlyStopping:
             if model is not None and self.restore_best_weights:
                 self.best_model_state = model.state_dict().copy()
 
-
         else:
             self.patience_counter += 1
 
@@ -118,13 +127,6 @@ class EarlyStopping:
 
     def get_best_epoch(self):
         return self.best_epoch
-
-
-def clear_memory(device: str):
-    """Clear GPU memory if using CUDA"""
-    gc.collect()
-    if device == "cuda":
-        torch.cuda.empty_cache()
 
 
 def load_split_proteins(splits_dir: str, mode: str) -> List[str]:
@@ -196,8 +198,51 @@ def filter_proteins_by_size(proteins: List[str], data_dir: str, max_residues: in
     return valid_proteins, [p[0] for p in oversized_proteins]
 
 
-def load_protein_blocks(protein_id: str, data_dir: str, device: str, max_cluster_size: int = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Load M and Z tensors for blocks 0 and 48"""
+def load_protein_blocks_sequential(protein_id: str, data_dir: str, device: str, max_cluster_size: int = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Load M and Z tensors sequentially to minimize memory spikes"""
+    protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+
+    # Load block 0 - one tensor at a time
+    m0_path = os.path.join(protein_dir, "m_block_0.pt")
+    m0 = torch.load(m0_path, map_location='cpu')
+    if m0.dim() == 4:
+        m0 = m0.squeeze(0)
+    if max_cluster_size and m0.shape[0] > max_cluster_size:
+        m0 = m0[:max_cluster_size]
+    m0 = m0.to(device)
+
+    aggressive_memory_cleanup()
+
+    z0_path = os.path.join(protein_dir, "z_block_0.pt")
+    z0 = torch.load(z0_path, map_location='cpu')
+    if z0.dim() == 4:
+        z0 = z0.squeeze(0)
+    z0 = z0.to(device)
+
+    aggressive_memory_cleanup()
+
+    # Load block 48
+    m48_path = os.path.join(protein_dir, "m_block_48.pt")
+    m48 = torch.load(m48_path, map_location='cpu')
+    if m48.dim() == 4:
+        m48 = m48.squeeze(0)
+    if max_cluster_size and m48.shape[0] > max_cluster_size:
+        m48 = m48[:max_cluster_size]
+    m48 = m48.to(device)
+
+    aggressive_memory_cleanup()
+
+    z48_path = os.path.join(protein_dir, "z_block_48.pt")
+    z48 = torch.load(z48_path, map_location='cpu')
+    if z48.dim() == 4:
+        z48 = z48.squeeze(0)
+    z48 = z48.to(device)
+
+    return m0, z0, m48, z48
+
+
+def load_protein_blocks_standard(protein_id: str, data_dir: str, device: str, max_cluster_size: int = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Load M and Z tensors for blocks 0 and 48 (standard method)"""
     protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
 
     # Load block 0
@@ -256,8 +301,14 @@ def train_single_protein(protein_id: str, ode_func: torch.nn.Module, optimizer: 
                         scaler: GradScaler, args: argparse.Namespace) -> Dict:
     """Train using 0→48 transformation with adjoint method"""
 
+    # Choose loading method based on config
+    if getattr(args, 'use_sequential_loading', False):
+        load_func = load_protein_blocks_sequential
+    else:
+        load_func = load_protein_blocks_standard
+
     # Load initial and final states
-    m0, z0, m48, z48 = load_protein_blocks(protein_id, args.data_dir, args.device, args.reduced_cluster_size)
+    m0, z0, m48, z48 = load_func(protein_id, args.data_dir, args.device, args.reduced_cluster_size)
 
     optimizer.zero_grad()
 
@@ -276,6 +327,11 @@ def train_single_protein(protein_id: str, ode_func: torch.nn.Module, optimizer: 
         m_pred = trajectory[0][-1]
         z_pred = trajectory[1][-1]
 
+        # Delete trajectory immediately to save memory
+        del trajectory
+        if getattr(args, 'aggressive_cleanup', False):
+            aggressive_memory_cleanup()
+
         # Compute loss
         loss = compute_adaptive_loss(m_pred, m48, z_pred, z48)
 
@@ -293,9 +349,10 @@ def train_single_protein(protein_id: str, ode_func: torch.nn.Module, optimizer: 
 
     loss_value = loss.item()
 
-    # Clean up
-    del m0, z0, m48, z48, trajectory, m_pred, z_pred, loss
-    clear_memory(args.device)
+    # Clean up all tensors
+    del m0, z0, m48, z48, m_pred, z_pred, loss
+    if getattr(args, 'aggressive_cleanup', False):
+        aggressive_memory_cleanup()
 
     return {
         'protein': protein_id,
@@ -306,8 +363,14 @@ def train_single_protein(protein_id: str, ode_func: torch.nn.Module, optimizer: 
 def validate_single_protein(protein_id: str, ode_func: torch.nn.Module, args: argparse.Namespace) -> Dict:
     """Validate using 0→48 transformation"""
 
+    # Choose loading method based on config
+    if getattr(args, 'use_sequential_loading', False):
+        load_func = load_protein_blocks_sequential
+    else:
+        load_func = load_protein_blocks_standard
+
     # Load initial and final states
-    m0, z0, m48, z48 = load_protein_blocks(protein_id, args.data_dir, args.device, args.reduced_cluster_size)
+    m0, z0, m48, z48 = load_func(protein_id, args.data_dir, args.device, args.reduced_cluster_size)
 
     with torch.no_grad():
         # Solve ODE from 0 to 1
@@ -324,14 +387,20 @@ def validate_single_protein(protein_id: str, ode_func: torch.nn.Module, args: ar
         m_pred = trajectory[0][-1]
         z_pred = trajectory[1][-1]
 
+        # Delete trajectory immediately
+        del trajectory
+        if getattr(args, 'aggressive_cleanup', False):
+            aggressive_memory_cleanup()
+
         # Compute loss
         loss = compute_adaptive_loss(m_pred, m48, z_pred, z48)
 
     loss_value = loss.item()
 
     # Clean up
-    del m0, z0, m48, z48, trajectory, m_pred, z_pred, loss
-    clear_memory(args.device)
+    del m0, z0, m48, z48, m_pred, z_pred, loss
+    if getattr(args, 'aggressive_cleanup', False):
+        aggressive_memory_cleanup()
 
     return {
         'protein': protein_id,
@@ -359,7 +428,8 @@ def validate_model(ode_func: torch.nn.Module, val_proteins: List[str], args: arg
                 print(f"❌ Error: {str(e)[:50]}...")
                 continue
 
-            clear_memory(args.device)
+            if getattr(args, 'aggressive_cleanup', False):
+                aggressive_memory_cleanup()
 
     ode_func.train()
 
@@ -380,7 +450,7 @@ def validate_model(ode_func: torch.nn.Module, val_proteins: List[str], args: arg
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Simplified Neural ODE Training with Adjoint Method')
+    parser = argparse.ArgumentParser(description='Neural ODE Training with Memory Optimizations')
 
     # Core settings
     parser.add_argument('--data_dir', type=str, required=True, help='Data directory')
@@ -415,7 +485,16 @@ def main():
 
     # Optimization settings
     parser.add_argument('--use_amp', action='store_true', help='Use automatic mixed precision')
-    parser.add_argument('--max_residues', type=int, default=None, help='Skip proteins with more than N residues')
+    parser.add_argument('--max_residues', type=int, default=None,
+                        help='Skip proteins with more than N residues (omit for no limit)')
+    parser.add_argument('--max_time_hours', type=float, default=None,
+                        help='Maximum training time in hours (omit for no limit)')
+
+    # Memory optimization settings
+    parser.add_argument('--use_sequential_loading', action='store_true',
+                        help='Load tensors sequentially to reduce memory spikes')
+    parser.add_argument('--aggressive_cleanup', action='store_true',
+                        help='Use aggressive memory cleanup between operations')
 
     args = parser.parse_args()
 
@@ -427,16 +506,16 @@ def main():
     if args.device == 'cpu':
         args.use_amp = False
 
-    print(f"🚀 Starting Simplified Neural ODE Training with Adjoint Method")
+    print(f"🚀 Starting Neural ODE Training with Memory Optimizations")
     print(f"📁 Data directory: {args.data_dir}")
     if args.splits_dir:
         print(f"📂 Splits directory: {args.splits_dir}")
     print(f"💻 Device: {args.device}")
     print(f"🔧 Settings: LR={args.learning_rate}, Fast ODE={args.use_fast_ode}, AMP={args.use_amp}")
-    print(f"🎯 Loss: Only blocks 0→48 transformation")
     print(f"🧮 Method: Adjoint method for backpropagation")
-    print(f"📉 LR Scheduling: patience={args.lr_patience}, factor={args.lr_factor}, min_lr={args.min_lr}")
-    print(f"🛑 Early Stopping: patience={args.early_stopping_patience}, min_delta={args.early_stopping_min_delta}")
+    print(f"💾 Memory: Sequential loading={args.use_sequential_loading}, Aggressive cleanup={args.aggressive_cleanup}")
+    if args.max_time_hours is not None:
+        print(f"⏰ Time limit: {args.max_time_hours} hours")
 
     # Initialize CUDA if using GPU
     if args.device == 'cuda':
@@ -454,7 +533,7 @@ def main():
         print(f"🧬 Raw training proteins: {len(train_dataset_raw)}")
         print(f"🔍 Raw validation proteins: {len(val_dataset_raw)}")
 
-        # Filter by size if max_residues is specified
+        # Filter by size if args.max_residues is specified
         if args.max_residues is not None:
             print(f"\n📏 Applying size filter (max {args.max_residues} residues)...")
 
@@ -473,6 +552,7 @@ def main():
                 print(f"❌ No training proteins remain after size filtering!")
                 return
         else:
+            print(f"\n📏 No size filter applied (processing all proteins)")
             train_dataset = train_dataset_raw
             val_dataset = val_dataset_raw
 
@@ -497,6 +577,9 @@ def main():
             train_dataset, train_oversized = filter_proteins_by_size(
                 train_dataset, args.data_dir, args.max_residues
             )
+            print(f"📏 Size filter applied: {len(train_oversized)} proteins filtered out")
+        else:
+            print(f"📏 No size filter applied")
 
         print("⚠️  LR scheduling and early stopping disabled (no validation set)")
 
@@ -554,7 +637,11 @@ def main():
                 'val_proteins': len(val_dataset),
                 'lr_scheduling': lr_scheduler is not None,
                 'early_stopping': early_stopping is not None,
-                'adjoint_method': True
+                'adjoint_method': True,
+                'memory_optimizations': {
+                    'sequential_loading': args.use_sequential_loading,
+                    'aggressive_cleanup': args.aggressive_cleanup
+                }
             }
 
             optimizer_info = {
@@ -571,14 +658,27 @@ def main():
             print(f"⚠️ Warning: Could not initialize logger: {e}")
             logger = None
 
-    # Training loop
+    # Training loop with time limit handling
     previous_losses = []
     training_start_time = time.time()
+    final_epoch = 0
+    interrupted_by_timeout = False
+    max_time_seconds = args.max_time_hours * 3600 if args.max_time_hours is not None else None
 
     if logger:
         logger.log_training_start()
 
     for epoch in range(args.epochs):
+        final_epoch = epoch + 1
+
+        # Check time limit before starting epoch
+        if max_time_seconds is not None:
+            elapsed_time = time.time() - training_start_time
+            if elapsed_time >= max_time_seconds:
+                interrupted_by_timeout = True
+                print(f"\n⏰ Time limit reached ({args.max_time_hours} hours). Stopping training...")
+                break
+
         print(f"\n📈 Epoch {epoch + 1}/{args.epochs}")
 
         current_lr = optimizer.param_groups[0]['lr']
@@ -592,6 +692,14 @@ def main():
         epoch_start_time = time.time()
 
         for protein_idx, protein_id in enumerate(train_dataset):
+            # Check time limit during epoch
+            if max_time_seconds is not None:
+                elapsed_time = time.time() - training_start_time
+                if elapsed_time >= max_time_seconds:
+                    interrupted_by_timeout = True
+                    print(f"\n⏰ Time limit reached during epoch {epoch + 1}. Stopping training...")
+                    break
+
             print(f"  [{protein_idx + 1}/{len(train_dataset)}] Processing {protein_id}... ", end='', flush=True)
 
             protein_start_time = time.time()
@@ -617,7 +725,12 @@ def main():
                 print(f"❌ Error: {str(e)[:50]}...")
                 continue
 
-            clear_memory(args.device)
+            if args.aggressive_cleanup:
+                aggressive_memory_cleanup()
+
+        # Break out of epoch loop if timeout occurred
+        if interrupted_by_timeout:
+            break
 
         # Run validation
         val_results = None
@@ -643,9 +756,10 @@ def main():
 
             print(f"📊 Epoch {epoch + 1} Summary:")
             print(f"    Training Loss: {avg_train_loss:.5f}")
+            print(f"    Training Success: {successful_proteins}/{len(train_dataset)} proteins")
             if val_results:
                 print(f"    Validation Loss: {val_results['avg_loss']:.5f}")
-            print(f"    Successful proteins: {successful_proteins}/{len(train_dataset)}")
+                print(f"    Validation Success: {val_results['successful_validations']}/{len(val_dataset)} proteins")
             print(f"    Epoch time: {epoch_time:.1f} seconds")
 
             # Update learning rate scheduler
@@ -662,55 +776,82 @@ def main():
                     total_time = time.time() - training_start_time
                     print(f"\n🛑 Early stopping triggered after {epoch + 1} epochs!")
                     print(f"⏱️  Total training time: {total_time / 60:.1f} minutes")
-                    print(f"🎯 Best validation loss: {early_stopping.get_best_loss():.4f} (epoch {early_stopping.get_best_epoch()})")
+                    print(
+                        f"🎯 Best validation loss: {early_stopping.get_best_loss():.4f} (epoch {early_stopping.get_best_epoch()})")
                     break
 
             previous_losses = epoch_losses[:]
 
             total_time = time.time() - training_start_time
             print(f"    ⏱️  Total time so far: {total_time / 60:.1f} minutes")
+            if max_time_seconds is not None:
+                remaining_time = max_time_seconds - total_time
+                print(f"    ⏰ Time remaining: {remaining_time / 60:.1f} minutes")
 
     # Training completion
     total_training_time = time.time() - training_start_time
-    print(f"\n🎯 Training completed!")
-    print(f"⏱️  Total training time: {total_training_time / 60:.1f} minutes")
 
-    if early_stopping is not None:
-        print(f"🏆 Best validation loss: {early_stopping.get_best_loss():.4f} (epoch {early_stopping.get_best_epoch()})")
+    if interrupted_by_timeout:
+        print(f"\n⏰ Training stopped due to time limit after {final_epoch} epochs!")
+        print(f"⏱️  Total training time: {total_training_time / 60:.1f} minutes")
+        print("💾 Saving best model...")
+    else:
+        print(f"\n🎯 Training completed!")
+        print(f"⏱️  Total training time: {total_training_time / 60:.1f} minutes")
 
-    if lr_scheduler is not None:
-        print(f"📉 Learning rate reductions: {lr_scheduler.lr_reductions}")
-        print(f"🎛️  Final learning rate: {lr_scheduler.get_last_lr():.2e}")
+        if early_stopping is not None:
+            print(
+                f"🏆 Best validation loss: {early_stopping.get_best_loss():.4f} (epoch {early_stopping.get_best_epoch()})")
+
+        if lr_scheduler is not None:
+            print(f"📉 Learning rate reductions: {lr_scheduler.lr_reductions}")
+            print(f"🎛️  Final learning rate: {lr_scheduler.get_last_lr():.2e}")
 
     # Save final model and close logger
     if logger:
-        # Save final model
+        # Mark as interrupted if applicable
+        if interrupted_by_timeout:
+            logger.interrupted_at_epoch = final_epoch
+
+        # Save final model (use best weights if timeout and early stopping is available)
         model_path = os.path.join(args.output_dir, f"{args.experiment_name}_final_model.pt")
+
+        # If interrupted by timeout and we have early stopping with best weights, use those
+        if interrupted_by_timeout and early_stopping is not None and early_stopping.best_model_state is not None:
+            print(f"🔄 Using best model weights from epoch {early_stopping.get_best_epoch()}")
+            ode_func.load_state_dict(early_stopping.best_model_state)
 
         save_dict = {
             'model_state_dict': ode_func.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'config': vars(args),
             'training_stats': {
-                'total_epochs': epoch + 1,
+                'total_epochs': final_epoch,
                 'total_time_minutes': total_training_time / 60,
-                'final_train_loss': avg_train_loss if epoch_losses else None,
-                'final_val_loss': val_results['avg_loss'] if val_results else None,
+                'final_train_loss': avg_train_loss if 'avg_train_loss' in locals() and epoch_losses else None,
+                'final_val_loss': val_results['avg_loss'] if 'val_results' in locals() and val_results else None,
                 'best_val_loss': early_stopping.get_best_loss() if early_stopping else None,
                 'best_val_epoch': early_stopping.get_best_epoch() if early_stopping else None,
                 'lr_reductions': lr_scheduler.lr_reductions if lr_scheduler else 0,
                 'final_lr': lr_scheduler.get_last_lr() if lr_scheduler else args.learning_rate,
                 'early_stopped': early_stopping.should_stop if early_stopping else False,
-                'method': 'adjoint_0_to_48'
+                'interrupted_by_timeout': interrupted_by_timeout,
+                'interrupted_at_epoch': final_epoch if interrupted_by_timeout else None,
+                'max_time_hours': args.max_time_hours,
+                'method': 'adjoint_0_to_48',
+                'memory_optimizations': {
+                    'sequential_loading': args.use_sequential_loading,
+                    'aggressive_cleanup': args.aggressive_cleanup
+                }
             }
         }
 
         torch.save(save_dict, model_path)
 
         logger.log_training_complete(model_path)
-        print(f"📊 Training complete! Full report saved to: {args.output_dir}/{args.experiment_name}.txt")
+        status = 'interrupted by timeout' if interrupted_by_timeout else 'complete'
+        print(f"📊 Training {status}! Full report saved to: {args.output_dir}/{args.experiment_name}.txt")
         print(f"🤖 Final model saved to: {model_path}")
-
 
 if __name__ == "__main__":
     main()
