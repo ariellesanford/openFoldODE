@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Production version - Generate Evoformer inputs for all proteins in training, validation, and testing splits
+Modified version - Generate Evoformer inputs for all proteins in training, validation, and testing splits
+Uses hardcoded paths for production environment
 """
 
 import argparse
@@ -10,37 +11,34 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 
 class EvoformerInputGenerator:
-    def __init__(self, data_dir: str, config_preset: str = "model_1_ptm",
-                 device: str = "cuda:0", template_mmcif_dir: str = None):
-        self.data_dir = Path(data_dir)
+    def __init__(self, config_preset: str = "model_1_ptm", device: str = "cuda:0"):
+        # Hardcoded paths
+        self.root_dir = Path("/home/visitor/PycharmProjects/openFold")
+        self.data_dir = Path("/media/visitor/Extreme SSD/data")
+        self.fasta_dir = self.data_dir / "fasta_data"
+        self.template_mmcif_dir = self.data_dir / "template_data" / "pdb70_mmcif" / "mmcif_files"
+        self.precomputed_alignments = self.data_dir / "alignments"
+        self.splits_dir = self.root_dir / "neural_ODE" / "data_splits" / "jumbo"
+        self.incomplete_blocks_dir = self.data_dir / "incomplete_blocks"
+        self.complete_blocks_dir = self.data_dir / "complete_blocks"
+
         self.config_preset = config_preset
         self.device = device
 
-        # Set default template directory if not provided
-        if template_mmcif_dir is None:
-            script_dir = Path(__file__).parent
-            openfold_root = script_dir.parent.parent
-            self.template_mmcif_dir = openfold_root / "openfold" / "data" / "pdb70_mmcif" / "mmcif_files"
-        else:
-            self.template_mmcif_dir = Path(template_mmcif_dir)
-
-        # Find the OpenFold script and root
-        script_dir = Path(__file__).parent
-        self.openfold_root = script_dir.parent.parent
-        self.openfold_script = self.openfold_root / "evoformer_init" / "run_evoformer_init.py"
-
-        # Find the parameters file
+        # Find the OpenFold script and parameters file
+        self.openfold_script = self.root_dir / "evoformer_init" / "run_evoformer_init.py"
         self.params_file = self.find_params_file()
 
         # Statistics
         self.stats = {
             'successful': 0,
             'failed': 0,
-            'skipped': 0,
+            'skipped_incomplete': 0,
+            'skipped_complete': 0,
             'errors': []
         }
 
@@ -51,14 +49,10 @@ class EvoformerInputGenerator:
         param_filename = f"params_{self.config_preset}.npz"
 
         possible_locations = [
-            # In evoformer_init directory
-            self.openfold_root / "evoformer_init" / "openfold" / "resources" / "params" / param_filename,
-            # In main openfold directory
-            self.openfold_root / "openfold" / "resources" / "params" / param_filename,
-            # In evoformer_init root
-            self.openfold_root / "evoformer_init" / param_filename,
-            # Search in evoformer_init subdirectories
-            self.openfold_root / "evoformer_init" / "resources" / "params" / param_filename,
+            self.root_dir / "evoformer_init" / "openfold" / "resources" / "params" / param_filename,
+            self.root_dir / "openfold" / "resources" / "params" / param_filename,
+            self.root_dir / "evoformer_init" / param_filename,
+            self.root_dir / "evoformer_init" / "resources" / "params" / param_filename,
         ]
 
         for location in possible_locations:
@@ -66,7 +60,7 @@ class EvoformerInputGenerator:
                 return location
 
         # If not found in expected locations, search more broadly
-        for path in self.openfold_root.rglob(param_filename):
+        for path in self.root_dir.rglob(param_filename):
             return path
 
         raise FileNotFoundError(f"Could not find {param_filename} in any expected location")
@@ -80,30 +74,21 @@ class EvoformerInputGenerator:
             return 'python'
 
     def load_protein_splits(self) -> Dict[str, List[str]]:
-        """Load protein splits from JSON file"""
-        json_file = self.data_dir / 'balanced_protein_splits.json'
+        """Load protein splits from text files"""
+        splits = {}
 
-        if not json_file.exists():
-            print(f"❌ Error: JSON file not found: {json_file}")
-            print("Please run create_balanced_protein_splits.py first.")
-            sys.exit(1)
+        for split_name in ['training', 'validation', 'testing']:
+            split_file = self.splits_dir / f"{split_name}_chains.txt"
 
-        try:
-            with open(json_file, 'r') as f:
-                data = json.load(f)
+            if split_file.exists():
+                with open(split_file, 'r') as f:
+                    chains = [line.strip() for line in f if line.strip()]
+                splits[split_name] = chains
+            else:
+                print(f"⚠️  Split file not found: {split_file}")
+                splits[split_name] = []
 
-            splits = {}
-            for split_name in ['training', 'validation', 'testing']:
-                if split_name in data['splits']:
-                    splits[split_name] = data['splits'][split_name]['pdb_chains']
-                else:
-                    splits[split_name] = []
-
-            return splits
-
-        except json.JSONDecodeError as e:
-            print(f"❌ Invalid JSON file: {e}")
-            sys.exit(1)
+        return splits
 
     def check_prerequisites(self) -> bool:
         """Check if all required files and directories exist"""
@@ -125,6 +110,16 @@ class EvoformerInputGenerator:
             print(f"❌ {e}")
             return False
 
+        if not self.splits_dir.exists():
+            print(f"❌ Splits directory not found: {self.splits_dir}")
+            return False
+        print(f"   ✅ Splits directory: {self.splits_dir}")
+
+        if not self.precomputed_alignments.exists():
+            print(f"❌ Precomputed alignments not found: {self.precomputed_alignments}")
+            return False
+        print(f"   ✅ Precomputed alignments: {self.precomputed_alignments}")
+
         try:
             result = subprocess.run([self.python_path, '--version'],
                                     capture_output=True, text=True, check=True)
@@ -135,38 +130,41 @@ class EvoformerInputGenerator:
 
         return True
 
-    def setup_protein_directories(self, split: str, chain: str) -> Dict[str, Path]:
+    def setup_protein_directories(self, chain: str) -> Dict[str, Path]:
         """Setup directory structure for a protein"""
-        split_dir = self.data_dir / split
+        # All outputs go to incomplete_blocks directory
+        protein_blocks_dir = self.incomplete_blocks_dir / f"{chain}_evoformer_blocks"
 
-        # Input directories
-        fasta_dir = split_dir / 'fasta_data'
-        alignments_dir = split_dir / 'alignments'
-
-        # Output directories
-        blocks_dir = split_dir / 'blocks'
-        protein_blocks_dir = blocks_dir / f"{chain}_evoformer_blocks"
-
-        blocks_dir.mkdir(exist_ok=True)
+        self.incomplete_blocks_dir.mkdir(exist_ok=True)
         protein_blocks_dir.mkdir(exist_ok=True)
 
         return {
-            'fasta_dir': fasta_dir,
-            'alignments_dir': alignments_dir,
-            'blocks_dir': blocks_dir,
-            'protein_blocks_dir': protein_blocks_dir,
-            'fasta_file': fasta_dir / f"{chain}.fasta",
-            'alignment_dir': alignments_dir / chain
+            'fasta_file': self.fasta_dir / f"{chain}.fasta",
+            'alignment_dir': self.precomputed_alignments / chain,
+            'protein_blocks_dir': protein_blocks_dir
         }
 
     def check_existing_blocks(self, protein_blocks_dir: Path) -> bool:
-        """Check if Evoformer blocks already exist"""
+        """Check if Evoformer blocks already exist in incomplete_blocks"""
         recycle_dir = protein_blocks_dir / "recycle_0"
         if recycle_dir.exists():
             m_block_0 = recycle_dir / "m_block_0.pt"
             z_block_0 = recycle_dir / "z_block_0.pt"
             if m_block_0.exists() and z_block_0.exists():
                 return True
+        return False
+
+    def check_complete_blocks(self, chain: str) -> bool:
+        """Check if protein already exists in complete_blocks"""
+        complete_protein_dir = self.complete_blocks_dir / f"{chain}_evoformer_blocks"
+        if complete_protein_dir.exists():
+            recycle_dir = complete_protein_dir / "recycle_0"
+            if recycle_dir.exists():
+                # Check for final block (block 48)
+                m_block_48 = recycle_dir / "m_block_48.pt"
+                z_block_48 = recycle_dir / "z_block_48.pt"
+                if m_block_48.exists() and z_block_48.exists():
+                    return True
         return False
 
     def prepare_fasta_directory(self, chain: str, fasta_file: Path, temp_fasta_dir: Path) -> bool:
@@ -201,7 +199,7 @@ class EvoformerInputGenerator:
             str(temp_fasta_dir),
             str(self.template_mmcif_dir),
             '--output_dir', str(output_parent_dir),
-            '--use_precomputed_alignments', str(dirs['alignments_dir']),
+            '--use_precomputed_alignments', str(self.precomputed_alignments),
             '--config_preset', self.config_preset,
             '--model_device', self.device,
             '--jax_param_path', str(self.params_file),
@@ -213,9 +211,9 @@ class EvoformerInputGenerator:
         env = os.environ.copy()
         current_pythonpath = env.get('PYTHONPATH', '')
         if current_pythonpath:
-            env['PYTHONPATH'] = f"{str(self.openfold_root)}:{current_pythonpath}"
+            env['PYTHONPATH'] = f"{str(self.root_dir)}:{current_pythonpath}"
         else:
-            env['PYTHONPATH'] = str(self.openfold_root)
+            env['PYTHONPATH'] = str(self.root_dir)
 
         try:
             result = subprocess.run(
@@ -223,15 +221,15 @@ class EvoformerInputGenerator:
                 capture_output=True,
                 text=True,
                 timeout=1800,  # 30 minute timeout
-                cwd=str(self.openfold_root),
+                cwd=str(self.root_dir),
                 env=env
             )
 
             if result.returncode == 0:
-                # Check output files - look in the correct nested directory
+                # Check output files
                 possible_recycle_dirs = [
-                    dirs['protein_blocks_dir'] / "recycle_0",  # Direct path
-                    dirs['protein_blocks_dir'] / f"{chain}_evoformer_blocks" / "recycle_0",  # Nested path
+                    dirs['protein_blocks_dir'] / "recycle_0",
+                    dirs['protein_blocks_dir'] / f"{chain}_evoformer_blocks" / "recycle_0",
                 ]
 
                 recycle_dir = None
@@ -273,59 +271,75 @@ class EvoformerInputGenerator:
             self.stats['errors'].append(f"{chain}: {str(e)}")
             return False
 
-    def process_protein(self, split: str, chain: str) -> bool:
+    def process_protein(self, chain: str) -> Tuple[bool, str]:
         """Process a single protein to generate Evoformer inputs"""
-        # Setup directories
-        dirs = self.setup_protein_directories(split, chain)
 
-        # Check if already processed
+        # First check if already complete (48 blocks)
+        if self.check_complete_blocks(chain):
+            self.stats['skipped_complete'] += 1
+            return True, "already_complete"
+
+        # Setup directories
+        dirs = self.setup_protein_directories(chain)
+
+        # Check if already in incomplete_blocks
         if self.check_existing_blocks(dirs['protein_blocks_dir']):
-            self.stats['skipped'] += 1
-            return True
+            self.stats['skipped_incomplete'] += 1
+            return True, "already_incomplete"
 
         # Check if input files exist
         if not dirs['fasta_file'].exists():
             self.stats['errors'].append(f"{chain}: FASTA file not found")
             self.stats['failed'] += 1
-            return False
+            return False, "fasta_missing"
 
         if not dirs['alignment_dir'].exists():
             self.stats['errors'].append(f"{chain}: Alignment directory not found")
             self.stats['failed'] += 1
-            return False
+            return False, "alignment_missing"
 
         # Run OpenFold inference
         if self.run_openfold_inference(chain, dirs):
             self.stats['successful'] += 1
-            return True
+            return True, "processed"
         else:
             self.stats['failed'] += 1
-            return False
+            return False, "failed"
 
-    def process_split(self, split_name: str, chains: List[str]):
-        """Process all proteins in a split"""
-        print(f"\n🔄 Processing {split_name} split ({len(chains)} proteins)")
+    def process_all_proteins(self, all_chains: List[str]):
+        """Process all proteins in one batch"""
+        print(f"\n🔄 Processing all proteins ({len(all_chains)} total)")
         print("=" * 60)
 
-        for i, chain in enumerate(chains):
-            print(f"[{i + 1}/{len(chains)}] {split_name}/{chain}... ", end='', flush=True)
+        for i, chain in enumerate(all_chains):
+            print(f"[{i + 1}/{len(all_chains)}] {chain}... ", end='', flush=True)
 
-            if self.process_protein(split_name, chain):
-                print("✅")
+            success, status = self.process_protein(chain)
+
+            if success:
+                if status == "already_complete":
+                    print("✅ (already complete)")
+                elif status == "already_incomplete":
+                    print("✅ (already in incomplete)")
+                elif status == "processed":
+                    print("✅")
+                else:
+                    print("✅")
             else:
                 print("❌")
 
             # Progress update every 10 proteins
             if (i + 1) % 10 == 0:
-                print(f"\n   📊 Progress: {i + 1}/{len(chains)} proteins processed")
+                print(f"\n   📊 Progress: {i + 1}/{len(all_chains)} proteins processed")
                 print(f"      ✅ Successful: {self.stats['successful']}")
-                print(f"      ⏭️  Skipped: {self.stats['skipped']}")
+                print(f"      ⏭️  Skipped (complete): {self.stats['skipped_complete']}")
+                print(f"      ⏭️  Skipped (incomplete): {self.stats['skipped_incomplete']}")
                 print(f"      ❌ Failed: {self.stats['failed']}")
 
             # Small delay to prevent overwhelming the system
             time.sleep(1)
 
-        print(f"\n✅ {split_name} split completed")
+        print(f"\n✅ All proteins processed")
 
     def print_final_stats(self):
         """Print final processing statistics"""
@@ -333,12 +347,17 @@ class EvoformerInputGenerator:
         print("📊 FINAL PROCESSING STATISTICS")
         print("=" * 60)
 
-        total = self.stats['successful'] + self.stats['failed'] + self.stats['skipped']
+        total = self.stats['successful'] + self.stats['failed'] + self.stats['skipped_incomplete'] + self.stats[
+            'skipped_complete']
 
         print(f"✅ Successful: {self.stats['successful']}")
-        print(f"⏭️  Skipped (already exists): {self.stats['skipped']}")
+        print(f"⏭️  Skipped (already complete): {self.stats['skipped_complete']}")
+        print(f"⏭️  Skipped (already in incomplete): {self.stats['skipped_incomplete']}")
         print(f"❌ Failed: {self.stats['failed']}")
-        print(f"📈 Success rate: {self.stats['successful'] / max(total, 1) * 100:.1f}%")
+        if total > 0:
+            print(f"📈 Success rate: {self.stats['successful'] / total * 100:.1f}%")
+            print(
+                f"📈 Already processed rate: {(self.stats['skipped_complete'] + self.stats['skipped_incomplete']) / total * 100:.1f}%")
 
         if self.stats['errors']:
             print(f"\n❌ Error details:")
@@ -348,28 +367,47 @@ class EvoformerInputGenerator:
                 print(f"   ... and {len(self.stats['errors']) - 10} more errors")
 
         print(f"\n📁 Output structure:")
-        for split in ['training', 'validation', 'testing']:
-            split_dir = self.data_dir / split / 'blocks'
-            if split_dir.exists():
-                block_dirs = [d for d in split_dir.iterdir() if d.is_dir() and d.name.endswith('_evoformer_blocks')]
-                print(f"  {split}/blocks/ ({len(block_dirs)} protein directories)")
+        if self.incomplete_blocks_dir.exists():
+            block_dirs = [d for d in self.incomplete_blocks_dir.iterdir() if
+                          d.is_dir() and d.name.endswith('_evoformer_blocks')]
+            print(f"  incomplete_blocks/ ({len(block_dirs)} protein directories)")
 
-                # Count successful blocks
-                successful_blocks = 0
-                for block_dir in block_dirs:
-                    recycle_dir = block_dir / "recycle_0"
-                    if recycle_dir.exists():
-                        m_block = recycle_dir / "m_block_0.pt"
-                        z_block = recycle_dir / "z_block_0.pt"
-                        if m_block.exists() and z_block.exists():
-                            successful_blocks += 1
+            # Count successful blocks
+            successful_blocks = 0
+            for block_dir in block_dirs:
+                recycle_dir = block_dir / "recycle_0"
+                if recycle_dir.exists():
+                    m_block = recycle_dir / "m_block_0.pt"
+                    z_block = recycle_dir / "z_block_0.pt"
+                    if m_block.exists() and z_block.exists():
+                        successful_blocks += 1
 
-                print(f"    └── {successful_blocks} with complete Evoformer blocks")
+            print(f"    └── {successful_blocks} with complete Evoformer blocks")
+
+        if self.complete_blocks_dir.exists():
+            complete_block_dirs = [d for d in self.complete_blocks_dir.iterdir() if
+                                   d.is_dir() and d.name.endswith('_evoformer_blocks')]
+            print(f"  complete_blocks/ ({len(complete_block_dirs)} protein directories)")
+
+            # Count complete blocks (have block 48)
+            complete_blocks = 0
+            for block_dir in complete_block_dirs:
+                recycle_dir = block_dir / "recycle_0"
+                if recycle_dir.exists():
+                    m_block_48 = recycle_dir / "m_block_48.pt"
+                    z_block_48 = recycle_dir / "z_block_48.pt"
+                    if m_block_48.exists() and z_block_48.exists():
+                        complete_blocks += 1
+
+            print(f"    └── {complete_blocks} with complete 48-block sequences")
 
     def run(self):
         """Run the complete Evoformer input generation pipeline"""
-        print("🚀 Evoformer Input Generator - Production Mode")
+        print("🚀 Evoformer Input Generator - Hardcoded Paths Mode")
+        print(f"📁 Root directory: {self.root_dir}")
         print(f"📁 Data directory: {self.data_dir}")
+        print(f"📁 FASTA directory: {self.fasta_dir}")
+        print(f"📁 Splits directory: {self.splits_dir}")
         print(f"🔧 Config preset: {self.config_preset}")
         print(f"💻 Device: {self.device}")
         print(f"🗂️  Template directory: {self.template_mmcif_dir}")
@@ -380,22 +418,28 @@ class EvoformerInputGenerator:
             print("❌ Prerequisites check failed. Please fix the issues above.")
             sys.exit(1)
 
-        # Load protein splits
+        # Load protein splits and combine all chains
         print(f"\n📄 Loading protein splits...")
         splits = self.load_protein_splits()
 
-        total_proteins = sum(len(chains) for chains in splits.values())
-        print(f"📊 Total proteins to process: {total_proteins}")
+        # Combine all chains from all splits
+        all_chains = []
         for split_name, chains in splits.items():
+            all_chains.extend(chains)
             print(f"   {split_name}: {len(chains)} chains")
 
-        # Process each split
+        # Remove duplicates and sort
+        all_chains = sorted(list(set(all_chains)))
+
+        print(f"📊 Total unique proteins to process: {len(all_chains)}")
+
+        if len(all_chains) == 0:
+            print("❌ No proteins found in splits!")
+            sys.exit(1)
+
+        # Process all proteins together
         start_time = time.time()
-
-        for split_name in ['training', 'validation', 'testing']:
-            if splits[split_name]:
-                self.process_split(split_name, splits[split_name])
-
+        self.process_all_proteins(all_chains)
         end_time = time.time()
 
         # Print final statistics
@@ -411,30 +455,20 @@ class EvoformerInputGenerator:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Generate Evoformer inputs for protein splits - Production Mode',
+        description='Generate Evoformer inputs for protein splits - Hardcoded Paths Mode',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
 
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    default_data_dir = os.path.join(script_dir, '..', 'data')
-    default_data_dir = os.path.abspath(default_data_dir)
-
-    parser.add_argument('--data-dir', type=str, default=default_data_dir,
-                        help='Data directory containing the splits')
     parser.add_argument('--config-preset', type=str, default='model_1_ptm',
                         help='OpenFold config preset')
     parser.add_argument('--device', type=str, default='cuda:0',
                         help='Device for inference (cuda:0, cpu, etc.)')
-    parser.add_argument('--template-mmcif-dir', type=str, default=None,
-                        help='Directory containing template mmCIF files')
 
     args = parser.parse_args()
 
     generator = EvoformerInputGenerator(
-        data_dir=args.data_dir,
         config_preset=args.config_preset,
-        device=args.device,
-        template_mmcif_dir=args.template_mmcif_dir
+        device=args.device
     )
 
     # Confirm before starting

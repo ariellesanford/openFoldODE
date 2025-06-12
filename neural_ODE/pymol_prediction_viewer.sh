@@ -2,7 +2,7 @@
 
 # =======================================================================================
 # MULTI-METHOD PYMOL STRUCTURE VIEWER
-# Launches PyMOL instances for all three prediction methods simultaneously
+# Launches PyMOL instances for all four prediction methods simultaneously
 # =======================================================================================
 
 # Base data directory
@@ -13,8 +13,8 @@ DATA_DIR="/media/visitor/Extreme SSD/data"
 # =======================================================================================
 
 # CONFIGURATION SECTION - Edit these variables directly:
-PDB_ID="7vsw_A"                    # Change this to your protein ID
-STRUCTURE_TYPE="relaxed"           # Change to "unrelaxed" if you want unrelaxed structures
+PDB_ID="1fv5_A"                    # Change this to your protein ID
+STRUCTURE_TYPE="unrelaxed"           # Change to "unrelaxed" if you want unrelaxed structures
 
 # =======================================================================================
 # COMMAND LINE SUPPORT (for terminal usage)
@@ -31,10 +31,11 @@ show_usage() {
     echo "OR edit the script directly for PyCharm usage:"
     echo "  Set PDB_ID=\"your_protein\" and STRUCTURE_TYPE=\"relaxed|unrelaxed\""
     echo ""
-    echo "This will launch 3 PyMOL windows showing:"
+    echo "This will launch 4 PyMOL windows showing:"
     echo "  1. Neural ODE prediction"
     echo "  2. OpenFold Deconstructed (48th block)"
     echo "  3. Full OpenFold prediction"
+    echo "  4. Half Evoformer (block 24 only)"
     echo ""
 }
 
@@ -65,10 +66,11 @@ fi
 NEURAL_ODE_PATH="${DATA_DIR}/structure_predictions/${PDB_ID}/neuralODE/${PDB_ID}_model_1_ptm_${STRUCTURE_TYPE}.pdb"
 OPENFOLD_DECON_PATH="${DATA_DIR}/structure_predictions/${PDB_ID}/openfold_deconstructed/${PDB_ID}_model_1_ptm_${STRUCTURE_TYPE}.pdb"
 OPENFOLD_FULL_PATH="${DATA_DIR}/structure_predictions/${PDB_ID}/openfold_0recycles/predictions/${PDB_ID}_model_1_ptm_${STRUCTURE_TYPE}.pdb"
+HALF_EVOFORMER_PATH="${DATA_DIR}/structure_predictions/${PDB_ID}/half_evoformer/${PDB_ID}_model_1_ptm_${STRUCTURE_TYPE}.pdb"
 
 # Method names for display
-METHOD_NAMES=("Neural ODE" "OpenFold Deconstructed" "Full OpenFold")
-PDB_PATHS=("$NEURAL_ODE_PATH" "$OPENFOLD_DECON_PATH" "$OPENFOLD_FULL_PATH")
+METHOD_NAMES=("Neural ODE" "OpenFold Deconstructed" "Full OpenFold" "Half Evoformer")
+PDB_PATHS=("$NEURAL_ODE_PATH" "$OPENFOLD_DECON_PATH" "$OPENFOLD_FULL_PATH" "$HALF_EVOFORMER_PATH")
 
 # =======================================================================================
 # HELPER FUNCTIONS
@@ -99,6 +101,9 @@ launch_pymol() {
             ;;
         "Full OpenFold")
             object_name="FullOpenFold_${PDB_ID}"
+            ;;
+        "Half Evoformer")
+            object_name="HalfEvoformer_${PDB_ID}"
             ;;
         *)
             object_name="Structure_${PDB_ID}"
@@ -160,7 +165,7 @@ echo "💡 To change settings for PyCharm:"
 echo "   Edit PDB_ID and STRUCTURE_TYPE variables at the top of this script"
 echo "========================================="
 
-echo "📁 Looking for structures in: $PROTEIN_DIR"
+echo "📁 Looking for structures for: $PDB_ID"
 echo ""
 
 # Track successful launches
@@ -172,7 +177,7 @@ for i in "${!METHOD_NAMES[@]}"; do
     method_name="${METHOD_NAMES[$i]}"
     pdb_path="${PDB_PATHS[$i]}"
 
-    echo "[$((i+1))/3] $method_name"
+    echo "[$((i+1))/4] $method_name"
 
     if launch_pymol "$pdb_path" "$method_name"; then
         ((successful_launches++))
@@ -196,7 +201,7 @@ if [ $successful_launches -eq 0 ]; then
     echo "❌ No PyMOL instances were launched successfully"
     echo "   Check that the structure prediction files exist"
     exit 1
-elif [ $successful_launches -lt 3 ]; then
+elif [ $successful_launches -lt 4 ]; then
     echo "⚠️  Some PyMOL instances failed to launch"
     echo "   This usually means some prediction methods haven't been run yet"
 else
@@ -209,6 +214,12 @@ echo "   - Each PyMOL window shows a different prediction method"
 echo "   - You can arrange windows side-by-side for comparison"
 echo "   - Use 'quit' in each PyMOL window to close it"
 echo "   - Press Ctrl+C in this terminal to see the summary again"
+echo ""
+echo "🔬 Method comparison:"
+echo "   - Neural ODE: AI-learned Evoformer dynamics"
+echo "   - OpenFold Deconstructed: Traditional 48 blocks"
+echo "   - Full OpenFold: Complete pipeline"
+echo "   - Half Evoformer: Structure module only (baseline)"
 echo ""
 
 # Wait for user to exit

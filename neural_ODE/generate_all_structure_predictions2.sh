@@ -3,7 +3,7 @@ set -e
 
 # =======================================================================================
 # MULTI-METHOD STRUCTURE PREDICTION SCRIPT
-# Generates structure predictions using 4 different methods for a given PDB_ID
+# Generates structure predictions using 3 different methods for a given PDB_ID
 # =======================================================================================
 
 # Get the actual directory where the script is located
@@ -16,7 +16,7 @@ DATA_DIR="/media/visitor/Extreme SSD/data"
 # =======================================================================================
 
 # Protein ID to process (REQUIRED - set this!)
-PDB_ID="1fv5_A"  # Change this to your desired protein
+PDB_ID="6l8f_A"  # Change this to your desired protein
 
 # Use CUDA if available (set to false to force CPU)
 USE_CUDA=true
@@ -54,11 +54,6 @@ OPENFOLD_DECON_OUTPUT_DIR="${DATA_DIR}/structure_predictions/${PDB_ID}/openfold_
 
 # Method 3: Full OpenFold
 OPENFOLD_FULL_OUTPUT_DIR="${DATA_DIR}/structure_predictions/${PDB_ID}/openfold_0recycles"
-
-# Method 4: HALF Evoformer (block 0 only)
-HALF_EVOFORMER_MSA_PATH="${DATA_DIR}/complete_blocks/${PDB_ID}_evoformer_blocks/recycle_0/m_block_24.pt"
-HALF_EVOFORMER_PAIR_PATH="${DATA_DIR}/complete_blocks/${PDB_ID}_evoformer_blocks/recycle_0/z_block_24.pt"
-HALF_EVOFORMER_OUTPUT_DIR="${DATA_DIR}/structure_predictions/${PDB_ID}/half_evoformer"
 
 # =======================================================================================
 # HELPER FUNCTIONS
@@ -236,6 +231,7 @@ run_full_openfold() {
         "--config_preset" "$CONFIG_PRESET"
         "--model_device" "$MODEL_DEVICE"
         "--save_intermediates"
+        "--data_random_seed" "3"
     )
 
     # Add optional arguments using the new function
@@ -247,6 +243,41 @@ run_full_openfold() {
     echo "✅ Full OpenFold completed successfully!"
 }
 
+run_full_openfold2() {
+    local output_dir="$1"
+    local python_path="$2"
+
+    echo ""
+    echo "🧬 Running Full OpenFold..."
+    echo "   Output: $output_dir"
+    echo ""
+
+    mkdir -p "$output_dir"
+
+    # Change to working directory (based on original script)
+    cd "${ROOT_DIR}/save_intermediates"
+
+    # Build command array
+    local cmd=(
+        "$python_path"
+        "run_pretrained_openfold.py"
+        "$FASTA_DIR"
+        "$TEMPLATE_MMCIF_DIR"
+        "--output_dir" "$output_dir"
+        "--config_preset" "$CONFIG_PRESET"
+        "--model_device" "$MODEL_DEVICE"
+        "--save_intermediates"
+        "--data_random_seed" "65"
+    )
+
+    # Add optional arguments using the new function
+    add_optional_args cmd
+
+    echo "Running: ${cmd[*]}"
+    "${cmd[@]}"
+
+    echo "✅ Full OpenFold completed successfully!"
+}
 # =======================================================================================
 # MAIN EXECUTION
 # =======================================================================================
@@ -385,32 +416,27 @@ else
 fi
 
 # =======================================================================================
-# METHOD 4: NO EVOFORMER (Block 48 Only)
+# METHOD 4: FULL OPENFOLD AGAIN
 # =======================================================================================
 
 echo ""
-echo "🎯 METHOD 4: Half Evoformer (Block 24 Only)"
+echo "🎯 METHOD 4: Full OpenFold AGAIN"
 echo "========================================="
 
-if check_method_requirements "Half Evoformer" \
-    "$HALF_EVOFORMER_MSA_PATH" \
-    "$HALF_EVOFORMER_PAIR_PATH" \
+if check_method_requirements "Full OpenFold" \
     "$FASTA_DIR" \
     "$TEMPLATE_MMCIF_DIR"; then
 
-    if run_structure_module \
-        "HALF Evoformer" \
-        "$HALF_EVOFORMER_MSA_PATH" \
-        "$HALF_EVOFORMER_PAIR_PATH" \
-        "$HALF_EVOFORMER_OUTPUT_DIR" \
+    if run_full_openfold2 \
+        "$NEURAL_ODE_OUTPUT_DIR" \
         "$PYTHON_PATH"; then
-        successful_methods+=("Half Evoformer")
+        successful_methods+=("Full OpenFold")
     else
-        failed_methods+=("Half Evoformer")
+        failed_methods+=("Full OpenFold")
     fi
 else
-    echo "⏭️  Skipping Half Evoformer method due to missing requirements"
-    failed_methods+=("Half Evoformer (missing files)")
+    echo "⏭️  Skipping Full OpenFold method due to missing requirements"
+    failed_methods+=("Full OpenFold (missing files)")
 fi
 
 # =======================================================================================
@@ -446,7 +472,6 @@ echo "📁 Output directories:"
 echo "   Neural ODE: $NEURAL_ODE_OUTPUT_DIR"
 echo "   OpenFold Deconstructed: $OPENFOLD_DECON_OUTPUT_DIR"
 echo "   Full OpenFold: $OPENFOLD_FULL_OUTPUT_DIR"
-echo "   Half Evoformer: $HALF_EVOFORMER_OUTPUT_DIR"
 
 echo ""
 echo "🎯 Structure prediction pipeline completed!"

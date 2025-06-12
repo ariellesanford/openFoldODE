@@ -2,14 +2,13 @@
 """
 Download RODA alignment data and FASTA files for balanced protein splits
 
-This script downloads:
-1. RODA alignment data from OpenFold S3 bucket
-2. FASTA files from RCSB PDB
-
-Based on the balanced splits created by create_balanced_protein_splits.py
+Modified version that:
+- Outputs to /media/visitor/Extreme SSD/data with alignments/ and fasta_data/ subdirectories
+- Doesn't split by training/validation/testing directories
+- Reads from jumbo splits directory
 
 Usage:
-    python download_split_data.py
+    python download_split_data_modified.py
 """
 
 import argparse
@@ -25,17 +24,14 @@ import requests
 
 
 class SplitDataDownloader:
-    def __init__(self, output_dir: str = ".", max_retries: int = 3, delay: float = 0.5):
+    def __init__(self, output_dir: str = "/media/visitor/Extreme SSD/data", max_retries: int = 3, delay: float = 0.5):
         self.output_dir = Path(output_dir)
         self.max_retries = max_retries
         self.delay = delay
 
-        # Create base directories
-        self.splits = ['training', 'validation', 'testing']
-        for split in self.splits:
-            split_dir = self.output_dir / split
-            (split_dir / 'alignments').mkdir(parents=True, exist_ok=True)
-            (split_dir / 'fasta_data').mkdir(parents=True, exist_ok=True)
+        # Create base directories (no split subdirectories)
+        (self.output_dir / 'alignments').mkdir(parents=True, exist_ok=True)
+        (self.output_dir / 'fasta_data').mkdir(parents=True, exist_ok=True)
 
         # Track download statistics
         self.stats = {
@@ -49,35 +45,27 @@ class SplitDataDownloader:
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
         })
 
-    def load_splits_from_json(self, json_file: str) -> Dict[str, List[str]]:
-        """Load protein splits from JSON file"""
-        print(f"📄 Loading splits from {json_file}")
+    def load_splits_from_text_files(self, splits_dir: str) -> Dict[str, List[str]]:
+        """Load protein splits from text files"""
+        print(f"📄 Loading splits from {splits_dir}")
 
-        try:
-            with open(json_file, 'r') as f:
-                data = json.load(f)
+        splits = {}
+        for split_name in ['training', 'validation', 'testing']:
+            file_path = os.path.join(splits_dir, f"{split_name}_chains.txt")
+            try:
+                with open(file_path, 'r') as f:
+                    chains = [line.strip() for line in f if line.strip()]
+                splits[split_name] = chains
+                print(f"   {split_name}: {len(chains)} chains")
+            except FileNotFoundError:
+                print(f"   {split_name}: 0 chains (file not found)")
+                splits[split_name] = []
 
-            splits = {}
-            for split_name in ['training', 'validation', 'testing']:
-                if split_name in data['splits']:
-                    splits[split_name] = data['splits'][split_name]['pdb_chains']
-                    print(f"   {split_name}: {len(splits[split_name])} chains")
-                else:
-                    splits[split_name] = []
-                    print(f"   {split_name}: 0 chains (not found)")
+        return splits
 
-            return splits
-
-        except FileNotFoundError:
-            print(f"❌ JSON file not found: {json_file}")
-            sys.exit(1)
-        except json.JSONDecodeError as e:
-            print(f"❌ Invalid JSON file: {e}")
-            sys.exit(1)
-
-    def download_roda_alignments(self, chain: str, split: str) -> bool:
+    def download_roda_alignments(self, chain: str) -> bool:
         """Download RODA alignment data for a chain"""
-        alignment_dir = self.output_dir / split / 'alignments' / chain
+        alignment_dir = self.output_dir / 'alignments' / chain
 
         # Check if already exists
         if alignment_dir.exists() and any(alignment_dir.iterdir()):
@@ -136,10 +124,10 @@ class SplitDataDownloader:
             self.stats['alignments']['failed'] += 1
             return False
 
-    def download_fasta(self, chain: str, split: str) -> bool:
+    def download_fasta(self, chain: str) -> bool:
         """Download FASTA data for a chain"""
         pdb_code = chain.split('_')[0]
-        fasta_file = self.output_dir / split / 'fasta_data' / f"{chain}.fasta"
+        fasta_file = self.output_dir / 'fasta_data' / f"{chain}.fasta"
 
         # Check if already exists
         if fasta_file.exists():
@@ -222,21 +210,21 @@ class SplitDataDownloader:
         self.stats['fasta']['failed'] += 1
         return False
 
-    def process_split(self, split_name: str, chains: List[str]):
-        """Process all chains in a split"""
-        print(f"\n🔄 Processing {split_name} split ({len(chains)} chains)")
+    def process_all_chains(self, all_chains: List[str]):
+        """Process all chains without split-based organization"""
+        print(f"\n🔄 Processing {len(all_chains)} total chains")
         print("=" * 60)
 
         # Track progress
         successful_alignments = 0
         successful_fasta = 0
 
-        for i, chain in enumerate(chains):
-            print(f"\n[{i + 1}/{len(chains)}] Processing {chain}:")
+        for i, chain in enumerate(all_chains):
+            print(f"\n[{i + 1}/{len(all_chains)}] Processing {chain}:")
 
             # Download alignments
             print("  📦 Downloading alignments...")
-            if self.download_roda_alignments(chain, split_name):
+            if self.download_roda_alignments(chain):
                 successful_alignments += 1
 
             # Small delay between alignment and FASTA download
@@ -244,23 +232,23 @@ class SplitDataDownloader:
 
             # Download FASTA
             print("  🧬 Downloading FASTA...")
-            if self.download_fasta(chain, split_name):
+            if self.download_fasta(chain):
                 successful_fasta += 1
 
             # Progress update every 10 chains
             if (i + 1) % 10 == 0:
-                print(f"\n   📊 Progress: {i + 1}/{len(chains)} chains processed")
+                print(f"\n   📊 Progress: {i + 1}/{len(all_chains)} chains processed")
                 print(f"      Alignments: {successful_alignments}/{i + 1} successful")
                 print(f"      FASTA: {successful_fasta}/{i + 1} successful")
 
             # Be nice to the servers
             time.sleep(self.delay)
 
-        print(f"\n✅ {split_name} split completed:")
-        print(f"   Alignments: {successful_alignments}/{len(chains)} successful")
-        print(f"   FASTA: {successful_fasta}/{len(chains)} successful")
+        print(f"\n✅ All chains completed:")
+        print(f"   Alignments: {successful_alignments}/{len(all_chains)} successful")
+        print(f"   FASTA: {successful_fasta}/{len(all_chains)} successful")
 
-    def print_final_stats(self):
+    def print_final_stats(self, all_chains: List[str]):
         """Print final download statistics"""
         print("\n" + "=" * 60)
         print("📊 FINAL DOWNLOAD STATISTICS")
@@ -276,37 +264,50 @@ class SplitDataDownloader:
             print(f"  📈 Success rate: {stats['successful'] / max(total, 1) * 100:.1f}%")
 
         print(f"\n📁 Output directory structure:")
-        for split in self.splits:
-            split_dir = self.output_dir / split
-            if split_dir.exists():
-                alignment_count = len(list((split_dir / 'alignments').iterdir())) if (
-                            split_dir / 'alignments').exists() else 0
-                fasta_count = len(list((split_dir / 'fasta_data').glob('*.fasta'))) if (
-                            split_dir / 'fasta_data').exists() else 0
-                print(f"  {split}/")
-                print(f"    alignments/ ({alignment_count} folders)")
-                print(f"    fasta_data/ ({fasta_count} files)")
+        alignment_count = len(list((self.output_dir / 'alignments').iterdir())) if (
+                    self.output_dir / 'alignments').exists() else 0
+        fasta_count = len(list((self.output_dir / 'fasta_data').glob('*.fasta'))) if (
+                    self.output_dir / 'fasta_data').exists() else 0
 
-    def run(self, json_file: str):
-        """Run the download process using JSON splits file"""
-        splits = self.load_splits_from_json(json_file)
+        print(f"  {self.output_dir}/")
+        print(f"    alignments/ ({alignment_count} folders)")
+        print(f"    fasta_data/ ({fasta_count} files)")
 
-        # Process each split
-        for split_name in ['training', 'validation', 'testing']:
-            if splits[split_name]:
-                self.process_split(split_name, splits[split_name])
+        print(f"\n📊 Total unique chains processed: {len(all_chains)}")
 
-        self.print_final_stats()
+    def run(self, splits_dir: str):
+        """Run the download process using splits directory"""
+        splits = self.load_splits_from_text_files(splits_dir)
+
+        # Combine all chains from all splits (remove duplicates)
+        all_chains = set()
+        for split_name, chains in splits.items():
+            all_chains.update(chains)
+
+        all_chains = sorted(list(all_chains))  # Convert to sorted list
+
+        if not all_chains:
+            print("❌ No chains found in any split files")
+            return
+
+        print(f"\n📊 Split breakdown:")
+        for split_name, chains in splits.items():
+            print(f"  {split_name}: {len(chains)} chains")
+        print(f"  Total unique: {len(all_chains)} chains")
+
+        # Process all chains
+        self.process_all_chains(all_chains)
+
+        self.print_final_stats(all_chains)
 
 
 def main():
     # Hardcoded paths - modify these as needed
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    default_output_dir = os.path.join(script_dir, '..', 'data')
-    default_output_dir = os.path.abspath(default_output_dir)
+    script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-    # JSON file path - modify this to point to your splits file
-    json_file = os.path.join(default_output_dir, 'balanced_protein_splits.json')
+    # Default paths
+    default_output_dir = "/media/visitor/Extreme SSD/data"
+    default_splits_dir = os.path.join(script_dir, 'data_splits', 'jumbo')
 
     parser = argparse.ArgumentParser(
         description='Download RODA alignments and FASTA files for protein splits',
@@ -315,7 +316,9 @@ def main():
 
     # Optional arguments for customization
     parser.add_argument('--output-dir', type=str, default=default_output_dir,
-                        help='Output directory (will create training/, validation/, testing/ subdirs)')
+                        help='Output directory (will create alignments/ and fasta_data/ subdirs)')
+    parser.add_argument('--splits-dir', type=str, default=default_splits_dir,
+                        help='Directory containing split text files')
     parser.add_argument('--max-retries', type=int, default=3,
                         help='Maximum number of retry attempts for failed downloads')
     parser.add_argument('--delay', type=float, default=0.5,
@@ -324,10 +327,15 @@ def main():
     # Parse arguments
     args = parser.parse_args()
 
-    # Check if JSON file exists
-    if not os.path.exists(json_file):
-        print(f"❌ Error: JSON file not found: {json_file}")
-        print("Please run create_balanced_protein_splits.py first, or modify the json_file path in this script.")
+    # Check if splits directory exists
+    if not os.path.exists(args.splits_dir):
+        print(f"❌ Error: Splits directory not found: {args.splits_dir}")
+        print("Available directories:")
+        splits_base = os.path.dirname(args.splits_dir)
+        if os.path.exists(splits_base):
+            for item in os.listdir(splits_base):
+                if os.path.isdir(os.path.join(splits_base, item)):
+                    print(f"  - {item}")
         sys.exit(1)
 
     # Check dependencies
@@ -338,11 +346,12 @@ def main():
         print("Please install AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html")
         sys.exit(1)
 
-    print("🚀 RODA and FASTA Data Downloader")
-    print(f"📄 Using splits from JSON file: {json_file}")
+    print("🚀 RODA and FASTA Data Downloader (Modified)")
+    print(f"📂 Using splits from: {args.splits_dir}")
     print(f"📁 Output directory: {args.output_dir}")
     print(f"🔄 Max retries: {args.max_retries}")
     print(f"⏱️  Delay between downloads: {args.delay}s")
+    print(f"📦 Structure: alignments/ and fasta_data/ (no split subdirectories)")
 
     # Create downloader
     downloader = SplitDataDownloader(
@@ -352,13 +361,16 @@ def main():
     )
 
     # Run the download process
-    downloader.run(json_file)
+    downloader.run(args.splits_dir)
 
     print("\n🎯 Download process completed!")
     print("\n💡 Next steps:")
     print("   1. Use the alignment data for training your neural ODE")
     print("   2. Use the FASTA files for sequence analysis")
     print("   3. Check the statistics above for any failed downloads")
+    print(f"\n📁 Data structure:")
+    print(f"   {args.output_dir}/alignments/[chain_id]/  # Alignment files")
+    print(f"   {args.output_dir}/fasta_data/[chain_id].fasta  # FASTA files")
 
 
 if __name__ == '__main__':
