@@ -31,13 +31,9 @@ def load_evoformer_outputs(msa_path, pair_path):
     if not os.path.exists(msa_path):
         raise FileNotFoundError(f"MSA representation file not found: {msa_path}")
 
-    logger.info(f"Loading pair representation from {pair_path}")
     pair = torch.load(pair_path, map_location='cpu')
-    logger.info(f"Loaded pair representation: {pair.shape}")
 
-    logger.info(f"Loading MSA representation from {msa_path}")
     msa = torch.load(msa_path, map_location='cpu')
-    logger.info(f"Loaded MSA representation: {msa.shape}")
 
     return {
         'single': None,
@@ -48,7 +44,6 @@ def load_evoformer_outputs(msa_path, pair_path):
 
 def generate_single_from_msa(msa_representation, model, device):
     """Generate single representation from MSA using the model's linear layer."""
-    logger.info(f"Generating single representation from MSA: {msa_representation.shape}")
 
     linear_layer = model.evoformer.linear
     msa_representation = msa_representation.to(device)
@@ -59,7 +54,6 @@ def generate_single_from_msa(msa_representation, model, device):
     with torch.no_grad():
         single_representation = linear_layer(first_msa_row)
 
-    logger.info(f"Generated single representation: {single_representation.shape}")
     return single_representation
 
 
@@ -74,10 +68,6 @@ def squeeze_all_dims(tensor):
 
 def process_protein(args, config, model, data_processor, feature_processor):
     """Process a single protein."""
-
-    logger.info(f"Processing protein with:")
-    logger.info(f"  Pair path: {args.pair_path}")
-    logger.info(f"  MSA path: {args.msa_path}")
 
     # Load Evoformer outputs
     evoformer_outputs = load_evoformer_outputs(
@@ -109,7 +99,6 @@ def process_protein(args, config, model, data_processor, feature_processor):
         local_alignment_dir = os.path.join(args.use_precomputed_alignments, tag)
 
         if os.path.exists(local_alignment_dir):
-            logger.info(f"Using precomputed alignments from {local_alignment_dir}")
             feature_dict = data_processor.process_fasta(
                 fasta_path=tmp_fasta_path,
                 alignment_dir=local_alignment_dir,
@@ -125,10 +114,6 @@ def process_protein(args, config, model, data_processor, feature_processor):
         feature_dict, mode='predict'
     )
 
-    logger.info(f"Processed feature shapes:")
-    logger.info(f"  AAtype: {processed_feature_dict['aatype'].shape}")
-    logger.info(f"  Seq mask: {processed_feature_dict['seq_mask'].shape}")
-
     # Convert to tensors and move to device
     processed_feature_dict = tensor_tree_map(
         lambda x: torch.tensor(x).to(args.model_device),
@@ -141,29 +126,19 @@ def process_protein(args, config, model, data_processor, feature_processor):
     if len(processed_feature_dict["seq_mask"].shape) == 2:
         processed_feature_dict["seq_mask"] = processed_feature_dict["seq_mask"].squeeze(-1)
 
-    logger.info(f"After removing recycling dimension:")
-    logger.info(f"  AAtype: {processed_feature_dict['aatype'].shape}")
-    logger.info(f"  Seq mask: {processed_feature_dict['seq_mask'].shape}")
-
     # Generate single representation if needed
     if evoformer_outputs['single'] is not None:
         single = evoformer_outputs['single'].to(args.model_device)
-        logger.info(f"Using existing single representation: {single.shape}")
     else:
-        logger.info("Generating single representation from MSA")
         single = generate_single_from_msa(evoformer_outputs['msa'], model, args.model_device)
 
     pair = evoformer_outputs['pair'].to(args.model_device)
-    logger.info(f"Pair representation shape: {pair.shape}")
 
     # Remove batch dimension if present
     if len(single.shape) == 3 and single.shape[0] == 1:
         single = single.squeeze(0)
-        logger.info(f"Removed batch dim from single: {single.shape}")
     if len(pair.shape) == 4 and pair.shape[0] == 1:
         pair = pair.squeeze(0)
-        logger.info(f"Removed batch dim from pair: {pair.shape}")
-
     # Create outputs dict exactly like model.py does - include MSA if available
     outputs = {
         'single': single,
@@ -179,32 +154,21 @@ def process_protein(args, config, model, data_processor, feature_processor):
         if msa.shape[0] > 512:
             msa = msa[:512]
         outputs['msa'] = msa[:, :processed_feature_dict["aatype"].shape[0], :]  # Match sequence length
-        logger.info(f"Added MSA to outputs: {outputs['msa'].shape}")
 
-    logger.info(f"Final tensor shapes before structure module:")
-    logger.info(f"  Single: {outputs['single'].shape}")
-    logger.info(f"  Pair: {outputs['pair'].shape}")
-    logger.info(f"  AAtype: {processed_feature_dict['aatype'].shape}")
-    logger.info(f"  Seq mask: {processed_feature_dict['seq_mask'].shape}")
 
     # Verify the sequence lengths match
     single_seq_len = outputs['single'].shape[0]
     pair_seq_len = outputs['pair'].shape[0]
     aatype_seq_len = processed_feature_dict['aatype'].shape[0]
 
-    logger.info(f"Sequence lengths: single={single_seq_len}, pair={pair_seq_len}, aatype={aatype_seq_len}")
 
     if not (single_seq_len == pair_seq_len == aatype_seq_len):
         raise ValueError(
             f"Sequence length mismatch: single={single_seq_len}, pair={pair_seq_len}, aatype={aatype_seq_len}")
 
     # Check the channel dimensions
-    logger.info(f"Channel dimensions:")
-    logger.info(f"  Single channels: {outputs['single'].shape[-1]} (expected: {config.model.evoformer_stack.c_s})")
-    logger.info(f"  Pair channels: {outputs['pair'].shape[-1]} (expected: {config.model.evoformer_stack.c_z})")
 
     # Run structure module exactly like the model does
-    logger.info("Running structure module")
     try:
         with torch.no_grad():
             t = time.perf_counter()
@@ -222,7 +186,6 @@ def process_protein(args, config, model, data_processor, feature_processor):
 
     # Add plddt from auxiliary heads if available, otherwise create dummy
     try:
-        logger.info("Running auxiliary heads to get plddt...")
         with torch.no_grad():
             # Prepare the exact structure that aux_heads expects
             outputs_for_aux = {
@@ -310,7 +273,6 @@ def process_protein(args, config, model, data_processor, feature_processor):
     outputs["final_affine_tensor"] = outputs["sm"]["frames"][-1]
 
     # **CRITICAL FIX**: Remove ALL singleton dimensions from arrays before converting to numpy
-    logger.info("Removing singleton dimensions from all outputs...")
 
     def remove_singleton_dims(x):
         if torch.is_tensor(x):
@@ -318,20 +280,12 @@ def process_protein(args, config, model, data_processor, feature_processor):
             original_shape = x.shape
             while x.dim() > 0 and 1 in x.shape:
                 x = x.squeeze()
-            if len(original_shape) != len(x.shape):
-                logger.info(f"Squeezed tensor from {original_shape} to {x.shape}")
-            return x
         return x
 
     # Apply to all outputs
     outputs = tensor_tree_map(remove_singleton_dims, outputs)
     processed_feature_dict = tensor_tree_map(remove_singleton_dims, processed_feature_dict)
     batch_for_atom_conversion = tensor_tree_map(remove_singleton_dims, batch_for_atom_conversion)
-
-    logger.info(f"After removing singleton dimensions:")
-    logger.info(f"  final_atom_positions: {outputs['final_atom_positions'].shape}")
-    logger.info(f"  final_atom_mask: {outputs['final_atom_mask'].shape}")
-    logger.info(f"  final_affine_tensor: {outputs['final_affine_tensor'].shape}")
 
     # Now convert everything to numpy safely
     def safe_to_numpy(x):
@@ -368,8 +322,6 @@ def process_protein(args, config, model, data_processor, feature_processor):
         else:
             fp.write(protein.to_pdb(unrelaxed_protein))
 
-    logger.info(f"Unrelaxed structure saved to: {unrelaxed_output_path}")
-
     # Save timing
     update_timings({tag: {"structure_module_inference": inference_time}},
                    os.path.join(args.output_dir, "timings.json"))
@@ -384,8 +336,6 @@ def process_protein(args, config, model, data_processor, feature_processor):
         output_dict_path = os.path.join(args.output_dir, f'{output_name}_output_dict.pkl')
         with open(output_dict_path, "wb") as fp:
             pickle.dump(outputs, fp, protocol=pickle.HIGHEST_PROTOCOL)
-
-    logger.info(f"✅ Successfully processed")
 
 
 def main(args):
@@ -427,7 +377,6 @@ def main(args):
     feature_processor = feature_pipeline.FeaturePipeline(config.data)
 
     # Load model
-    logger.info("Loading OpenFold model...")
     model_generator = load_models_from_command_line(
         config, args.model_device, args.openfold_checkpoint_path,
         args.jax_param_path, args.output_dir

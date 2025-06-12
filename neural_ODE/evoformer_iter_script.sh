@@ -6,15 +6,16 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
 
 # === Define variables based on project root ===
-PDB_ID="5i5h_A"
-DATA_DIR="${SCRIPT_DIR}/data/training/blocks/${PDB_ID}_evoformer_blocks/recycle_0"
+PDB_ID="1b08_A"
+DATA_DIR="/media/visitor/Extreme SSD/data"
+DATA_DIR="${DATA_DIR}/incomplete_blocks/${PDB_ID}_evoformer_blocks/recycle_0"
 OUTPUT_DIR="${DATA_DIR}"
 
 # Get path to python interpreter
 PYTHON_PATH=$(which python)
 
 # === Change to working directory ===
-cd "${ROOT_DIR}/evoformer_iter"
+cd "${ROOT_DIR}/save_intermediates"
 
 # === Determine last existing block index ===
 last_m=$(ls "${DATA_DIR}"/m_block_*.pt 2>/dev/null | sed -n 's/.*m_block_\([0-9]\+\)\.pt/\1/p' | sort -n | tail -1)
