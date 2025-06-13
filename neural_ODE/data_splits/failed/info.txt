@@ -1,0 +1,2 @@
+These are removed from jumbo because generate_evoformer_input fails (due to memory error i think)
+Later remove these from balanced_protein_splits.json if i need to show accurate stats

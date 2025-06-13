@@ -2,6 +2,7 @@
 """
 Modified version - Generate Evoformer inputs for all proteins in training, validation, and testing splits
 Uses hardcoded paths for production environment
+Now also skips proteins that are already in endpoint_blocks
 """
 
 import argparse
@@ -22,9 +23,10 @@ class EvoformerInputGenerator:
         self.fasta_dir = self.data_dir / "fasta_data"
         self.template_mmcif_dir = self.data_dir / "template_data" / "pdb70_mmcif" / "mmcif_files"
         self.precomputed_alignments = self.data_dir / "alignments"
-        self.splits_dir = self.root_dir / "neural_ODE" / "data_splits" / "jumbo"
+        self.splits_dir = self.root_dir / "neural_ODE" / "data_splits" / "failed"
         self.incomplete_blocks_dir = self.data_dir / "incomplete_blocks"
         self.complete_blocks_dir = self.data_dir / "complete_blocks"
+        self.endpoint_blocks_dir = self.data_dir / "endpoint_blocks"  # NEW: Added endpoint_blocks
 
         self.config_preset = config_preset
         self.device = device
@@ -39,6 +41,7 @@ class EvoformerInputGenerator:
             'failed': 0,
             'skipped_incomplete': 0,
             'skipped_complete': 0,
+            'skipped_endpoint': 0,  # NEW: Added endpoint skip counter
             'errors': []
         }
 
@@ -167,6 +170,19 @@ class EvoformerInputGenerator:
                     return True
         return False
 
+    def check_endpoint_blocks(self, chain: str) -> bool:
+        """NEW: Check if protein already exists in endpoint_blocks"""
+        endpoint_protein_dir = self.endpoint_blocks_dir / f"{chain}_evoformer_blocks"
+        if endpoint_protein_dir.exists():
+            recycle_dir = endpoint_protein_dir / "recycle_0"
+            if recycle_dir.exists():
+                # Check for block 48 (endpoint means it has 48th block)
+                m_block_48 = recycle_dir / "m_block_48.pt"
+                z_block_48 = recycle_dir / "z_block_48.pt"
+                if m_block_48.exists() and z_block_48.exists():
+                    return True
+        return False
+
     def prepare_fasta_directory(self, chain: str, fasta_file: Path, temp_fasta_dir: Path) -> bool:
         """Prepare FASTA directory for OpenFold processing"""
         if not fasta_file.exists():
@@ -274,7 +290,12 @@ class EvoformerInputGenerator:
     def process_protein(self, chain: str) -> Tuple[bool, str]:
         """Process a single protein to generate Evoformer inputs"""
 
-        # First check if already complete (48 blocks)
+        # NEW: First check if already in endpoint_blocks (highest priority)
+        if self.check_endpoint_blocks(chain):
+            self.stats['skipped_endpoint'] += 1
+            return True, "already_endpoint"
+
+        # Check if already complete (48 blocks)
         if self.check_complete_blocks(chain):
             self.stats['skipped_complete'] += 1
             return True, "already_complete"
@@ -317,7 +338,9 @@ class EvoformerInputGenerator:
             success, status = self.process_protein(chain)
 
             if success:
-                if status == "already_complete":
+                if status == "already_endpoint":
+                    print("✅ (already in endpoint)")
+                elif status == "already_complete":
                     print("✅ (already complete)")
                 elif status == "already_incomplete":
                     print("✅ (already in incomplete)")
@@ -332,6 +355,7 @@ class EvoformerInputGenerator:
             if (i + 1) % 10 == 0:
                 print(f"\n   📊 Progress: {i + 1}/{len(all_chains)} proteins processed")
                 print(f"      ✅ Successful: {self.stats['successful']}")
+                print(f"      ⏭️  Skipped (endpoint): {self.stats['skipped_endpoint']}")
                 print(f"      ⏭️  Skipped (complete): {self.stats['skipped_complete']}")
                 print(f"      ⏭️  Skipped (incomplete): {self.stats['skipped_incomplete']}")
                 print(f"      ❌ Failed: {self.stats['failed']}")
@@ -347,17 +371,20 @@ class EvoformerInputGenerator:
         print("📊 FINAL PROCESSING STATISTICS")
         print("=" * 60)
 
-        total = self.stats['successful'] + self.stats['failed'] + self.stats['skipped_incomplete'] + self.stats[
-            'skipped_complete']
+        total = (self.stats['successful'] + self.stats['failed'] +
+                self.stats['skipped_incomplete'] + self.stats['skipped_complete'] +
+                self.stats['skipped_endpoint'])
 
         print(f"✅ Successful: {self.stats['successful']}")
+        print(f"⏭️  Skipped (already in endpoint): {self.stats['skipped_endpoint']}")
         print(f"⏭️  Skipped (already complete): {self.stats['skipped_complete']}")
         print(f"⏭️  Skipped (already in incomplete): {self.stats['skipped_incomplete']}")
         print(f"❌ Failed: {self.stats['failed']}")
         if total > 0:
             print(f"📈 Success rate: {self.stats['successful'] / total * 100:.1f}%")
-            print(
-                f"📈 Already processed rate: {(self.stats['skipped_complete'] + self.stats['skipped_incomplete']) / total * 100:.1f}%")
+            total_skipped = (self.stats['skipped_complete'] + self.stats['skipped_incomplete'] +
+                           self.stats['skipped_endpoint'])
+            print(f"📈 Already processed rate: {total_skipped / total * 100:.1f}%")
 
         if self.stats['errors']:
             print(f"\n❌ Error details:")
@@ -401,9 +428,27 @@ class EvoformerInputGenerator:
 
             print(f"    └── {complete_blocks} with complete 48-block sequences")
 
+        # NEW: Report endpoint_blocks status
+        if self.endpoint_blocks_dir.exists():
+            endpoint_block_dirs = [d for d in self.endpoint_blocks_dir.iterdir() if
+                                   d.is_dir() and d.name.endswith('_evoformer_blocks')]
+            print(f"  endpoint_blocks/ ({len(endpoint_block_dirs)} protein directories)")
+
+            # Count endpoint blocks (have block 48)
+            endpoint_blocks = 0
+            for block_dir in endpoint_block_dirs:
+                recycle_dir = block_dir / "recycle_0"
+                if recycle_dir.exists():
+                    m_block_48 = recycle_dir / "m_block_48.pt"
+                    z_block_48 = recycle_dir / "z_block_48.pt"
+                    if m_block_48.exists() and z_block_48.exists():
+                        endpoint_blocks += 1
+
+            print(f"    └── {endpoint_blocks} with endpoint 48-block sequences")
+
     def run(self):
         """Run the complete Evoformer input generation pipeline"""
-        print("🚀 Evoformer Input Generator - Hardcoded Paths Mode")
+        print("🚀 Evoformer Input Generator - Hardcoded Paths Mode (with endpoint check)")
         print(f"📁 Root directory: {self.root_dir}")
         print(f"📁 Data directory: {self.data_dir}")
         print(f"📁 FASTA directory: {self.fasta_dir}")
@@ -455,7 +500,7 @@ class EvoformerInputGenerator:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Generate Evoformer inputs for protein splits - Hardcoded Paths Mode',
+        description='Generate Evoformer inputs for protein splits - Hardcoded Paths Mode (with endpoint check)',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
 

@@ -23,7 +23,7 @@ def find_python():
 
 def find_evoformer_script():
     """Find the evoformer 48th iteration script"""
-    script_dir = Path(__file__).parent
+    script_dir = Path(__file__).parent.parent
     project_root = script_dir.parent
 
     possible_locations = [
