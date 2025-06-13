@@ -1,7 +1,7 @@
 """
 Simplified Neural ODE training for Evoformer using only blocks 0 and 48
 Uses adjoint method from torchdiffeq with memory optimizations
-MODIFIED: Support multiple data directories
+MODIFIED: Support multiple data directories and preliminary intermediate block training
 """
 
 import os
@@ -9,7 +9,6 @@ import gc
 import torch
 import argparse
 import sys
-#from torchdiffeq import odeint_adjoint as odeint
 from torchdiffeq import odeint
 import torch.optim as optim
 from evoformer_ode import EvoformerODEFunc, EvoformerODEFuncFast
@@ -203,6 +202,90 @@ def filter_proteins_by_size_multi_dir(proteins: List[Tuple[str, str]], max_resid
     return valid_proteins, oversized_proteins
 
 
+def get_available_proteins_single_dir(data_dir: str, splits_dir: str, mode: str) -> List[str]:
+    """Get available proteins in a specific directory (for preliminary training)"""
+    split_proteins = load_split_proteins(splits_dir, mode)
+
+    available_proteins = []
+    for protein_id in split_proteins:
+        protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+        if os.path.isdir(protein_dir):
+            available_proteins.append(protein_id)
+
+    return available_proteins
+
+
+def load_protein_blocks_strided_memory_efficient(protein_id: str, data_dir: str, device: str, max_cluster_size: int,
+                                                 block_stride: int, max_blocks: int = 49) -> Tuple[
+    torch.Tensor, torch.Tensor, List[int]]:
+    """Load only initial state, return block indices for lazy loading"""
+    protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+
+    # Find available blocks
+    available_blocks = []
+    for i in range(max_blocks):
+        m_path = os.path.join(protein_dir, f"m_block_{i}.pt")
+        z_path = os.path.join(protein_dir, f"z_block_{i}.pt")
+        if os.path.exists(m_path) and os.path.exists(z_path):
+            available_blocks.append(i)
+        else:
+            break
+
+    # Select blocks with stride
+    selected_blocks = [available_blocks[0]]
+    for i in range(block_stride, len(available_blocks), block_stride):
+        selected_blocks.append(available_blocks[i])
+    if available_blocks[-1] not in selected_blocks:
+        selected_blocks.append(available_blocks[-1])
+
+    # Load ONLY initial block
+    m_init_path = os.path.join(protein_dir, f"m_block_{selected_blocks[0]}.pt")
+    z_init_path = os.path.join(protein_dir, f"z_block_{selected_blocks[0]}.pt")
+    m_init = torch.load(m_init_path, map_location='cpu')  # Load to CPU first
+    z_init = torch.load(z_init_path, map_location='cpu')
+
+    # Remove batch dimension and apply cluster size limit
+    if m_init.dim() == 4:
+        m_init = m_init.squeeze(0)
+    if z_init.dim() == 4:
+        z_init = z_init.squeeze(0)
+    if max_cluster_size and m_init.shape[0] > max_cluster_size:
+        m_init = m_init[:max_cluster_size]
+
+    # Move to device only after processing
+    m_init = m_init.to(device)
+    z_init = z_init.to(device)
+
+    return m_init, z_init, selected_blocks
+
+
+def load_single_target_block(protein_id: str, data_dir: str, block_idx: int, device: str, max_cluster_size: int) -> \
+Tuple[torch.Tensor, torch.Tensor]:
+    """Load a single target block on demand"""
+    protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+
+    m_path = os.path.join(protein_dir, f"m_block_{block_idx}.pt")
+    z_path = os.path.join(protein_dir, f"z_block_{block_idx}.pt")
+
+    # Load to CPU first to save GPU memory
+    m = torch.load(m_path, map_location='cpu')
+    z = torch.load(z_path, map_location='cpu')
+
+    # Process on CPU
+    if m.dim() == 4:
+        m = m.squeeze(0)
+    if z.dim() == 4:
+        z = z.squeeze(0)
+    if max_cluster_size and m.shape[0] > max_cluster_size:
+        m = m[:max_cluster_size]
+
+    # Move to device only when needed
+    m = m.to(device)
+    z = z.to(device)
+
+    return m, z
+
+
 def load_protein_blocks_sequential(protein_id: str, data_dir: str, device: str, max_cluster_size: int = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Load M and Z tensors sequentially to minimize memory spikes"""
     protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
@@ -284,7 +367,17 @@ def compute_adaptive_loss(pred_m: torch.Tensor, target_m: torch.Tensor,
                           pred_z: torch.Tensor, target_z: torch.Tensor) -> torch.Tensor:
     """
     Compute loss with proper scaling that preserves learning signal
+    MODIFIED: Weight by number of residues
     """
+    # Get number of residues from tensor shape
+    # MSA shape: [n_seq, n_res, c_m] or [n_res, c_m]
+    # Pair shape: [n_res, n_res, c_z]
+
+    if target_m.dim() == 3:
+        num_residues = target_m.shape[1]  # [n_seq, n_res, c_m]
+    else:
+        num_residues = target_m.shape[0]  # [n_res, c_m]
+
     # Standard MSE losses
     msa_loss = F.mse_loss(pred_m, target_m)
     pair_loss = F.mse_loss(pred_z, target_z)
@@ -297,32 +390,389 @@ def compute_adaptive_loss(pred_m: torch.Tensor, target_m: torch.Tensor,
     pair_scaled = pair_loss / pair_variance
 
     # Balanced loss (equal contribution from MSA and pair)
-    total_loss = msa_scaled + pair_scaled
+    base_loss = msa_scaled + pair_scaled
 
-    return total_loss
+    # Weight by number of residues
+    residue_weight = float(num_residues)
+    weighted_loss = base_loss * residue_weight
 
-def print_gpu_memory(step_name):
-    if torch.cuda.is_available():
-        allocated = torch.cuda.memory_allocated() / 1024 ** 3  # GB
-        reserved = torch.cuda.memory_reserved() / 1024 ** 3  # GB
-        print(f"  {step_name}: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved")
+    return weighted_loss
 
 
-class StepCounter:
-    def __init__(self, ode_func):
-        self.ode_func = ode_func
-        self.step_count = 0
+def train_single_protein_strided(protein_id: str, data_dir: str, ode_func: torch.nn.Module,
+                                 optimizer: torch.optim.Optimizer, scaler: GradScaler,
+                                 args: argparse.Namespace) -> Dict:
+    """Memory-efficient strided training with chunked supervision"""
 
-    def __call__(self, t, state):
-        self.step_count += 1
-        return self.ode_func(t, state)
+    # Get preliminary training cluster size (smaller than main training)
+    prelim_cluster_size = getattr(args, 'prelim_reduced_cluster_size', None)
+    if prelim_cluster_size is None:
+        prelim_cluster_size = args.reduced_cluster_size // 2
+    prelim_cluster_size = max(prelim_cluster_size, 16)  # Minimum of 16
+
+    # Load only initial state and get block indices
+    m_init, z_init, selected_blocks = load_protein_blocks_strided_memory_efficient(
+        protein_id, data_dir, args.device, prelim_cluster_size,
+        args.prelim_block_stride, args.max_blocks
+    )
+
+    num_blocks = len(selected_blocks)
+    chunk_size = getattr(args, 'prelim_chunk_size', 4)  # Process 4 blocks at a time by default
+
+    print(f"Memory-efficient strided: {num_blocks} blocks, chunk_size={chunk_size}, cluster_size={prelim_cluster_size}")
+
+    optimizer.zero_grad()
+    total_loss = 0
+    total_chunks = 0
+
+    # Process in chunks to save memory
+    for chunk_start in range(0, num_blocks, chunk_size):
+        chunk_end = min(chunk_start + chunk_size, num_blocks)
+        chunk_blocks = selected_blocks[chunk_start:chunk_end]
+
+        # Create time points for this chunk
+        if num_blocks > 1:
+            chunk_time_start = float(chunk_start) / (num_blocks - 1)
+            chunk_time_end = float(chunk_end - 1) / (num_blocks - 1)
+        else:
+            chunk_time_start = 0.0
+            chunk_time_end = 1.0
+
+        chunk_time_points = torch.linspace(
+            chunk_time_start, chunk_time_end, len(chunk_blocks)
+        ).to(args.device)
+
+        # Get initial state for this chunk
+        if chunk_start == 0:
+            chunk_m_init, chunk_z_init = m_init, z_init
+        else:
+            # Load the state from the end of previous chunk
+            chunk_m_init, chunk_z_init = load_single_target_block(
+                protein_id, data_dir, selected_blocks[chunk_start],
+                args.device, prelim_cluster_size
+            )
+
+        with autocast(enabled=args.use_amp):
+            # Solve ODE for this chunk only
+            trajectory = odeint(
+                ode_func,
+                (chunk_m_init, chunk_z_init),
+                chunk_time_points,
+                method=args.integrator,
+                rtol=getattr(args, 'prelim_rtol', 1e-4),
+                atol=getattr(args, 'prelim_atol', 1e-5)
+            )
+
+            # Supervise this chunk
+            chunk_loss = 0
+            chunk_steps = 0
+
+            for i, block_idx in enumerate(chunk_blocks):
+                # Load target block on demand
+                m_target, z_target = load_single_target_block(
+                    protein_id, data_dir, block_idx, args.device, prelim_cluster_size
+                )
+
+                m_pred = trajectory[0][i]
+                z_pred = trajectory[1][i]
+
+                step_loss = compute_adaptive_loss(m_pred, m_target, z_pred, z_target)
+                chunk_loss += step_loss
+                chunk_steps += 1
+
+                # Immediately delete target to save memory
+                del m_target, z_target
+
+            chunk_loss = chunk_loss / chunk_steps
+            total_loss += chunk_loss
+            total_chunks += 1
+
+            # Clean up chunk trajectory immediately
+            del trajectory, chunk_loss
+            if chunk_start > 0:  # Don't delete the original init states
+                del chunk_m_init, chunk_z_init
+
+            # Aggressive cleanup after each chunk
+            if getattr(args, 'prelim_aggressive_cleanup', True):
+                aggressive_memory_cleanup()
+
+    # Average loss across all chunks
+    avg_loss = total_loss / total_chunks
+
+    # Backward pass
+    if args.use_amp:
+        scaler.scale(avg_loss).backward()
+        scaler.unscale_(optimizer)
+        torch.nn.utils.clip_grad_norm_(ode_func.parameters(), max_norm=1.0)
+        scaler.step(optimizer)
+        scaler.update()
+    else:
+        avg_loss.backward()
+        torch.nn.utils.clip_grad_norm_(ode_func.parameters(), max_norm=1.0)
+        optimizer.step()
+
+    loss_value = avg_loss.item()
+
+    # Final cleanup
+    del m_init, z_init, total_loss, avg_loss
+    if getattr(args, 'prelim_aggressive_cleanup', True):
+        aggressive_memory_cleanup()
+
+    return {
+        'protein': protein_id,
+        'loss': loss_value,
+        'selected_blocks': selected_blocks,
+        'num_chunks': total_chunks,
+        'prelim_cluster_size': prelim_cluster_size,
+        'approach': 'memory_efficient_chunked'
+    }
+
+
+def validate_single_protein_strided(protein_id: str, data_dir: str, ode_func: torch.nn.Module,
+                                    args: argparse.Namespace) -> Dict:
+    """Memory-efficient strided validation with chunked supervision"""
+
+    # Use same cluster size as training
+    prelim_cluster_size = getattr(args, 'prelim_reduced_cluster_size', args.reduced_cluster_size // 2)
+    prelim_cluster_size = max(prelim_cluster_size, 16)
+
+    # Load only initial state and get block indices
+    m_init, z_init, selected_blocks = load_protein_blocks_strided_memory_efficient(
+        protein_id, data_dir, args.device, prelim_cluster_size,
+        args.prelim_block_stride, args.max_blocks
+    )
+
+    num_blocks = len(selected_blocks)
+    chunk_size = getattr(args, 'prelim_chunk_size', 4)
+
+    total_loss = 0
+    total_chunks = 0
+
+    with torch.no_grad():
+        # Process in chunks
+        for chunk_start in range(0, num_blocks, chunk_size):
+            chunk_end = min(chunk_start + chunk_size, num_blocks)
+            chunk_blocks = selected_blocks[chunk_start:chunk_end]
+
+            # Create time points for this chunk
+            if num_blocks > 1:
+                chunk_time_start = float(chunk_start) / (num_blocks - 1)
+                chunk_time_end = float(chunk_end - 1) / (num_blocks - 1)
+            else:
+                chunk_time_start = 0.0
+                chunk_time_end = 1.0
+
+            chunk_time_points = torch.linspace(
+                chunk_time_start, chunk_time_end, len(chunk_blocks)
+            ).to(args.device)
+
+            # Get initial state for this chunk
+            if chunk_start == 0:
+                chunk_m_init, chunk_z_init = m_init, z_init
+            else:
+                chunk_m_init, chunk_z_init = load_single_target_block(
+                    protein_id, data_dir, selected_blocks[chunk_start],
+                    args.device, prelim_cluster_size
+                )
+
+            # Solve ODE for this chunk
+            trajectory = odeint(
+                ode_func,
+                (chunk_m_init, chunk_z_init),
+                chunk_time_points,
+                method=args.integrator,
+                rtol=getattr(args, 'prelim_rtol', 1e-4),
+                atol=getattr(args, 'prelim_atol', 1e-5)
+            )
+
+            # Validate this chunk
+            chunk_loss = 0
+            chunk_steps = 0
+
+            for i, block_idx in enumerate(chunk_blocks):
+                m_target, z_target = load_single_target_block(
+                    protein_id, data_dir, block_idx, args.device, prelim_cluster_size
+                )
+
+                m_pred = trajectory[0][i]
+                z_pred = trajectory[1][i]
+
+                step_loss = compute_adaptive_loss(m_pred, m_target, z_pred, z_target)
+                chunk_loss += step_loss.item()  # Convert to scalar for validation
+                chunk_steps += 1
+
+                del m_target, z_target
+
+            chunk_loss = chunk_loss / chunk_steps
+            total_loss += chunk_loss
+            total_chunks += 1
+
+            # Clean up
+            del trajectory, chunk_loss
+            if chunk_start > 0:
+                del chunk_m_init, chunk_z_init
+
+            if getattr(args, 'prelim_aggressive_cleanup', True):
+                aggressive_memory_cleanup()
+
+    # Average loss across all chunks
+    avg_loss = total_loss / total_chunks
+
+    # Final cleanup
+    del m_init, z_init, total_loss
+    if getattr(args, 'prelim_aggressive_cleanup', True):
+        aggressive_memory_cleanup()
+
+    return {
+        'protein': protein_id,
+        'loss': avg_loss,
+        'selected_blocks': selected_blocks,
+        'num_chunks': total_chunks,
+        'prelim_cluster_size': prelim_cluster_size
+    }
+
+
+def run_preliminary_training(ode_func: torch.nn.Module, optimizer: torch.optim.Optimizer,
+                             scaler: GradScaler, args: argparse.Namespace, logger) -> bool:
+    """Run preliminary training on intermediate blocks with memory optimizations"""
+    print(f"\n🚀 PRELIMINARY TRAINING PHASE (MEMORY-EFFICIENT)")
+    print(f"=" * 60)
+    print(f"📁 Preliminary data directory: {args.prelim_data_dir}")
+    print(f"🔢 Block stride: {args.prelim_block_stride}")
+    print(f"📈 Max epochs: {args.prelim_max_epochs}")
+    print(f"🛑 Early stopping min delta: {args.prelim_early_stopping_min_delta}")
+
+    # Memory optimization settings
+    prelim_cluster_size = getattr(args, 'prelim_reduced_cluster_size', None)
+    if prelim_cluster_size is None:
+        prelim_cluster_size = args.reduced_cluster_size // 2
+    prelim_cluster_size = max(prelim_cluster_size, 16)
+    chunk_size = getattr(args, 'prelim_chunk_size', 4)
+
+    print(f"💾 Memory optimizations:")
+    print(f"   Cluster size: {prelim_cluster_size} (vs {args.reduced_cluster_size} main)")
+    print(f"   Chunk size: {chunk_size} blocks")
+    print(f"   Aggressive cleanup: {getattr(args, 'prelim_aggressive_cleanup', True)}")
+
+    # Get preliminary training proteins
+    prelim_train_proteins = get_available_proteins_single_dir(
+        args.prelim_data_dir, args.splits_dir, 'training'
+    )
+    prelim_val_proteins = get_available_proteins_single_dir(
+        args.prelim_data_dir, args.splits_dir, 'validation'
+    )
+
+    print(f"🧬 Preliminary training proteins: {len(prelim_train_proteins)}")
+    print(f"🔍 Preliminary validation proteins: {len(prelim_val_proteins)}")
+
+    if not prelim_train_proteins:
+        print("❌ No preliminary training proteins found")
+        return False
+
+    # Setup early stopping for preliminary phase
+    prelim_early_stopping = EarlyStopping(
+        patience=args.early_stopping_patience,
+        min_delta=args.prelim_early_stopping_min_delta,
+        restore_best_weights=args.restore_best_weights,
+        verbose=True
+    )
+
+    # Preliminary training loop
+    for epoch in range(args.prelim_max_epochs):
+        print(f"\n📈 Preliminary Epoch {epoch + 1}/{args.prelim_max_epochs}")
+
+        epoch_losses = []
+        successful_proteins = 0
+
+        for protein_idx, protein_id in enumerate(prelim_train_proteins):
+            print(f"  [{protein_idx + 1}/{len(prelim_train_proteins)}] {protein_id}... ", end='', flush=True)
+
+            try:
+                result = train_single_protein_strided(
+                    protein_id, args.prelim_data_dir, ode_func, optimizer, scaler, args
+                )
+                epoch_losses.append(result['loss'])
+                successful_proteins += 1
+
+                # Show memory info for first protein
+                if protein_idx == 0:
+                    print(
+                        f"✅ Loss: {result['loss']:.5f} ({result['num_chunks']} chunks, {result['prelim_cluster_size']} clusters)")
+                else:
+                    print(f"✅ Loss: {result['loss']:.5f}")
+
+            except Exception as e:
+                print(f"❌ Error: {str(e)[:50]}...")
+                continue
+
+            # Always do aggressive cleanup between proteins in preliminary phase
+            aggressive_memory_cleanup()
+
+        # Validation
+        val_results = None
+        if prelim_val_proteins:
+            print(f"\n🔍 Preliminary validation on {len(prelim_val_proteins)} proteins...")
+            val_losses = []
+
+            ode_func.eval()
+            with torch.no_grad():
+                for val_idx, protein_id in enumerate(prelim_val_proteins):
+                    print(f"    [{val_idx + 1}/{len(prelim_val_proteins)}] {protein_id}... ", end='', flush=True)
+
+                    try:
+                        result = validate_single_protein_strided(
+                            protein_id, args.prelim_data_dir, ode_func, args
+                        )
+                        val_losses.append(result['loss'])
+                        print(f"✅ Loss: {result['loss']:.5f}")
+
+                    except Exception as e:
+                        print(f"❌ Error: {str(e)[:50]}...")
+                        continue
+
+                    # Cleanup between validation proteins too
+                    aggressive_memory_cleanup()
+
+            ode_func.train()
+
+            if val_losses:
+                val_results = {
+                    'avg_loss': sum(val_losses) / len(val_losses),
+                    'min_loss': min(val_losses),
+                    'max_loss': max(val_losses),
+                    'num_proteins': len(val_losses),
+                    'successful_validations': len(val_losses),
+                }
+
+        # Epoch summary
+        if epoch_losses:
+            avg_train_loss = sum(epoch_losses) / len(epoch_losses)
+            print(f"📊 Preliminary Epoch {epoch + 1} Summary:")
+            print(f"    Training Loss: {avg_train_loss:.5f}")
+            print(f"    Training Success: {successful_proteins}/{len(prelim_train_proteins)} proteins")
+            if val_results:
+                print(f"    Validation Loss: {val_results['avg_loss']:.5f}")
+
+        # Check early stopping
+        if val_results and prelim_early_stopping(val_results['avg_loss'], epoch + 1, ode_func):
+            print(f"\n🛑 Preliminary training stopped early after {epoch + 1} epochs!")
+            break
+
+        # Final cleanup after each epoch
+        aggressive_memory_cleanup()
+
+    print(f"\n✅ Preliminary training completed!")
+    print(f"🎯 Best preliminary validation loss: {prelim_early_stopping.get_best_loss():.4f}")
+    print(f"=" * 60)
+
+    return True
+
 
 def train_single_protein(protein_tuple: Tuple[str, str], ode_func: torch.nn.Module, optimizer: torch.optim.Optimizer,
                          scaler: GradScaler, args: argparse.Namespace) -> Dict:
     """Train using 0→48 transformation with adjoint method"""
 
     protein_id, data_dir = protein_tuple
-
 
     # Choose loading method based on config
     if getattr(args, 'use_sequential_loading', False):
@@ -332,19 +782,13 @@ def train_single_protein(protein_tuple: Tuple[str, str], ode_func: torch.nn.Modu
 
     # Load initial and final states
     m0, z0, m48, z48 = load_func(protein_id, data_dir, args.device, args.reduced_cluster_size)
-    m0, z0, m48, z48 = load_func(protein_id, data_dir, args.device, args.reduced_cluster_size)
-
-    print(f"m0 shape: {m0.shape}, size: {m0.numel() * 4 / 1024 ** 2:.1f}MB")
-    print(f"z0 shape: {z0.shape}, size: {z0.numel() * 4 / 1024 ** 2:.1f}MB")
-    print(f"Combined state size: {(m0.numel() + z0.numel()) * 4 / 1024 ** 2:.1f}MB")
 
     optimizer.zero_grad()
 
     with autocast(enabled=args.use_amp):
         # Solve ODE from 0 to 1 using adjoint method
-        print_gpu_memory("Before odeint")
         trajectory = odeint(
-            ode_func,  # Wrapped function
+            ode_func,
             (m0, z0),
             torch.tensor([0.0, 1.0]).to(args.device),
             method=args.integrator,
@@ -365,7 +809,6 @@ def train_single_protein(protein_tuple: Tuple[str, str], ode_func: torch.nn.Modu
         loss = compute_adaptive_loss(m_pred, m48, z_pred, z48)
 
     # Backward pass (uses adjoint method automatically)
-    print_gpu_memory("Before backward")
     if args.use_amp:
         scaler.scale(loss).backward()
         scaler.unscale_(optimizer)
@@ -384,15 +827,15 @@ def train_single_protein(protein_tuple: Tuple[str, str], ode_func: torch.nn.Modu
     if getattr(args, 'aggressive_cleanup', False):
         aggressive_memory_cleanup()
 
-
     return {
         'protein': protein_id,
         'loss': loss_value
     }
 
+
 def validate_single_protein(protein_tuple: Tuple[str, str], ode_func: torch.nn.Module, args: argparse.Namespace) -> Dict:
     """Validate using 0→48 transformation"""
-    protein_id, data_dir = protein_tuple  # Unpack the tuple
+    protein_id, data_dir = protein_tuple
 
     # Choose loading method based on config
     if getattr(args, 'use_sequential_loading', False):
@@ -400,7 +843,7 @@ def validate_single_protein(protein_tuple: Tuple[str, str], ode_func: torch.nn.M
     else:
         load_func = load_protein_blocks_standard
 
-    # Load initial and final states (use the specific data_dir for this protein)
+    # Load initial and final states
     m0, z0, m48, z48 = load_func(protein_id, data_dir, args.device, args.reduced_cluster_size)
 
     with torch.no_grad():
@@ -447,7 +890,7 @@ def validate_model(ode_func: torch.nn.Module, val_proteins: List[Tuple[str, str]
 
     with torch.no_grad():
         for val_idx, protein_tuple in enumerate(val_proteins):
-            protein_id = protein_tuple[0]  # Extract protein_id for display
+            protein_id = protein_tuple[0]
             print(f"    [{val_idx + 1}/{len(val_proteins)}] Validating {protein_id}... ", end='', flush=True)
 
             try:
@@ -481,8 +924,9 @@ def validate_model(ode_func: torch.nn.Module, val_proteins: List[Tuple[str, str]
         }
 
 
+
 def main():
-    parser = argparse.ArgumentParser(description='Neural ODE Training with Memory Optimizations')
+    parser = argparse.ArgumentParser(description='Neural ODE Training with Memory Optimizations and Preliminary Training')
 
     # Core settings
     parser.add_argument('--data_dirs', type=str, nargs='+', required=True,
@@ -510,6 +954,20 @@ def main():
     parser.add_argument('--restore_best_weights', action='store_true', default=True,
                         help='Restore best model weights when early stopping triggers')
 
+    # PRELIMINARY TRAINING ARGUMENTS
+    parser.add_argument('--enable_preliminary_training', action='store_true',
+                        help='Enable preliminary training on intermediate blocks')
+    parser.add_argument('--prelim_data_dir', type=str, required=False,
+                        help='Directory for preliminary intermediate block training (required if --enable_preliminary_training)')
+    parser.add_argument('--prelim_block_stride', type=int, required=False,
+                        help='Stride length for preliminary training (required if --enable_preliminary_training)')
+    parser.add_argument('--prelim_max_epochs', type=int, required=False,
+                        help='Max epochs for preliminary training (required if --enable_preliminary_training)')
+    parser.add_argument('--prelim_early_stopping_min_delta', type=float, required=False,
+                        help='Early stopping min delta for preliminary training (required if --enable_preliminary_training)')
+    parser.add_argument('--max_blocks', type=int, default=49,
+                        help='Maximum blocks to consider for preliminary training')
+
     # Model settings
     parser.add_argument('--use_fast_ode', action='store_true', help='Use fast ODE implementation')
     parser.add_argument('--reduced_cluster_size', type=int, default=64, help='Max cluster size')
@@ -529,7 +987,36 @@ def main():
     parser.add_argument('--aggressive_cleanup', action='store_true',
                         help='Use aggressive memory cleanup between operations')
 
+    # Add preliminary memory management arguments
+    parser.add_argument('--prelim_chunk_size', type=int, default=4,
+                        help='Number of blocks to process at once in preliminary training (default: 4)')
+    parser.add_argument('--prelim_reduced_cluster_size', type=int, default=None,
+                        help='Cluster size for preliminary training (default: half of --reduced_cluster_size)')
+    parser.add_argument('--prelim_aggressive_cleanup', action='store_true', default=True,
+                        help='Extra aggressive memory cleanup during preliminary training (default: True)')
+    # ODE solver tolerance for preliminary training
+    parser.add_argument('--prelim_rtol', type=float, default=1e-4,
+                        help='Relative tolerance for ODE solver in preliminary training')
+    parser.add_argument('--prelim_atol', type=float, default=1e-5,
+                        help='Absolute tolerance for ODE solver in preliminary training')
+
     args = parser.parse_args()
+
+    # Validate preliminary training arguments
+    if args.enable_preliminary_training:
+        required_prelim_args = ['prelim_data_dir', 'prelim_block_stride', 'prelim_max_epochs', 'prelim_early_stopping_min_delta']
+        missing_args = [arg for arg in required_prelim_args if getattr(args, arg) is None]
+
+        if missing_args:
+            print(f"❌ Error: When --enable_preliminary_training is used, the following arguments are required:")
+            for arg in missing_args:
+                print(f"   --{arg}")
+            return
+
+        # Validate that prelim_data_dir exists
+        if not os.path.exists(args.prelim_data_dir):
+            print(f"❌ Error: Preliminary data directory not found: {args.prelim_data_dir}")
+            return
 
     # Device setup
     if args.device == 'cuda' and not torch.cuda.is_available():
@@ -540,6 +1027,8 @@ def main():
         args.use_amp = False
 
     print(f"🚀 Starting Neural ODE Training with Memory Optimizations")
+    if args.enable_preliminary_training:
+        print(f"🔄 Preliminary training enabled on intermediate blocks")
     print(f"📁 Data directories: {args.data_dirs}")
     if args.splits_dir:
         print(f"📂 Splits directory: {args.splits_dir}")
@@ -677,6 +1166,7 @@ def main():
                 'lr_scheduling': lr_scheduler is not None,
                 'early_stopping': early_stopping is not None,
                 'adjoint_method': True,
+                'preliminary_training': args.enable_preliminary_training,
                 'memory_optimizations': {
                     'sequential_loading': args.use_sequential_loading,
                     'aggressive_cleanup': args.aggressive_cleanup
@@ -697,6 +1187,12 @@ def main():
             print(f"⚠️ Warning: Could not initialize logger: {e}")
             logger = None
 
+    # RUN PRELIMINARY TRAINING IF ENABLED
+    if args.enable_preliminary_training:
+        success = run_preliminary_training(ode_func, optimizer, scaler, args, logger)
+        if not success:
+            print("❌ Preliminary training failed, continuing with main training...")
+
     # Training loop with time limit handling
     previous_losses = []
     training_start_time = time.time()
@@ -706,6 +1202,9 @@ def main():
 
     if logger:
         logger.log_training_start()
+
+    print(f"\n🚀 MAIN TRAINING PHASE (0→48 blocks)")
+    print(f"=" * 60)
 
     for epoch in range(args.epochs):
         final_epoch = epoch + 1
@@ -718,7 +1217,7 @@ def main():
                 print(f"\n⏰ Time limit reached ({args.max_time_hours} hours). Stopping training...")
                 break
 
-        print(f"\n📈 Epoch {epoch + 1}/{args.epochs}")
+        print(f"\n📈 Main Epoch {epoch + 1}/{args.epochs}")
 
         current_lr = optimizer.param_groups[0]['lr']
         print(f"🎛️  Current learning rate: {current_lr:.2e}")
@@ -803,7 +1302,7 @@ def main():
             avg_train_loss = sum(epoch_losses) / len(epoch_losses)
             epoch_time = time.time() - epoch_start_time
 
-            print(f"📊 Epoch {epoch + 1} Summary:")
+            print(f"📊 Main Epoch {epoch + 1} Summary:")
             print(f"    Training Loss: {avg_train_loss:.5f}")
             print(f"    Training Success: {successful_proteins}/{len(train_dataset)} proteins")
             if val_results:
@@ -888,6 +1387,7 @@ def main():
                 'interrupted_at_epoch': final_epoch if interrupted_by_timeout else None,
                 'max_time_hours': args.max_time_hours,
                 'method': 'adjoint_0_to_48',
+                'preliminary_training_enabled': args.enable_preliminary_training,
                 'memory_optimizations': {
                     'sequential_loading': args.use_sequential_loading,
                     'aggressive_cleanup': args.aggressive_cleanup
