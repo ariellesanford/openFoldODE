@@ -2,6 +2,7 @@
 """
 Simplified training runner for the new train_evoformer_ode.py
 Uses only blocks 0→48 with adjoint method
+MODIFIED: Support multiple data directories
 """
 
 import os
@@ -15,14 +16,29 @@ from datetime import datetime
 def main():
     # Get script directory and set up paths
     script_dir = Path(__file__).parent
-    data_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
-    splits_dir = script_dir / "data_splits" / "mini"
+
+    # CHANGED: Support multiple data directories
+    data_dirs = [
+        Path("/media/visitor/Extreme SSD/data/complete_blocks"),
+        Path("/media/visitor/Extreme SSD/data/endpoint_blocks"),
+        # Add more directories as needed
+    ]
+
+    splits_dir = script_dir / "data_splits" / "jumbo"
     output_dir = script_dir / "trained_models"
     training_script = script_dir / "train_evoformer_ode.py"
 
-    # Check if data directory exists
-    if not data_dir.exists():
-        print(f"❌ Data directory not found: {data_dir}")
+    # Check if data directories exist
+    valid_data_dirs = []
+    for data_dir in data_dirs:
+        if data_dir.exists():
+            valid_data_dirs.append(str(data_dir))
+            print(f"✅ Found data directory: {data_dir}")
+        else:
+            print(f"⚠️  Data directory not found: {data_dir}")
+
+    if not valid_data_dirs:
+        print(f"❌ No valid data directories found!")
         return 1
 
     if not training_script.exists():
@@ -41,7 +57,7 @@ def main():
 
     # Configuration - simplified for adjoint method
     config = {
-        'data_dir': str(data_dir),
+        'data_dirs': valid_data_dirs,  # CHANGED: Now a list
         'splits_dir': str(splits_dir),
         'device': 'cuda' if torch.cuda.is_available() else 'cpu',
         'epochs': 1000,
@@ -53,7 +69,7 @@ def main():
         'use_amp': torch.cuda.is_available(),
         'output_dir': str(output_dir),
         'experiment_name': experiment_name,
-#        'max_residues': 100,
+        # 'max_residues': 100,
         # Enhanced features
         'lr_patience': 3,
         'lr_factor': 0.5,
@@ -61,10 +77,10 @@ def main():
         'early_stopping_patience': 10,
         'early_stopping_min_delta': 0.0001,
         'restore_best_weights': True,
-        'max_time_hours': 15.5,
+        'max_time_hours': 1,
         # Memory optimizations
-        'use_sequential_loading': True,  # New memory optimization
-        'aggressive_cleanup': True  # New memory optimization
+        'use_sequential_loading': True,
+        'aggressive_cleanup': True
     }
 
     # Parse command line arguments
@@ -83,7 +99,7 @@ def main():
         print("🔧 Quick test mode: 3 epochs, small proteins, small clusters")
 
     print("🚀 Neural ODE Training Runner")
-    print(f"📁 Data: {data_dir}")
+    print(f"📁 Data directories: {valid_data_dirs}")
     print(f"💻 Device: {config['device']}")
     print(
         f"🔧 Memory: Sequential loading={config['use_sequential_loading']}, Aggressive cleanup={config['aggressive_cleanup']}")
@@ -92,7 +108,10 @@ def main():
     # Build command
     cmd = [sys.executable, str(training_script)]
     for key, value in config.items():
-        if isinstance(value, bool):
+        if key == 'data_dirs':
+            # CHANGED: Handle multiple data directories
+            cmd.extend(['--data_dirs'] + value)
+        elif isinstance(value, bool):
             if value:
                 cmd.append(f'--{key}')
         else:
@@ -172,7 +191,7 @@ def main():
 
 
 if __name__ == "__main__":
-    print("Neural ODE Training Runner with Memory Optimizations")
+    print("Neural ODE Training Runner with Multiple Data Directory Support")
     print("Features: Blocks 0→48 only, Adjoint backprop, LR Scheduling, Early Stopping, Memory optimized")
     print("")
     print("Usage:")
@@ -181,10 +200,9 @@ if __name__ == "__main__":
     print("  python training_runner.py cpu              # Force CPU")
     print("  python training_runner.py cuda             # Force CUDA")
     print("")
-    print("Memory optimizations:")
-    print("  - Sequential tensor loading (avoid 4x memory spike)")
-    print("  - Aggressive GPU memory cleanup")
-    print("  - Mixed precision training")
-    print("  - Immediate tensor deletion")
+    print("Data directory search order:")
+    print("  1. /media/visitor/Extreme SSD/data/complete_blocks")
+    print("  2. /media/visitor/Extreme SSD/data/endpoint_blocks")
+    print("  (Edit script to add more directories)")
     print("")
     sys.exit(main())

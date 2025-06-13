@@ -1,6 +1,7 @@
 """
 Simplified Neural ODE training for Evoformer using only blocks 0 and 48
 Uses adjoint method from torchdiffeq with memory optimizations
+MODIFIED: Support multiple data directories
 """
 
 import os
@@ -8,6 +9,7 @@ import gc
 import torch
 import argparse
 import sys
+#from torchdiffeq import odeint_adjoint as odeint
 from torchdiffeq import odeint
 import torch.optim as optim
 from evoformer_ode import EvoformerODEFunc, EvoformerODEFuncFast
@@ -149,34 +151,37 @@ def load_split_proteins(splits_dir: str, mode: str) -> List[str]:
     return proteins
 
 
-def get_available_proteins(data_dir: str, splits_dir: str, mode: str) -> List[str]:
-    """Get list of available protein IDs for the specified mode"""
+def get_available_proteins_multi_dir(data_dirs: List[str], splits_dir: str, mode: str) -> List[Tuple[str, str]]:
+    """Get list of available protein IDs and their data directories for the specified mode"""
     split_proteins = load_split_proteins(splits_dir, mode)
 
     available_proteins = []
     for protein_id in split_proteins:
-        protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
-        if os.path.isdir(protein_dir):
-            available_proteins.append(protein_id)
+        # Search all data directories for this protein
+        for data_dir in data_dirs:
+            protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+            if os.path.isdir(protein_dir):
+                available_proteins.append((protein_id, data_dir))
+                break  # Found it, don't search other directories
 
     return available_proteins
 
 
-def get_train_val_datasets(data_dir: str, splits_dir: str) -> Tuple[List[str], List[str]]:
-    """Get training and validation datasets"""
-    train_proteins = get_available_proteins(data_dir, splits_dir, 'training')
-    val_proteins = get_available_proteins(data_dir, splits_dir, 'validation')
+def get_train_val_datasets_multi_dir(data_dirs: List[str], splits_dir: str) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+    """Get training and validation datasets with their data directories"""
+    train_proteins = get_available_proteins_multi_dir(data_dirs, splits_dir, 'training')
+    val_proteins = get_available_proteins_multi_dir(data_dirs, splits_dir, 'validation')
     return train_proteins, val_proteins
 
 
-def filter_proteins_by_size(proteins: List[str], data_dir: str, max_residues: int = None) -> Tuple[List[str], List[str]]:
-    """Filter proteins by residue count"""
+def filter_proteins_by_size_multi_dir(proteins: List[Tuple[str, str]], max_residues: int = None) -> Tuple[List[Tuple[str, str]], List[str]]:
+    """Filter proteins by residue count, keeping (protein_id, data_dir) tuples"""
     if max_residues is None:
         return proteins, []
 
     valid_proteins = []
     oversized_proteins = []
-    for protein_id in proteins:
+    for protein_id, data_dir in proteins:
         try:
             protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
             m_path = os.path.join(protein_dir, "m_block_0.pt")
@@ -187,15 +192,15 @@ def filter_proteins_by_size(proteins: List[str], data_dir: str, max_residues: in
                 del m_test
 
                 if num_residues <= max_residues:
-                    valid_proteins.append(protein_id)
+                    valid_proteins.append((protein_id, data_dir))
                 else:
-                    oversized_proteins.append((protein_id, num_residues))
+                    oversized_proteins.append(protein_id)
             else:
-                oversized_proteins.append((protein_id, "unknown"))
+                oversized_proteins.append(protein_id)
 
         except Exception as e:
-            oversized_proteins.append((protein_id, f"error: {e}"))
-    return valid_proteins, [p[0] for p in oversized_proteins]
+            oversized_proteins.append(protein_id)
+    return valid_proteins, oversized_proteins
 
 
 def load_protein_blocks_sequential(protein_id: str, data_dir: str, device: str, max_cluster_size: int = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -296,10 +301,28 @@ def compute_adaptive_loss(pred_m: torch.Tensor, target_m: torch.Tensor,
 
     return total_loss
 
+def print_gpu_memory(step_name):
+    if torch.cuda.is_available():
+        allocated = torch.cuda.memory_allocated() / 1024 ** 3  # GB
+        reserved = torch.cuda.memory_reserved() / 1024 ** 3  # GB
+        print(f"  {step_name}: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved")
 
-def train_single_protein(protein_id: str, ode_func: torch.nn.Module, optimizer: torch.optim.Optimizer,
-                        scaler: GradScaler, args: argparse.Namespace) -> Dict:
+
+class StepCounter:
+    def __init__(self, ode_func):
+        self.ode_func = ode_func
+        self.step_count = 0
+
+    def __call__(self, t, state):
+        self.step_count += 1
+        return self.ode_func(t, state)
+
+def train_single_protein(protein_tuple: Tuple[str, str], ode_func: torch.nn.Module, optimizer: torch.optim.Optimizer,
+                         scaler: GradScaler, args: argparse.Namespace) -> Dict:
     """Train using 0→48 transformation with adjoint method"""
+
+    protein_id, data_dir = protein_tuple
+
 
     # Choose loading method based on config
     if getattr(args, 'use_sequential_loading', False):
@@ -308,14 +331,20 @@ def train_single_protein(protein_id: str, ode_func: torch.nn.Module, optimizer: 
         load_func = load_protein_blocks_standard
 
     # Load initial and final states
-    m0, z0, m48, z48 = load_func(protein_id, args.data_dir, args.device, args.reduced_cluster_size)
+    m0, z0, m48, z48 = load_func(protein_id, data_dir, args.device, args.reduced_cluster_size)
+    m0, z0, m48, z48 = load_func(protein_id, data_dir, args.device, args.reduced_cluster_size)
+
+    print(f"m0 shape: {m0.shape}, size: {m0.numel() * 4 / 1024 ** 2:.1f}MB")
+    print(f"z0 shape: {z0.shape}, size: {z0.numel() * 4 / 1024 ** 2:.1f}MB")
+    print(f"Combined state size: {(m0.numel() + z0.numel()) * 4 / 1024 ** 2:.1f}MB")
 
     optimizer.zero_grad()
 
     with autocast(enabled=args.use_amp):
-        # Solve ODE from 0 to 1 using adjoint method (automatic in torchdiffeq)
+        # Solve ODE from 0 to 1 using adjoint method
+        print_gpu_memory("Before odeint")
         trajectory = odeint(
-            ode_func,
+            ode_func,  # Wrapped function
             (m0, z0),
             torch.tensor([0.0, 1.0]).to(args.device),
             method=args.integrator,
@@ -336,6 +365,7 @@ def train_single_protein(protein_id: str, ode_func: torch.nn.Module, optimizer: 
         loss = compute_adaptive_loss(m_pred, m48, z_pred, z48)
 
     # Backward pass (uses adjoint method automatically)
+    print_gpu_memory("Before backward")
     if args.use_amp:
         scaler.scale(loss).backward()
         scaler.unscale_(optimizer)
@@ -354,14 +384,15 @@ def train_single_protein(protein_id: str, ode_func: torch.nn.Module, optimizer: 
     if getattr(args, 'aggressive_cleanup', False):
         aggressive_memory_cleanup()
 
+
     return {
         'protein': protein_id,
         'loss': loss_value
     }
 
-
-def validate_single_protein(protein_id: str, ode_func: torch.nn.Module, args: argparse.Namespace) -> Dict:
+def validate_single_protein(protein_tuple: Tuple[str, str], ode_func: torch.nn.Module, args: argparse.Namespace) -> Dict:
     """Validate using 0→48 transformation"""
+    protein_id, data_dir = protein_tuple  # Unpack the tuple
 
     # Choose loading method based on config
     if getattr(args, 'use_sequential_loading', False):
@@ -369,8 +400,8 @@ def validate_single_protein(protein_id: str, ode_func: torch.nn.Module, args: ar
     else:
         load_func = load_protein_blocks_standard
 
-    # Load initial and final states
-    m0, z0, m48, z48 = load_func(protein_id, args.data_dir, args.device, args.reduced_cluster_size)
+    # Load initial and final states (use the specific data_dir for this protein)
+    m0, z0, m48, z48 = load_func(protein_id, data_dir, args.device, args.reduced_cluster_size)
 
     with torch.no_grad():
         # Solve ODE from 0 to 1
@@ -408,18 +439,19 @@ def validate_single_protein(protein_id: str, ode_func: torch.nn.Module, args: ar
     }
 
 
-def validate_model(ode_func: torch.nn.Module, val_proteins: List[str], args: argparse.Namespace) -> Dict:
+def validate_model(ode_func: torch.nn.Module, val_proteins: List[Tuple[str, str]], args: argparse.Namespace) -> Dict:
     """Run validation on validation set"""
     ode_func.eval()
     val_losses = []
     successful_validations = 0
 
     with torch.no_grad():
-        for val_idx, protein_id in enumerate(val_proteins):
+        for val_idx, protein_tuple in enumerate(val_proteins):
+            protein_id = protein_tuple[0]  # Extract protein_id for display
             print(f"    [{val_idx + 1}/{len(val_proteins)}] Validating {protein_id}... ", end='', flush=True)
 
             try:
-                result = validate_single_protein(protein_id, ode_func, args)
+                result = validate_single_protein(protein_tuple, ode_func, args)
                 val_losses.append(result['loss'])
                 successful_validations += 1
                 print(f"✅ Loss: {result['loss']:.5f}")
@@ -453,7 +485,8 @@ def main():
     parser = argparse.ArgumentParser(description='Neural ODE Training with Memory Optimizations')
 
     # Core settings
-    parser.add_argument('--data_dir', type=str, required=True, help='Data directory')
+    parser.add_argument('--data_dirs', type=str, nargs='+', required=True,
+                        help='Data directories (can specify multiple)')
     parser.add_argument('--splits_dir', type=str, default=None, help='Directory containing split files')
     parser.add_argument('--output_dir', type=str, default=None, help='Path to output directory')
     parser.add_argument('--experiment_name', type=str, default=None, help='Experiment name for logging')
@@ -507,7 +540,7 @@ def main():
         args.use_amp = False
 
     print(f"🚀 Starting Neural ODE Training with Memory Optimizations")
-    print(f"📁 Data directory: {args.data_dir}")
+    print(f"📁 Data directories: {args.data_dirs}")
     if args.splits_dir:
         print(f"📂 Splits directory: {args.splits_dir}")
     print(f"💻 Device: {args.device}")
@@ -525,23 +558,27 @@ def main():
 
     # Load dataset
     if args.splits_dir:
-        train_dataset_raw, val_dataset_raw = get_train_val_datasets(args.data_dir, args.splits_dir)
+        train_dataset_raw, val_dataset_raw = get_train_val_datasets_multi_dir(args.data_dirs, args.splits_dir)
         if not train_dataset_raw:
-            print(f"❌ No training proteins found in {args.data_dir}")
+            print(f"❌ No training proteins found in {args.data_dirs}")
             return
 
-        print(f"🧬 Raw training proteins: {len(train_dataset_raw)}")
-        print(f"🔍 Raw validation proteins: {len(val_dataset_raw)}")
+        # Convert back to just protein IDs for display
+        train_protein_ids = [protein_id for protein_id, _ in train_dataset_raw]
+        val_protein_ids = [protein_id for protein_id, _ in val_dataset_raw]
+
+        print(f"🧬 Raw training proteins: {len(train_protein_ids)}")
+        print(f"🔍 Raw validation proteins: {len(val_protein_ids)}")
 
         # Filter by size if args.max_residues is specified
         if args.max_residues is not None:
             print(f"\n📏 Applying size filter (max {args.max_residues} residues)...")
 
-            train_dataset, train_oversized = filter_proteins_by_size(
-                train_dataset_raw, args.data_dir, args.max_residues
+            train_dataset, train_oversized = filter_proteins_by_size_multi_dir(
+                train_dataset_raw, args.max_residues
             )
-            val_dataset, val_oversized = filter_proteins_by_size(
-                val_dataset_raw, args.data_dir, args.max_residues
+            val_dataset, val_oversized = filter_proteins_by_size_multi_dir(
+                val_dataset_raw, args.max_residues
             )
 
             print(f"\n📊 Final dataset sizes:")
@@ -561,21 +598,23 @@ def main():
             return
 
     else:
-        # Fallback to scanning all data
+        # Fallback to scanning all data directories
         all_proteins = []
-        for name in os.listdir(args.data_dir):
-            full_path = os.path.join(args.data_dir, name)
-            if (os.path.isdir(full_path) and name.endswith('_evoformer_blocks') and
-                    os.path.isdir(os.path.join(full_path, 'recycle_0'))):
-                protein_id = name.replace('_evoformer_blocks', '')
-                all_proteins.append(protein_id)
+        for data_dir in args.data_dirs:
+            for name in os.listdir(data_dir):
+                full_path = os.path.join(data_dir, name)
+                if (os.path.isdir(full_path) and name.endswith('_evoformer_blocks') and
+                        os.path.isdir(os.path.join(full_path, 'recycle_0'))):
+                    protein_id = name.replace('_evoformer_blocks', '')
+                    all_proteins.append((protein_id, data_dir))
+                    break  # Only take first occurrence
 
         train_dataset = sorted(all_proteins)
         val_dataset = []
 
         if args.max_residues is not None:
-            train_dataset, train_oversized = filter_proteins_by_size(
-                train_dataset, args.data_dir, args.max_residues
+            train_dataset, train_oversized = filter_proteins_by_size_multi_dir(
+                train_dataset, args.max_residues
             )
             print(f"📏 Size filter applied: {len(train_oversized)} proteins filtered out")
         else:
@@ -685,13 +724,23 @@ def main():
         print(f"🎛️  Current learning rate: {current_lr:.2e}")
 
         if logger:
-            logger.log_epoch_start(epoch + 1, args.epochs, train_dataset)
+            # Convert tuples back to protein IDs for logging
+            train_protein_ids = [protein_id for protein_id, _ in train_dataset]
+            logger.log_epoch_start(epoch + 1, args.epochs, train_protein_ids)
 
         epoch_losses = []
         successful_proteins = 0
         epoch_start_time = time.time()
 
-        for protein_idx, protein_id in enumerate(train_dataset):
+        for protein_idx, protein_tuple in enumerate(train_dataset):
+            protein_id = protein_tuple[0]  # Extract protein_id for display
+
+            # cleanup memory at the start of each protein processing
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                gc.collect()
+                torch.cuda.empty_cache()
+
             # Check time limit during epoch
             if max_time_seconds is not None:
                 elapsed_time = time.time() - training_start_time
@@ -705,7 +754,7 @@ def main():
             protein_start_time = time.time()
 
             try:
-                result = train_single_protein(protein_id, ode_func, optimizer, scaler, args)
+                result = train_single_protein(protein_tuple, ode_func, optimizer, scaler, args)
                 epoch_losses.append(result['loss'])
                 successful_proteins += 1
 
