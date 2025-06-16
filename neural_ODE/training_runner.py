@@ -68,7 +68,7 @@ def main():
         'reduced_cluster_size': 64,
         'hidden_dim': 64,
         'integrator': 'rk4',
-        'use_fast_ode': False,
+        'use_fast_ode': True,
         'use_amp': torch.cuda.is_available(),
         'output_dir': str(output_dir),
         'experiment_name': experiment_name,
@@ -86,7 +86,7 @@ def main():
         # NEW: Preliminary training settings
         'enable_preliminary_training': True,  # Set to True to enable
         'prelim_data_dir': str(prelim_data_dir),
-        'prelim_block_stride': 8,
+        'prelim_block_stride': 4,
         'prelim_max_epochs': 100,
         'prelim_early_stopping_min_delta': 0.01,
     }

@@ -992,6 +992,7 @@ def main():
                         help='Number of blocks to process at once in preliminary training (default: 4)')
     parser.add_argument('--prelim_reduced_cluster_size', type=int, default=None,
                         help='Cluster size for preliminary training (default: half of --reduced_cluster_size)')
+    # Add this argument with the other model settings
     parser.add_argument('--prelim_aggressive_cleanup', action='store_true', default=True,
                         help='Extra aggressive memory cleanup during preliminary training (default: True)')
     # ODE solver tolerance for preliminary training
@@ -999,6 +1000,7 @@ def main():
                         help='Relative tolerance for ODE solver in preliminary training')
     parser.add_argument('--prelim_atol', type=float, default=1e-5,
                         help='Absolute tolerance for ODE solver in preliminary training')
+
 
     args = parser.parse_args()
 

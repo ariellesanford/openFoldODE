@@ -56,7 +56,7 @@ def main():
     # Get script directory and set up paths
     script_dir = Path(__file__).parent
     data_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
-    splits_dir = script_dir / "data_splits" / "mini"
+    splits_dir = script_dir / "data_splits" / "jumbo"
     test_script = script_dir / "test_model.py"
     outputs_dir = script_dir / "trained_models"
 
