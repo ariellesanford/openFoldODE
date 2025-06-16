@@ -39,10 +39,10 @@ def get_experiment_configs():
                 'epochs': 1,
                 'max_residues': 100,
                 'learning_rate': 1e-3,
-                'reduced_cluster_size': 128,
-                'hidden_dim': 128,
+                'reduced_cluster_size': 64,
+                'hidden_dim': 64,
                 'integrator': 'rk4',
-                'use_fast_ode': True,
+                'use_fast_ode': False,
                 'use_amp': torch.cuda.is_available(),
                 'output_dir': str(output_dir),
                 'experiment_name': f'{base_timestamp}_baseline_no_prelim',
@@ -55,7 +55,11 @@ def get_experiment_configs():
                 'max_time_hours': 24,
                 'use_sequential_loading': True,
                 'aggressive_cleanup': True,
-                'enable_preliminary_training': False
+                'enable_preliminary_training': True,
+                'prelim_data_dir': str(prelim_data_dir),
+                'prelim_block_stride': 8,
+                'prelim_max_epochs': 1,
+                'prelim_early_stopping_min_delta': 0.01,
             }
         },
         {

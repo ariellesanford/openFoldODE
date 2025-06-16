@@ -1,7 +1,7 @@
 """
 Simplified Neural ODE training for Evoformer using only blocks 0 and 48
 Uses adjoint method from torchdiffeq with memory optimizations
-MODIFIED: Support multiple data directories and preliminary intermediate block training
+FIXED: Unified cluster sizes and max_residues for preliminary and main training
 """
 
 import os
@@ -215,6 +215,30 @@ def get_available_proteins_single_dir(data_dir: str, splits_dir: str, mode: str)
     return available_proteins
 
 
+def filter_proteins_by_size_single_dir(proteins: List[str], data_dir: str, max_residues: int = None) -> List[str]:
+    """Filter proteins by residue count for single directory"""
+    if max_residues is None:
+        return proteins
+
+    valid_proteins = []
+    for protein_id in proteins:
+        try:
+            protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+            m_path = os.path.join(protein_dir, "m_block_0.pt")
+
+            if os.path.exists(m_path):
+                m_test = torch.load(m_path, map_location='cpu')
+                num_residues = m_test.shape[-2] if m_test.dim() == 4 else m_test.shape[-2]
+                del m_test
+
+                if num_residues <= max_residues:
+                    valid_proteins.append(protein_id)
+
+        except Exception:
+            continue
+    return valid_proteins
+
+
 def load_protein_blocks_strided_memory_efficient(protein_id: str, data_dir: str, device: str, max_cluster_size: int,
                                                  block_stride: int, max_blocks: int = 49) -> Tuple[
     torch.Tensor, torch.Tensor, List[int]]:
@@ -402,24 +426,23 @@ def compute_adaptive_loss(pred_m: torch.Tensor, target_m: torch.Tensor,
 def train_single_protein_strided(protein_id: str, data_dir: str, ode_func: torch.nn.Module,
                                  optimizer: torch.optim.Optimizer, scaler: GradScaler,
                                  args: argparse.Namespace) -> Dict:
-    """Memory-efficient strided training with chunked supervision"""
+    """Memory-efficient strided training with chunked supervision - FIXED: Uses same cluster size as main training"""
 
-    # Get preliminary training cluster size (smaller than main training)
-    prelim_cluster_size = getattr(args, 'prelim_reduced_cluster_size', None)
-    if prelim_cluster_size is None:
-        prelim_cluster_size = args.reduced_cluster_size // 2
-    prelim_cluster_size = max(prelim_cluster_size, 16)  # Minimum of 16
+    # FIXED: Use SAME cluster size as main training (no more separate prelim cluster size)
+    cluster_size = args.reduced_cluster_size
+
+    print(f"🔧 Using unified cluster size: {cluster_size} (same for preliminary and main training)")
 
     # Load only initial state and get block indices
     m_init, z_init, selected_blocks = load_protein_blocks_strided_memory_efficient(
-        protein_id, data_dir, args.device, prelim_cluster_size,
+        protein_id, data_dir, args.device, cluster_size,
         args.prelim_block_stride, args.max_blocks
     )
 
     num_blocks = len(selected_blocks)
     chunk_size = getattr(args, 'prelim_chunk_size', 4)  # Process 4 blocks at a time by default
 
-    print(f"Memory-efficient strided: {num_blocks} blocks, chunk_size={chunk_size}, cluster_size={prelim_cluster_size}")
+    print(f"Memory-efficient strided: {num_blocks} blocks, chunk_size={chunk_size}, cluster_size={cluster_size}")
 
     optimizer.zero_grad()
     total_loss = 0
@@ -449,7 +472,7 @@ def train_single_protein_strided(protein_id: str, data_dir: str, ode_func: torch
             # Load the state from the end of previous chunk
             chunk_m_init, chunk_z_init = load_single_target_block(
                 protein_id, data_dir, selected_blocks[chunk_start],
-                args.device, prelim_cluster_size
+                args.device, cluster_size  # FIXED: Use same cluster size
             )
 
         with autocast(enabled=args.use_amp):
@@ -470,7 +493,7 @@ def train_single_protein_strided(protein_id: str, data_dir: str, ode_func: torch
             for i, block_idx in enumerate(chunk_blocks):
                 # Load target block on demand
                 m_target, z_target = load_single_target_block(
-                    protein_id, data_dir, block_idx, args.device, prelim_cluster_size
+                    protein_id, data_dir, block_idx, args.device, cluster_size  # FIXED: Use same cluster size
                 )
 
                 m_pred = trajectory[0][i]
@@ -493,7 +516,7 @@ def train_single_protein_strided(protein_id: str, data_dir: str, ode_func: torch
                 del chunk_m_init, chunk_z_init
 
             # Aggressive cleanup after each chunk
-            if getattr(args, 'prelim_aggressive_cleanup', True):
+            if getattr(args, 'aggressive_cleanup', True):
                 aggressive_memory_cleanup()
 
     # Average loss across all chunks
@@ -515,7 +538,7 @@ def train_single_protein_strided(protein_id: str, data_dir: str, ode_func: torch
 
     # Final cleanup
     del m_init, z_init, total_loss, avg_loss
-    if getattr(args, 'prelim_aggressive_cleanup', True):
+    if getattr(args, 'aggressive_cleanup', True):
         aggressive_memory_cleanup()
 
     return {
@@ -523,22 +546,21 @@ def train_single_protein_strided(protein_id: str, data_dir: str, ode_func: torch
         'loss': loss_value,
         'selected_blocks': selected_blocks,
         'num_chunks': total_chunks,
-        'prelim_cluster_size': prelim_cluster_size,
-        'approach': 'memory_efficient_chunked'
+        'cluster_size': cluster_size,  # FIXED: Report unified cluster size
+        'approach': 'memory_efficient_chunked_unified'
     }
 
 
 def validate_single_protein_strided(protein_id: str, data_dir: str, ode_func: torch.nn.Module,
                                     args: argparse.Namespace) -> Dict:
-    """Memory-efficient strided validation with chunked supervision"""
+    """Memory-efficient strided validation with chunked supervision - FIXED: Uses same cluster size as main training"""
 
-    # Use same cluster size as training
-    prelim_cluster_size = getattr(args, 'prelim_reduced_cluster_size', args.reduced_cluster_size // 2)
-    prelim_cluster_size = max(prelim_cluster_size, 16)
+    # FIXED: Use SAME cluster size as main training
+    cluster_size = args.reduced_cluster_size
 
     # Load only initial state and get block indices
     m_init, z_init, selected_blocks = load_protein_blocks_strided_memory_efficient(
-        protein_id, data_dir, args.device, prelim_cluster_size,
+        protein_id, data_dir, args.device, cluster_size,
         args.prelim_block_stride, args.max_blocks
     )
 
@@ -572,7 +594,7 @@ def validate_single_protein_strided(protein_id: str, data_dir: str, ode_func: to
             else:
                 chunk_m_init, chunk_z_init = load_single_target_block(
                     protein_id, data_dir, selected_blocks[chunk_start],
-                    args.device, prelim_cluster_size
+                    args.device, cluster_size  # FIXED: Use same cluster size
                 )
 
             # Solve ODE for this chunk
@@ -591,7 +613,7 @@ def validate_single_protein_strided(protein_id: str, data_dir: str, ode_func: to
 
             for i, block_idx in enumerate(chunk_blocks):
                 m_target, z_target = load_single_target_block(
-                    protein_id, data_dir, block_idx, args.device, prelim_cluster_size
+                    protein_id, data_dir, block_idx, args.device, cluster_size  # FIXED: Use same cluster size
                 )
 
                 m_pred = trajectory[0][i]
@@ -612,7 +634,7 @@ def validate_single_protein_strided(protein_id: str, data_dir: str, ode_func: to
             if chunk_start > 0:
                 del chunk_m_init, chunk_z_init
 
-            if getattr(args, 'prelim_aggressive_cleanup', True):
+            if getattr(args, 'aggressive_cleanup', True):
                 aggressive_memory_cleanup()
 
     # Average loss across all chunks
@@ -620,7 +642,7 @@ def validate_single_protein_strided(protein_id: str, data_dir: str, ode_func: to
 
     # Final cleanup
     del m_init, z_init, total_loss
-    if getattr(args, 'prelim_aggressive_cleanup', True):
+    if getattr(args, 'aggressive_cleanup', True):
         aggressive_memory_cleanup()
 
     return {
@@ -628,31 +650,29 @@ def validate_single_protein_strided(protein_id: str, data_dir: str, ode_func: to
         'loss': avg_loss,
         'selected_blocks': selected_blocks,
         'num_chunks': total_chunks,
-        'prelim_cluster_size': prelim_cluster_size
+        'cluster_size': cluster_size  # FIXED: Report unified cluster size
     }
 
 
 def run_preliminary_training(ode_func: torch.nn.Module, optimizer: torch.optim.Optimizer,
                              scaler: GradScaler, args: argparse.Namespace, logger) -> bool:
-    """Run preliminary training on intermediate blocks with memory optimizations"""
-    print(f"\n🚀 PRELIMINARY TRAINING PHASE (MEMORY-EFFICIENT)")
+    """Run preliminary training on intermediate blocks with memory optimizations - FIXED: Unified cluster sizes and max_residues"""
+    print(f"\n🚀 PRELIMINARY TRAINING PHASE (UNIFIED CLUSTER SIZES)")
     print(f"=" * 60)
     print(f"📁 Preliminary data directory: {args.prelim_data_dir}")
     print(f"🔢 Block stride: {args.prelim_block_stride}")
     print(f"📈 Max epochs: {args.prelim_max_epochs}")
     print(f"🛑 Early stopping min delta: {args.prelim_early_stopping_min_delta}")
 
-    # Memory optimization settings
-    prelim_cluster_size = getattr(args, 'prelim_reduced_cluster_size', None)
-    if prelim_cluster_size is None:
-        prelim_cluster_size = args.reduced_cluster_size // 2
-    prelim_cluster_size = max(prelim_cluster_size, 16)
+    # FIXED: Use SAME cluster size as main training (no more separate prelim cluster size)
+    cluster_size = args.reduced_cluster_size
     chunk_size = getattr(args, 'prelim_chunk_size', 4)
 
-    print(f"💾 Memory optimizations:")
-    print(f"   Cluster size: {prelim_cluster_size} (vs {args.reduced_cluster_size} main)")
+    print(f"💾 Memory and dimension settings:")
+    print(f"   Cluster size: {cluster_size} (SAME as main training)")
     print(f"   Chunk size: {chunk_size} blocks")
-    print(f"   Aggressive cleanup: {getattr(args, 'prelim_aggressive_cleanup', True)}")
+    print(f"   Aggressive cleanup: {getattr(args, 'aggressive_cleanup', True)}")
+    print(f"   Max residues: {args.max_residues} (SAME as main training)")
 
     # Get preliminary training proteins
     prelim_train_proteins = get_available_proteins_single_dir(
@@ -662,8 +682,26 @@ def run_preliminary_training(ode_func: torch.nn.Module, optimizer: torch.optim.O
         args.prelim_data_dir, args.splits_dir, 'validation'
     )
 
-    print(f"🧬 Preliminary training proteins: {len(prelim_train_proteins)}")
-    print(f"🔍 Preliminary validation proteins: {len(prelim_val_proteins)}")
+    # FIXED: Apply same max_residues filter as main training
+    if args.max_residues is not None:
+        print(f"📏 Applying max_residues filter to preliminary training: {args.max_residues}")
+        original_train_count = len(prelim_train_proteins)
+        original_val_count = len(prelim_val_proteins)
+
+        prelim_train_proteins = filter_proteins_by_size_single_dir(
+            prelim_train_proteins, args.prelim_data_dir, args.max_residues
+        )
+        prelim_val_proteins = filter_proteins_by_size_single_dir(
+            prelim_val_proteins, args.prelim_data_dir, args.max_residues
+        )
+
+        print(f"   Training: {len(prelim_train_proteins)}/{original_train_count} proteins (after size filter)")
+        print(f"   Validation: {len(prelim_val_proteins)}/{original_val_count} proteins (after size filter)")
+    else:
+        print(f"📏 No max_residues filter applied to preliminary training")
+
+    print(f"🧬 Final preliminary training proteins: {len(prelim_train_proteins)}")
+    print(f"🔍 Final preliminary validation proteins: {len(prelim_val_proteins)}")
 
     if not prelim_train_proteins:
         print("❌ No preliminary training proteins found")
@@ -681,11 +719,17 @@ def run_preliminary_training(ode_func: torch.nn.Module, optimizer: torch.optim.O
     for epoch in range(args.prelim_max_epochs):
         print(f"\n📈 Preliminary Epoch {epoch + 1}/{args.prelim_max_epochs}")
 
+        # FIXED: Log preliminary training epochs if logger is available
+        if logger:
+            logger.log_epoch_start(epoch + 1, args.prelim_max_epochs, prelim_train_proteins, is_preliminary=True)
+
         epoch_losses = []
         successful_proteins = 0
 
         for protein_idx, protein_id in enumerate(prelim_train_proteins):
             print(f"  [{protein_idx + 1}/{len(prelim_train_proteins)}] {protein_id}... ", end='', flush=True)
+
+            protein_start_time = time.time()
 
             try:
                 result = train_single_protein_strided(
@@ -697,9 +741,27 @@ def run_preliminary_training(ode_func: torch.nn.Module, optimizer: torch.optim.O
                 # Show memory info for first protein
                 if protein_idx == 0:
                     print(
-                        f"✅ Loss: {result['loss']:.5f} ({result['num_chunks']} chunks, {result['prelim_cluster_size']} clusters)")
+                        f"✅ Loss: {result['loss']:.5f} ({result['num_chunks']} chunks, {result['cluster_size']} clusters)")
                 else:
                     print(f"✅ Loss: {result['loss']:.5f}")
+
+                # FIXED: Log preliminary protein steps if logger is available
+                if logger:
+                    protein_time = time.time() - protein_start_time
+                    logger.log_protein_step(
+                        protein_id=protein_id,
+                        step_idx=protein_idx,
+                        loss=result['loss'],
+                        step_info={
+                            'approach': 'preliminary_strided_unified',
+                            'num_blocks': len(result['selected_blocks']),
+                            'cluster_size': result['cluster_size'],
+                            'block_stride': args.prelim_block_stride,
+                            'selected_blocks': result['selected_blocks']
+                        },
+                        time_taken=protein_time,
+                        is_preliminary=True
+                    )
 
             except Exception as e:
                 print(f"❌ Error: {str(e)[:50]}...")
@@ -744,6 +806,10 @@ def run_preliminary_training(ode_func: torch.nn.Module, optimizer: torch.optim.O
                     'successful_validations': len(val_losses),
                 }
 
+        # FIXED: Log preliminary epoch end if logger is available
+        if logger:
+            logger.log_epoch_end(val_results, is_preliminary=True)
+
         # Epoch summary
         if epoch_losses:
             avg_train_loss = sum(epoch_losses) / len(epoch_losses)
@@ -763,6 +829,7 @@ def run_preliminary_training(ode_func: torch.nn.Module, optimizer: torch.optim.O
 
     print(f"\n✅ Preliminary training completed!")
     print(f"🎯 Best preliminary validation loss: {prelim_early_stopping.get_best_loss():.4f}")
+    print(f"🔧 Cluster size consistency: {cluster_size} (maintained throughout)")
     print(f"=" * 60)
 
     return True
@@ -954,7 +1021,7 @@ def main():
     parser.add_argument('--restore_best_weights', action='store_true', default=True,
                         help='Restore best model weights when early stopping triggers')
 
-    # PRELIMINARY TRAINING ARGUMENTS
+    # PRELIMINARY TRAINING ARGUMENTS - FIXED: Removed separate cluster size option
     parser.add_argument('--enable_preliminary_training', action='store_true',
                         help='Enable preliminary training on intermediate blocks')
     parser.add_argument('--prelim_data_dir', type=str, required=False,
@@ -970,14 +1037,14 @@ def main():
 
     # Model settings
     parser.add_argument('--use_fast_ode', action='store_true', help='Use fast ODE implementation')
-    parser.add_argument('--reduced_cluster_size', type=int, default=64, help='Max cluster size')
+    parser.add_argument('--reduced_cluster_size', type=int, default=64, help='Max cluster size (used for BOTH preliminary and main training)')
     parser.add_argument('--hidden_dim', type=int, default=64, help='Hidden dimension')
     parser.add_argument('--integrator', choices=['dopri5', 'rk4', 'euler'], default='rk4', help='ODE integrator')
 
     # Optimization settings
     parser.add_argument('--use_amp', action='store_true', help='Use automatic mixed precision')
     parser.add_argument('--max_residues', type=int, default=None,
-                        help='Skip proteins with more than N residues (omit for no limit)')
+                        help='Skip proteins with more than N residues (applies to BOTH preliminary and main training)')
     parser.add_argument('--max_time_hours', type=float, default=None,
                         help='Maximum training time in hours (omit for no limit)')
 
@@ -987,12 +1054,9 @@ def main():
     parser.add_argument('--aggressive_cleanup', action='store_true',
                         help='Use aggressive memory cleanup between operations')
 
-    # Add preliminary memory management arguments
+    # Preliminary memory management arguments - FIXED: Removed separate cluster size
     parser.add_argument('--prelim_chunk_size', type=int, default=4,
                         help='Number of blocks to process at once in preliminary training (default: 4)')
-    parser.add_argument('--prelim_reduced_cluster_size', type=int, default=None,
-                        help='Cluster size for preliminary training (default: half of --reduced_cluster_size)')
-    # Add this argument with the other model settings
     parser.add_argument('--prelim_aggressive_cleanup', action='store_true', default=True,
                         help='Extra aggressive memory cleanup during preliminary training (default: True)')
     # ODE solver tolerance for preliminary training
@@ -1000,7 +1064,6 @@ def main():
                         help='Relative tolerance for ODE solver in preliminary training')
     parser.add_argument('--prelim_atol', type=float, default=1e-5,
                         help='Absolute tolerance for ODE solver in preliminary training')
-
 
     args = parser.parse_args()
 
@@ -1028,9 +1091,12 @@ def main():
     if args.device == 'cpu':
         args.use_amp = False
 
-    print(f"🚀 Starting Neural ODE Training with Memory Optimizations")
+    print(f"🚀 Starting Neural ODE Training with UNIFIED CLUSTER SIZES")
     if args.enable_preliminary_training:
-        print(f"🔄 Preliminary training enabled on intermediate blocks")
+        print(f"🔄 Preliminary training enabled with SAME cluster size as main training")
+        print(f"   Cluster size: {args.reduced_cluster_size} (unified for both phases)")
+        if args.max_residues:
+            print(f"   Max residues: {args.max_residues} (applied to both phases)")
     print(f"📁 Data directories: {args.data_dirs}")
     if args.splits_dir:
         print(f"📂 Splits directory: {args.splits_dir}")
@@ -1063,7 +1129,7 @@ def main():
 
         # Filter by size if args.max_residues is specified
         if args.max_residues is not None:
-            print(f"\n📏 Applying size filter (max {args.max_residues} residues)...")
+            print(f"\n📏 Applying size filter (max {args.max_residues} residues) to BOTH main and preliminary training...")
 
             train_dataset, train_oversized = filter_proteins_by_size_multi_dir(
                 train_dataset_raw, args.max_residues
@@ -1169,6 +1235,7 @@ def main():
                 'early_stopping': early_stopping is not None,
                 'adjoint_method': True,
                 'preliminary_training': args.enable_preliminary_training,
+                'unified_cluster_sizes': True,  # FIXED: Flag for unified cluster sizes
                 'memory_optimizations': {
                     'sequential_loading': args.use_sequential_loading,
                     'aggressive_cleanup': args.aggressive_cleanup
@@ -1203,7 +1270,11 @@ def main():
     max_time_seconds = args.max_time_hours * 3600 if args.max_time_hours is not None else None
 
     if logger:
-        logger.log_training_start()
+        # Start main training phase (preliminary training start was already logged if it occurred)
+        if not args.enable_preliminary_training:
+            logger.log_training_start()
+        else:
+            logger.log_main_training_start()  # NEW: Separate method for main phase start
 
     print(f"\n🚀 MAIN TRAINING PHASE (0→48 blocks)")
     print(f"=" * 60)
@@ -1227,7 +1298,7 @@ def main():
         if logger:
             # Convert tuples back to protein IDs for logging
             train_protein_ids = [protein_id for protein_id, _ in train_dataset]
-            logger.log_epoch_start(epoch + 1, args.epochs, train_protein_ids)
+            logger.log_epoch_start(epoch + 1, args.epochs, train_protein_ids, is_preliminary=False)
 
         epoch_losses = []
         successful_proteins = 0
@@ -1267,8 +1338,9 @@ def main():
                         protein_id=protein_id,
                         step_idx=protein_idx,
                         loss=result['loss'],
-                        step_info={'approach': 'adjoint_0_to_48', 'num_blocks': 48},
-                        time_taken=protein_time
+                        step_info={'approach': 'adjoint_0_to_48_unified', 'num_blocks': 48, 'cluster_size': args.reduced_cluster_size},
+                        time_taken=protein_time,
+                        is_preliminary=False
                     )
 
             except Exception as e:
@@ -1297,7 +1369,7 @@ def main():
             print(f"    Time: {val_time:.1f}s")
 
         if logger:
-            logger.log_epoch_end(val_results)
+            logger.log_epoch_end(val_results, is_preliminary=False)
 
         # Compute epoch statistics
         if epoch_losses:
@@ -1388,8 +1460,10 @@ def main():
                 'interrupted_by_timeout': interrupted_by_timeout,
                 'interrupted_at_epoch': final_epoch if interrupted_by_timeout else None,
                 'max_time_hours': args.max_time_hours,
-                'method': 'adjoint_0_to_48',
+                'method': 'adjoint_0_to_48_unified',
                 'preliminary_training_enabled': args.enable_preliminary_training,
+                'unified_cluster_sizes': True,  # FIXED: Track that cluster sizes were unified
+                'cluster_size': args.reduced_cluster_size,  # FIXED: Record the unified cluster size
                 'memory_optimizations': {
                     'sequential_loading': args.use_sequential_loading,
                     'aggressive_cleanup': args.aggressive_cleanup
