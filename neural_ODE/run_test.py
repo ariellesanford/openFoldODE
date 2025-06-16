@@ -13,50 +13,36 @@ from datetime import datetime
 import re
 
 
-def find_latest_model(outputs_dir: Path) -> Path:
-    """Find the most recent model file in outputs directory"""
+def find_specific_model(outputs_dir: Path, model_name: str) -> Path:
+    """Find the specific model file"""
+    model_path = outputs_dir / model_name
 
-    # Look for model files
-    model_patterns = [
-        "*_final_model.pt",
-        "*_model.pt",
-        "*.pt"
-    ]
-
-    model_files = []
-    for pattern in model_patterns:
-        model_files.extend(outputs_dir.glob(pattern))
-
-    if not model_files:
+    if model_path.exists():
+        return model_path
+    else:
         return None
 
-    # Sort by modification time (most recent first)
-    model_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
 
-    return model_files[0]
-
-
-def extract_timestamp_from_model_path(model_path: Path) -> str:
-    """Extract timestamp from model filename like adjoint_training_20250605_112329_final_model.pt"""
+def extract_full_model_name_from_path(model_path: Path) -> str:
+    """Extract full model name from model filename like 20250613_180436_baseline_no_prelim_final_model.pt"""
     model_name = model_path.stem  # Remove .pt extension
 
-    # Look for pattern like: adjoint_training_20250605_112329_final_model
-    # Extract the date and time part (YYYYMMDD_HHMMSS)
-    pattern = r'(\d{8}_\d{6})'
-    match = re.search(pattern, model_name)
+    # Remove _final_model suffix if present
+    if model_name.endswith('_final_model'):
+        model_name = model_name[:-12]  # Remove '_final_model'
 
-    if match:
-        return match.group(1)
-    else:
-        # Fallback to current timestamp if pattern not found
-        return datetime.now().strftime("%Y%m%d_%H%M%S")
+    return model_name
 
 
 def main():
     # Get script directory and set up paths
     script_dir = Path(__file__).parent
-    data_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
-    splits_dir = script_dir / "data_splits" / "jumbo"
+    # Support multiple data directories
+    data_dirs = [
+        "/media/visitor/Extreme SSD/data/complete_blocks",
+        "/media/visitor/Extreme SSD/data/endpoint_blocks",
+    ]
+    splits_dir = script_dir / "data_splits" / "jumbo"  # Changed to jumbo
     test_script = script_dir / "test_model.py"
     outputs_dir = script_dir / "trained_models"
 
@@ -68,9 +54,18 @@ def main():
         print(f"❌ Test script not found: {test_script}")
         return 1
 
-    # Check if data directory exists
-    if not data_dir.exists():
-        print(f"❌ Data directory not found: {data_dir}")
+    # Check data directories
+    valid_data_dirs = []
+    for data_dir in data_dirs:
+        data_path = Path(data_dir)
+        if data_path.exists():
+            valid_data_dirs.append(str(data_path))
+            print(f"✅ Found data directory: {data_path}")
+        else:
+            print(f"⚠️  Data directory not found: {data_path}")
+
+    if not valid_data_dirs:
+        print(f"❌ No valid data directories found!")
         return 1
 
     # Check if splits directory exists
@@ -84,30 +79,39 @@ def main():
         print(f"   Have you trained a model yet?")
         return 1
 
-    # Find the latest model
-    print(f"🔍 Looking for models in: {outputs_dir}")
+    # Find the specific model
+    target_model_name = "20250615_180436_full_ode_with_prelim_64_final_model.pt"
+    print(f"🔍 Looking for specific model: {target_model_name}")
 
-    latest_model = find_latest_model(outputs_dir)
+    model_path = find_specific_model(outputs_dir, target_model_name)
 
-    if not latest_model:
-        print(f"❌ No model files found in {outputs_dir}")
-        print(f"   Expected files like: *_final_model.pt, *_model.pt, *.pt")
+    if not model_path:
+        print(f"❌ Model file not found: {target_model_name}")
+        print(f"   Looking in: {outputs_dir}")
+        # List available models for debugging
+        available_models = list(outputs_dir.glob("*.pt"))
+        if available_models:
+            print(f"   Available models:")
+            for model in available_models:
+                print(f"     - {model.name}")
         return 1
 
-    print(f"📦 Found latest model: {latest_model.name}")
+    print(f"📦 Found model: {model_path.name}")
 
-    # Extract timestamp and create predictions directory name
-    timestamp = extract_timestamp_from_model_path(latest_model)
-    predictions_dir_name = f"predictions_{timestamp}"
-    predictions_dir = data_dir / "post_evoformer_predictions" / predictions_dir_name
+    # Extract full model name and create predictions directory name
+    full_model_name = extract_full_model_name_from_path(model_path)
+    predictions_dir_name = f"predictions_{full_model_name}"
+    # Use first valid data directory for predictions
+    predictions_base_dir = Path(valid_data_dirs[0]).parent / "post_evoformer_predictions"
+    predictions_dir = predictions_base_dir / predictions_dir_name
 
-    print(f"📅 Using timestamp: {timestamp}")
+    print(f"🏷️  Full model name: {full_model_name}")
     print(f"📁 Predictions will be saved to: {predictions_dir}")
 
     # Show model info
     try:
-        model_size_mb = latest_model.stat().st_size / 1024 / 1024
-        model_date = datetime.fromtimestamp(latest_model.stat().st_mtime)
+        model_size_mb = model_path.stat().st_size / 1024 / 1024
+        model_date = datetime.fromtimestamp(model_path.stat().st_mtime)
         print(f"   Size: {model_size_mb:.1f} MB")
         print(f"   Modified: {model_date.strftime('%Y-%m-%d %H:%M:%S')}")
     except:
@@ -121,12 +125,12 @@ def main():
 
     # Build command
     cmd = [
-        sys.executable,
-        str(test_script),
-        "--model_path", str(latest_model),
-        "--data_dir", str(data_dir),
-        "--splits_dir", str(splits_dir)
-    ]
+              sys.executable,
+              str(test_script),
+              "--model_path", str(model_path),
+              "--data_dirs"] + valid_data_dirs + [
+              "--splits_dir", str(splits_dir)
+          ]
 
     # Add device selection
     if cpu_only:
@@ -147,7 +151,7 @@ def main():
 
     # Add result saving
     if save_results:
-        results_file = f"test_results_{timestamp}.json"
+        results_file = f"test_results_{full_model_name}.json"
         cmd.extend(["--output_file", results_file])
         print(f"💾 Results will be saved to: {results_file}")
 
@@ -169,7 +173,7 @@ def main():
             # Show what was created
             print(f"\n📁 Files created:")
             if save_results:
-                results_path = Path(f"test_results_{timestamp}.json")
+                results_path = Path(f"test_results_{full_model_name}.json")
                 if results_path.exists():
                     size_mb = results_path.stat().st_size / 1024 / 1024
                     print(f"  - {results_path.name} ({size_mb:.1f} MB) [Test results]")
@@ -209,7 +213,7 @@ def main():
 
 if __name__ == "__main__":
     print("🧪 Neural ODE Model Testing Runner")
-    print("Automatically finds latest model and runs comprehensive testing")
+    print("Automatically finds specific model and runs comprehensive testing")
     print("")
     print("Usage:")
     print("  python run_test.py                 # Basic test on all test proteins")
@@ -219,11 +223,11 @@ if __name__ == "__main__":
     print("  python run_test.py --cpu           # Force CPU testing")
     print("")
     print("Features:")
-    print("  🔍 Auto-finds latest trained model")
-    print("  🧪 Tests on all proteins in test split")
+    print("  🎯 Uses specific model: 20250613_180436_baseline_no_prelim_final_model.pt")
+    print("  🧪 Tests on all proteins in test split (jumbo)")
     print("  📊 Comprehensive evaluation metrics")
     print("  💾 Saves predictions for OpenFold structure module")
-    print("  📁 Creates timestamped predictions directory")
+    print("  📁 Creates full-model-name predictions directory")
     print("")
 
     exit(main())

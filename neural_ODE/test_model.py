@@ -2,6 +2,7 @@
 """
 Test a trained Neural ODE model on test data
 Loads a model from outputs folder and evaluates on test proteins
+MODIFIED: Support multiple data directories
 """
 
 import os
@@ -37,15 +38,18 @@ def load_split_proteins(splits_dir: str, mode: str) -> List[str]:
     return proteins
 
 
-def get_available_proteins(data_dir: str, splits_dir: str, mode: str) -> List[str]:
-    """Get list of available protein IDs for the specified mode"""
+def get_available_proteins_multi_dir(data_dirs: List[str], splits_dir: str, mode: str) -> List[Tuple[str, str]]:
+    """Get list of available protein IDs and their data directories for the specified mode"""
     split_proteins = load_split_proteins(splits_dir, mode)
 
     available_proteins = []
     for protein_id in split_proteins:
-        protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
-        if os.path.isdir(protein_dir):
-            available_proteins.append(protein_id)
+        # Search all data directories for this protein
+        for data_dir in data_dirs:
+            protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+            if os.path.isdir(protein_dir):
+                available_proteins.append((protein_id, data_dir))
+                break  # Found it, don't search other directories
 
     return available_proteins
 
@@ -63,6 +67,7 @@ def get_protein_info(protein_id: str, data_dir: str) -> Dict:
 
             return {
                 'protein_id': protein_id,
+                'data_dir': data_dir,
                 'num_residues': m.shape[-2],
                 'num_sequences': m.shape[0],
                 'msa_channels': m.shape[2]
@@ -130,14 +135,16 @@ def compute_adaptive_loss(pred_m: torch.Tensor, target_m: torch.Tensor,
     }
 
 
-def test_single_protein(protein_id: str, model: torch.nn.Module, config: Dict, device: str,
+def test_single_protein(protein_tuple: Tuple[str, str], model: torch.nn.Module, config: Dict, device: str,
                         save_predictions: bool = False, predictions_dir: str = None) -> Dict:
     """Test model on a single protein"""
+
+    protein_id, data_dir = protein_tuple
 
     # Load protein data
     m0, z0, m48, z48 = load_protein_blocks(
         protein_id,
-        config['data_dir'],
+        data_dir,
         device,
         config.get('reduced_cluster_size')
     )
@@ -177,6 +184,7 @@ def test_single_protein(protein_id: str, model: torch.nn.Module, config: Dict, d
             # Save metadata for structure module
             metadata = {
                 'protein_id': protein_id,
+                'data_dir': data_dir,
                 'num_residues': m_pred.shape[-2],
                 'num_sequences': m_pred.shape[0],
                 'msa_channels': m_pred.shape[-1],
@@ -213,6 +221,7 @@ def test_single_protein(protein_id: str, model: torch.nn.Module, config: Dict, d
 
     return {
         'protein_id': protein_id,
+        'data_dir': data_dir,
         'inference_time': inference_time,
         'loss': loss_dict,
         'msa_cosine_similarity': msa_cosine_sim,
@@ -268,16 +277,16 @@ def load_model(model_path: str, device: str) -> Tuple[torch.nn.Module, Dict]:
     return model, config
 
 
-def filter_proteins_by_size(proteins: List[str], data_dir: str, max_residues: int = None) -> List[str]:
+def filter_proteins_by_size(proteins: List[Tuple[str, str]], max_residues: int = None) -> List[Tuple[str, str]]:
     """Filter proteins by residue count"""
     if max_residues is None:
         return proteins
 
     valid_proteins = []
-    for protein_id in proteins:
+    for protein_id, data_dir in proteins:
         info = get_protein_info(protein_id, data_dir)
         if info and info['num_residues'] <= max_residues:
-            valid_proteins.append(protein_id)
+            valid_proteins.append((protein_id, data_dir))
 
     return valid_proteins
 
@@ -296,9 +305,18 @@ def print_results_summary(results: List[Dict]):
     inference_times = [r['inference_time'] for r in results]
     protein_sizes = [r['num_residues'] for r in results]
 
+    # Count proteins by data directory
+    data_dir_counts = {}
+    for r in results:
+        data_dir = r['data_dir']
+        data_dir_counts[data_dir] = data_dir_counts.get(data_dir, 0) + 1
+
     print(f"\n📊 TEST RESULTS SUMMARY")
     print("=" * 50)
     print(f"Proteins tested: {len(results)}")
+    print(f"Data directory distribution:")
+    for data_dir, count in data_dir_counts.items():
+        print(f"  {Path(data_dir).name}: {count} proteins")
     print(f"Average protein size: {sum(protein_sizes) / len(protein_sizes):.1f} residues")
     print(f"Size range: [{min(protein_sizes)}, {max(protein_sizes)}] residues")
 
@@ -321,13 +339,13 @@ def print_results_summary(results: List[Dict]):
 
     print(f"\n🏆 BEST PERFORMER:")
     best = results[best_idx]
-    print(f"   {best['protein_id']}: loss={best['loss']['total']:.4f}, "
+    print(f"   {best['protein_id']} ({Path(best['data_dir']).name}): loss={best['loss']['total']:.4f}, "
           f"msa_sim={best['msa_cosine_similarity']:.4f}, "
           f"pair_sim={best['pair_cosine_similarity']:.4f}")
 
     print(f"\n📉 WORST PERFORMER:")
     worst = results[worst_idx]
-    print(f"   {worst['protein_id']}: loss={worst['loss']['total']:.4f}, "
+    print(f"   {worst['protein_id']} ({Path(worst['data_dir']).name}): loss={worst['loss']['total']:.4f}, "
           f"msa_sim={worst['msa_cosine_similarity']:.4f}, "
           f"pair_sim={worst['pair_cosine_similarity']:.4f}")
 
@@ -338,8 +356,8 @@ def main():
     # Required arguments
     parser.add_argument('--model_path', type=str, required=True,
                         help='Path to trained model (.pt file)')
-    parser.add_argument('--data_dir', type=str, required=True,
-                        help='Directory containing protein data')
+    parser.add_argument('--data_dirs', type=str, nargs='+', required=True,
+                        help='Data directories (can specify multiple)')
     parser.add_argument('--splits_dir', type=str, required=True,
                         help='Directory containing data splits')
 
@@ -366,12 +384,25 @@ def main():
         print("CUDA not available, switching to CPU")
         args.device = 'cpu'
 
-    print("🧪 NEURAL ODE MODEL TESTING")
+    print("🧪 NEURAL ODE MODEL TESTING (MULTI-DIR)")
     print("=" * 50)
     print(f"📦 Model: {args.model_path}")
-    print(f"📁 Data: {args.data_dir}")
+    print(f"📁 Data directories: {args.data_dirs}")
     print(f"📂 Splits: {args.splits_dir}")
     print(f"💻 Device: {args.device}")
+
+    # Validate data directories
+    valid_data_dirs = []
+    for data_dir in args.data_dirs:
+        if os.path.exists(data_dir):
+            valid_data_dirs.append(data_dir)
+            print(f"✅ Found data directory: {data_dir}")
+        else:
+            print(f"⚠️  Data directory not found: {data_dir}")
+
+    if not valid_data_dirs:
+        print("❌ No valid data directories found!")
+        return 1
 
     # Set up predictions directory if saving
     predictions_dir = None
@@ -384,18 +415,21 @@ def main():
     # Load model
     model, config = load_model(args.model_path, args.device)
 
-    # Update config with current args
-    config['data_dir'] = args.data_dir
-
-    # Get test proteins
+    # Get test proteins with their data directories
     if args.protein_list:
-        # Use specific proteins provided
-        test_proteins = args.protein_list
-        print(f"🎯 Testing specific proteins: {test_proteins}")
+        # Use specific proteins provided - need to find them in data dirs
+        test_proteins = []
+        for protein_id in args.protein_list:
+            for data_dir in valid_data_dirs:
+                protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+                if os.path.isdir(protein_dir):
+                    test_proteins.append((protein_id, data_dir))
+                    break
+        print(f"🎯 Testing specific proteins: {[p[0] for p in test_proteins]}")
     else:
         # Use test split
-        test_proteins = get_available_proteins(args.data_dir, args.splits_dir, 'testing')
-        print(f"📋 Found {len(test_proteins)} test proteins")
+        test_proteins = get_available_proteins_multi_dir(valid_data_dirs, args.splits_dir, 'testing')
+        print(f"📋 Found {len(test_proteins)} test proteins across all data directories")
 
     if not test_proteins:
         print("❌ No test proteins found!")
@@ -404,7 +438,7 @@ def main():
     # Filter by size if specified
     if args.max_residues:
         original_count = len(test_proteins)
-        test_proteins = filter_proteins_by_size(test_proteins, args.data_dir, args.max_residues)
+        test_proteins = filter_proteins_by_size(test_proteins, args.max_residues)
         print(f"📏 Filtered by size (≤{args.max_residues}): {len(test_proteins)}/{original_count}")
 
     # Limit number if specified
@@ -413,22 +447,25 @@ def main():
         print(f"🔢 Limited to first {len(test_proteins)} proteins")
 
     print(f"\n🧬 Testing {len(test_proteins)} proteins:")
-    for protein_id in test_proteins:
-        info = get_protein_info(protein_id, args.data_dir)
+    for protein_id, data_dir in test_proteins:
+        info = get_protein_info(protein_id, data_dir)
         if info:
-            print(f"   {protein_id}: {info['num_residues']} residues, {info['num_sequences']} sequences")
+            data_dir_name = Path(data_dir).name
+            print(f"   {protein_id} ({data_dir_name}): {info['num_residues']} residues, {info['num_sequences']} sequences")
 
     # Run tests
     print(f"\n🚀 Starting tests...")
     results = []
     start_time = time.time()
 
-    for i, protein_id in enumerate(test_proteins):
-        print(f"\n[{i + 1}/{len(test_proteins)}] Testing {protein_id}... ", end='', flush=True)
+    for i, protein_tuple in enumerate(test_proteins):
+        protein_id, data_dir = protein_tuple
+        data_dir_name = Path(data_dir).name
+        print(f"\n[{i + 1}/{len(test_proteins)}] Testing {protein_id} ({data_dir_name})... ", end='', flush=True)
 
         try:
             result = test_single_protein(
-                protein_id, model, config, args.device,
+                protein_tuple, model, config, args.device,
                 save_predictions=args.save_predictions,
                 predictions_dir=predictions_dir
             )
@@ -458,13 +495,16 @@ def main():
     if args.output_file:
         output_data = {
             'model_path': args.model_path,
+            'data_dirs': valid_data_dirs,
             'test_date': datetime.now().isoformat(),
             'config': config,
-            'test_proteins': test_proteins,
+            'test_proteins': [(p[0], p[1]) for p in test_proteins],
             'results': results,
             'summary': {
                 'total_proteins': len(test_proteins),
                 'successful_tests': len(results),
+                'data_dir_distribution': {Path(data_dir).name: sum(1 for r in results if r['data_dir'] == data_dir)
+                                        for data_dir in valid_data_dirs},
                 'average_loss': sum(r['loss']['total'] for r in results) / len(results) if results else None,
                 'average_msa_similarity': sum(r['msa_cosine_similarity'] for r in results) / len(
                     results) if results else None,
