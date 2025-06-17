@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Training runner with preliminary training support
+Training runner with preliminary training support - Updated for restructured train_evoformer_ode.py
 Uses only blocks 0→48 with adjoint method
-MODIFIED: Support preliminary training on intermediate blocks
+MODIFIED: Updated for simplified configuration structure
 """
 
 import os
@@ -27,7 +27,7 @@ def main():
     # NEW: Preliminary training directory (for intermediate blocks)
     prelim_data_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
 
-    splits_dir = script_dir / "data_splits" / "jumbo"
+    splits_dir = script_dir / "data_splits" / "1fv5"
     output_dir = script_dir / "trained_models"
     training_script = script_dir / "train_evoformer_ode.py"
 
@@ -56,17 +56,17 @@ def main():
     output_dir.mkdir(exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    experiment_name = f"adjoint_training_{timestamp}"
+    experiment_name = f"{timestamp}_1fve"
 
-    # Configuration - simplified for adjoint method
+    # Configuration - simplified for restructured script
     config = {
         'data_dirs': valid_data_dirs,
         'splits_dir': str(splits_dir),
         'device': 'cuda' if torch.cuda.is_available() else 'cpu',
-        'epochs': 1000,
+        'epochs': 10000,
         'learning_rate': 1e-3,
-        'reduced_cluster_size': 64,
-        'hidden_dim': 64,
+        'reduced_cluster_size': 256,
+        'hidden_dim': 256,
         'integrator': 'rk4',
         'use_fast_ode': True,
         'use_amp': torch.cuda.is_available(),
@@ -78,17 +78,15 @@ def main():
         'min_lr': 1e-6,
         'early_stopping_patience': 10,
         'early_stopping_min_delta': 0.0001,
-        'restore_best_weights': True,
-        'max_time_hours': 42,
-        # Memory optimizations
-        'use_sequential_loading': True,
+        'max_time_hours': .2,
+        # Memory optimizations (aggressive_cleanup is the only configurable one now)
         'aggressive_cleanup': True,
         # NEW: Preliminary training settings
         'enable_preliminary_training': True,  # Set to True to enable
         'prelim_data_dir': str(prelim_data_dir),
-        'prelim_block_stride': 4,
-        'prelim_max_epochs': 100,
-        'prelim_early_stopping_min_delta': 0.01,
+        'prelim_block_stride': 1,
+        'prelim_max_epochs': 40,
+        'prelim_chunk_size': 4,  # Good balance of memory and stability
     }
 
     # Parse command line arguments
@@ -103,6 +101,11 @@ def main():
     if '--with-preliminary' in sys.argv or '--prelim' in sys.argv:
         config['enable_preliminary_training'] = True
         print("🔄 Preliminary training enabled via command line")
+
+    # Disable preliminary training
+    if '--no-preliminary' in sys.argv or '--no-prelim' in sys.argv:
+        config['enable_preliminary_training'] = False
+        print("⏭️  Preliminary training disabled via command line")
 
     # Quick test mode
     if '--quick-test' in sys.argv:
@@ -129,15 +132,30 @@ def main():
             print("❌ Error: --prelim-epochs requires an integer argument")
             return 1
 
-    print("🚀 Neural ODE Training Runner with Preliminary Training Support")
+    if '--prelim-chunk-size' in sys.argv:
+        try:
+            idx = sys.argv.index('--prelim-chunk-size')
+            config['prelim_chunk_size'] = int(sys.argv[idx + 1])
+        except (IndexError, ValueError):
+            print("❌ Error: --prelim-chunk-size requires an integer argument")
+            return 1
+
+    # Memory optimization flags
+    if '--small-memory' in sys.argv:
+        config['reduced_cluster_size'] = 32
+        config['prelim_chunk_size'] = 2
+        config['max_residues'] = 150
+        print("💾 Small memory mode: 32 clusters, chunk size 2, ≤150 residues")
+
+    print("🚀 Neural ODE Training Runner - Updated for Restructured Script")
     print(f"📁 Data directories: {valid_data_dirs}")
 
     if config['enable_preliminary_training']:
         print(f"🔄 Preliminary training enabled:")
         print(f"   Directory: {config['prelim_data_dir']}")
         print(f"   Block stride: {config['prelim_block_stride']}")
+        print(f"   Chunk size: {config['prelim_chunk_size']}")
         print(f"   Max epochs: {config['prelim_max_epochs']}")
-        print(f"   Early stopping delta: {config['prelim_early_stopping_min_delta']}")
 
         # Check if preliminary data directory exists
         if not prelim_data_dir.exists():
@@ -148,11 +166,11 @@ def main():
         print("⏭️  Preliminary training disabled")
 
     print(f"💻 Device: {config['device']}")
-    print(
-        f"🔧 Memory: Sequential loading={config['use_sequential_loading']}, Aggressive cleanup={config['aggressive_cleanup']}")
-    print(f"🎯 Method: Adjoint backpropagation (0→48 blocks only)")
+    print(f"🔧 Memory: Aggressive cleanup={config['aggressive_cleanup']}")
+    print(f"🧮 Method: Adjoint backpropagation (0→48 blocks only)")
+    print(f"📊 Model: {'Fast ODE' if config['use_fast_ode'] else 'Full ODE'}")
 
-    # Build command
+    # Build command for restructured script
     cmd = [sys.executable, str(training_script)]
     for key, value in config.items():
         if key == 'data_dirs':
@@ -169,8 +187,10 @@ def main():
     print(f"   Main training: {config['epochs']} epochs max")
     print(f"   Learning rate: {config['learning_rate']}")
     print(f"   Time limit: {config.get('max_time_hours', 'None')} hours")
+    print(f"   Cluster size: {config['reduced_cluster_size']}")
     if config['enable_preliminary_training']:
         print(f"   Preliminary: {config['prelim_max_epochs']} epochs on stride-{config['prelim_block_stride']} blocks")
+        print(f"   Chunk size: {config['prelim_chunk_size']} blocks per chunk")
 
     try:
         # Start the process with real-time output streaming
@@ -252,31 +272,40 @@ def main():
 
 
 if __name__ == "__main__":
-    print("Neural ODE Training Runner with Preliminary Training Support")
+    print("Neural ODE Training Runner - Updated for Restructured Script")
     print("Features: Blocks 0→48 only, Adjoint backprop, LR Scheduling, Early Stopping, Memory optimized")
-    print("NEW: Optional preliminary training on intermediate blocks with configurable stride")
+    print("NEW: Updated for simplified configuration structure")
     print("")
     print("Usage:")
-    print("  python training_runner.py                     # Standard training (no preliminary)")
-    print("  python training_runner.py --prelim            # Enable preliminary training")
-    print("  python training_runner.py --with-preliminary  # Enable preliminary training (alternative)")
-    print("  python training_runner.py --quick-test        # Quick 3-epoch test")
-    print("  python training_runner.py --prelim --prelim-stride 4   # Custom stride")
-    print("  python training_runner.py --prelim --prelim-epochs 5   # Custom prelim epochs")
-    print("  python training_runner.py cpu                 # Force CPU")
-    print("  python training_runner.py cuda                # Force CUDA")
+    print("  python training_runner.py                          # Standard training (with preliminary)")
+    print("  python training_runner.py --no-prelim              # Disable preliminary training")
+    print("  python training_runner.py --prelim                 # Enable preliminary training (default)")
+    print("  python training_runner.py --quick-test             # Quick 3-epoch test")
+    print("  python training_runner.py --prelim-stride 8        # Custom stride")
+    print("  python training_runner.py --prelim-epochs 50       # Custom prelim epochs")
+    print("  python training_runner.py --prelim-chunk-size 2    # Custom chunk size")
+    print("  python training_runner.py --small-memory           # Memory-optimized settings")
+    print("  python training_runner.py cpu                      # Force CPU")
+    print("  python training_runner.py cuda                     # Force CUDA")
     print("")
     print("Preliminary Training:")
     print("  • Runs BEFORE main 0→48 training")
-    print("  • Uses strided intermediate blocks (e.g., 0→8→16→24→32→40→48)")
+    print("  • Uses strided intermediate blocks (e.g., 0→4→8→12→16→20→24→28→32→36→40→44→48)")
     print("  • Helps initialize model with intermediate dynamics")
-    print("  • Configurable stride length and epoch count")
+    print("  • Configurable stride length, epoch count, and chunk size")
     print("  • Uses same validation set for early stopping")
+    print("  • Same early stopping delta as main training (hardcoded)")
+    print("")
+    print("Memory Optimization:")
+    print("  • Sequential loading always enabled (hardcoded)")
+    print("  • Best weights restoration always enabled (hardcoded)")
+    print("  • Configurable: cluster_size, chunk_size, aggressive_cleanup")
+    print("  • --small-memory flag for memory-constrained GPUs")
     print("")
     print("Data directory search order:")
     print("  1. /media/visitor/Extreme SSD/data/complete_blocks")
     print("  2. /media/visitor/Extreme SSD/data/endpoint_blocks")
-    print("  Preliminary: /media/visitor/Extreme SSD/data/incomplete_blocks")
+    print("  Preliminary: /media/visitor/Extreme SSD/data/complete_blocks")
     print("  (Edit script to add more directories)")
     print("")
     sys.exit(main())

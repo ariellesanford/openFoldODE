@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Automation script for running multiple Neural ODE training experiments
+Updated for restructured train_evoformer_ode.py
 Runs different configurations sequentially with proper naming and logging
 """
 
@@ -22,12 +23,11 @@ def get_experiment_configs():
         "/media/visitor/Extreme SSD/data/complete_blocks",
         "/media/visitor/Extreme SSD/data/endpoint_blocks",
     ]
-    splits_dir = script_dir / "data_splits" / "full"
+    splits_dir = script_dir / "data_splits" / "jumbo"
     output_dir = script_dir / "trained_models"
     prelim_data_dir = "/media/visitor/Extreme SSD/data/complete_blocks"
 
-    base_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
+    # Note: timestamp will be generated when each experiment starts
     configs = [
         {
             'name': 'baseline_no_prelim',
@@ -37,7 +37,6 @@ def get_experiment_configs():
                 'splits_dir': str(splits_dir),
                 'device': 'cuda' if torch.cuda.is_available() else 'cpu',
                 'epochs': 1,
-                'max_residues': 100,
                 'learning_rate': 1e-3,
                 'reduced_cluster_size': 64,
                 'hidden_dim': 64,
@@ -45,21 +44,20 @@ def get_experiment_configs():
                 'use_fast_ode': False,
                 'use_amp': torch.cuda.is_available(),
                 'output_dir': str(output_dir),
-                'experiment_name': f'{base_timestamp}_baseline_no_prelim',
+                'experiment_name': None,  # Will be set when experiment starts
+                #'max_residues': 50,
                 'lr_patience': 3,
                 'lr_factor': 0.5,
                 'min_lr': 1e-6,
                 'early_stopping_patience': 10,
                 'early_stopping_min_delta': 0.0001,
-                'restore_best_weights': True,
                 'max_time_hours': 24,
-                'use_sequential_loading': True,
                 'aggressive_cleanup': True,
                 'enable_preliminary_training': True,
                 'prelim_data_dir': str(prelim_data_dir),
                 'prelim_block_stride': 8,
                 'prelim_max_epochs': 1,
-                'prelim_early_stopping_min_delta': 0.01,
+                'prelim_chunk_size': 3,
             }
         },
         {
@@ -77,26 +75,24 @@ def get_experiment_configs():
                 'use_fast_ode': True,
                 'use_amp': torch.cuda.is_available(),
                 'output_dir': str(output_dir),
-                'experiment_name': f'{base_timestamp}_fast_ode_with_prelim',
+                'experiment_name': None,  # Will be set when experiment starts
                 'lr_patience': 3,
                 'lr_factor': 0.5,
                 'min_lr': 1e-6,
                 'early_stopping_patience': 10,
                 'early_stopping_min_delta': 0.0001,
-                'restore_best_weights': True,
                 'max_time_hours': 24,
-                'use_sequential_loading': True,
                 'aggressive_cleanup': True,
                 'enable_preliminary_training': True,
                 'prelim_data_dir': str(prelim_data_dir),
                 'prelim_block_stride': 8,
                 'prelim_max_epochs': 20,
-                'prelim_early_stopping_min_delta': 0.01,
+                'prelim_chunk_size': 4,
             }
         },
         {
-            'name': 'full_ode_with_prelim',
-            'description': 'Full ODE (not fast) with preliminary training',
+            'name': 'full_ode_with_prelim_medium',
+            'description': 'Full ODE (not fast) with preliminary training - medium size',
             'config': {
                 'data_dirs': data_dirs,
                 'splits_dir': str(splits_dir),
@@ -109,26 +105,24 @@ def get_experiment_configs():
                 'use_fast_ode': False,
                 'use_amp': torch.cuda.is_available(),
                 'output_dir': str(output_dir),
-                'experiment_name': f'{base_timestamp}_full_ode_with_prelim',
+                'experiment_name': None,  # Will be set when experiment starts
                 'lr_patience': 3,
                 'lr_factor': 0.5,
                 'min_lr': 1e-6,
                 'early_stopping_patience': 10,
                 'early_stopping_min_delta': 0.0001,
-                'restore_best_weights': True,
                 'max_time_hours': 24,
-                'use_sequential_loading': True,
                 'aggressive_cleanup': True,
                 'enable_preliminary_training': True,
                 'prelim_data_dir': str(prelim_data_dir),
                 'prelim_block_stride': 8,
                 'prelim_max_epochs': 20,
-                'prelim_early_stopping_min_delta': 0.01,
+                'prelim_chunk_size': 4,
             }
         },
         {
-            'name': 'full_ode_with_prelim',
-            'description': 'Full ODE (not fast) with preliminary training',
+            'name': 'full_ode_with_prelim_small',
+            'description': 'Full ODE (not fast) with preliminary training - small size',
             'config': {
                 'data_dirs': data_dirs,
                 'splits_dir': str(splits_dir),
@@ -141,21 +135,49 @@ def get_experiment_configs():
                 'use_fast_ode': False,
                 'use_amp': torch.cuda.is_available(),
                 'output_dir': str(output_dir),
-                'experiment_name': f'{base_timestamp}_full_ode_with_prelim',
+                'experiment_name': None,  # Will be set when experiment starts
                 'lr_patience': 3,
                 'lr_factor': 0.5,
                 'min_lr': 1e-6,
                 'early_stopping_patience': 10,
                 'early_stopping_min_delta': 0.0001,
-                'restore_best_weights': True,
                 'max_time_hours': 24,
-                'use_sequential_loading': True,
                 'aggressive_cleanup': True,
                 'enable_preliminary_training': True,
                 'prelim_data_dir': str(prelim_data_dir),
                 'prelim_block_stride': 8,
                 'prelim_max_epochs': 20,
-                'prelim_early_stopping_min_delta': 0.01,
+                'prelim_chunk_size': 4,
+            }
+        },
+        {
+            'name': 'fast_ode_different_stride',
+            'description': 'Fast ODE with preliminary training - different stride',
+            'config': {
+                'data_dirs': data_dirs,
+                'splits_dir': str(splits_dir),
+                'device': 'cuda' if torch.cuda.is_available() else 'cpu',
+                'epochs': 1000,
+                'learning_rate': 1e-3,
+                'reduced_cluster_size': 64,
+                'hidden_dim': 64,
+                'integrator': 'rk4',
+                'use_fast_ode': True,
+                'use_amp': torch.cuda.is_available(),
+                'output_dir': str(output_dir),
+                'experiment_name': None,  # Will be set when experiment starts
+                'lr_patience': 3,
+                'lr_factor': 0.5,
+                'min_lr': 1e-6,
+                'early_stopping_patience': 10,
+                'early_stopping_min_delta': 0.0001,
+                'max_time_hours': 24,
+                'aggressive_cleanup': True,
+                'enable_preliminary_training': True,
+                'prelim_data_dir': str(prelim_data_dir),
+                'prelim_block_stride': 12,  # Different stride
+                'prelim_max_epochs': 15,
+                'prelim_chunk_size': 6,  # Different chunk size
             }
         }
     ]
@@ -168,11 +190,17 @@ def run_experiment(experiment_config, script_path):
 
     name = experiment_config['name']
     description = experiment_config['description']
-    config = experiment_config['config']
+    config = experiment_config['config'].copy()  # Make a copy to avoid modifying original
 
     print(f"\n🚀 Starting experiment: {name}")
     print(f"📝 Description: {description}")
     print("=" * 80)
+
+    # Generate timestamp for this specific experiment
+    experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    config['experiment_name'] = f"{experiment_timestamp}_{name}"
+
+    print(f"🏷️  Experiment name: {config['experiment_name']}")
 
     # Build command
     cmd = [sys.executable, str(script_path)]
@@ -192,7 +220,12 @@ def run_experiment(experiment_config, script_path):
     print(f"   - Hidden dim: {config.get('hidden_dim')}")
     print(f"   - Cluster size: {config.get('reduced_cluster_size')}")
     print(f"   - Preliminary training: {config.get('enable_preliminary_training', False)}")
+    if config.get('enable_preliminary_training'):
+        print(f"     * Block stride: {config.get('prelim_block_stride')}")
+        print(f"     * Chunk size: {config.get('prelim_chunk_size')}")
+        print(f"     * Max epochs: {config.get('prelim_max_epochs')}")
     print(f"   - Max time: {config.get('max_time_hours')} hours")
+    print(f"   - Timestamp: {experiment_timestamp}")
     print("")
 
     start_time = time.time()
@@ -249,7 +282,7 @@ def main():
     # Get all experiment configurations
     experiments = get_experiment_configs()
 
-    print("🤖 Neural ODE Training Automation")
+    print("🤖 Neural ODE Training Automation - Updated for Restructured Script")
     print("=" * 80)
     print(f"📁 Training script: {training_script}")
     print(f"🧪 Total experiments: {len(experiments)}")
@@ -302,7 +335,17 @@ def main():
 
     if successful > 0:
         print(f"\n📁 Check results in: trained_models/")
-        print(f"🔍 Look for files matching pattern: *_{datetime.now().strftime('%Y%m%d')}_*")
+        print(f"🔍 Each experiment has its own timestamp:")
+        for result in results:
+            if result['success']:
+                print(f"     ✅ {result['name']} - Look for files with its unique timestamp")
+
+    print(f"\n🔧 Changes made for restructured script:")
+    print(f"   - Removed: restore_best_weights, use_sequential_loading")
+    print(f"   - Removed: prelim_early_stopping_min_delta, prelim_rtol, prelim_atol")
+    print(f"   - Kept configurable: prelim_chunk_size, prelim_block_stride")
+    print(f"   - Updated argument structure for new TrainingConfig")
+    print(f"   - Each experiment gets its own timestamp when it starts")
 
     return 0 if successful == len(experiments) else 1
 
