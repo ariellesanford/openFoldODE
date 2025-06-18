@@ -7,6 +7,8 @@ import pickle
 import time
 import torch
 import numpy as np
+from datetime import datetime
+from pathlib import Path
 
 logging.basicConfig()
 logger = logging.getLogger(__file__)
@@ -20,6 +22,116 @@ from openfold.utils.script_utils import (
 )
 from openfold.utils.tensor_utils import tensor_tree_map
 from openfold.np import protein
+
+
+def save_confidence_scores(protein_id: str, ptm_score: float, plddt_scores: torch.Tensor,
+                           output_dir: str, additional_info: dict = None):
+    """Save confidence scores to text file with comprehensive information"""
+
+    scores_file = os.path.join(output_dir, f"{protein_id}_confidence_scores.txt")
+
+    with open(scores_file, 'w') as f:
+        f.write(f"# OpenFold Confidence Scores for {protein_id}\n")
+        f.write(f"# Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"# Source: OpenFold Structure Module with Neural ODE Evoformer representations\n")
+        f.write(f"#\n")
+
+        # Main confidence metrics
+        mean_plddt = plddt_scores.mean().item()
+        f.write(f"pTM_score: {ptm_score:.4f}\n")
+        f.write(f"mean_pLDDT: {mean_plddt:.2f}\n")
+        f.write(f"num_residues: {len(plddt_scores)}\n")
+
+        # pLDDT quality assessment
+        very_high_plddt = (plddt_scores >= 90).sum().item()
+        high_plddt = ((plddt_scores >= 70) & (plddt_scores < 90)).sum().item()
+        medium_plddt = ((plddt_scores >= 50) & (plddt_scores < 70)).sum().item()
+        low_plddt = (plddt_scores < 50).sum().item()
+
+        f.write(f"#\n")
+        f.write(f"# pLDDT Quality Distribution:\n")
+        f.write(
+            f"# Very High (≥90): {very_high_plddt}/{len(plddt_scores)} ({very_high_plddt / len(plddt_scores) * 100:.1f}%)\n")
+        f.write(f"# High (70-90): {high_plddt}/{len(plddt_scores)} ({high_plddt / len(plddt_scores) * 100:.1f}%)\n")
+        f.write(
+            f"# Medium (50-70): {medium_plddt}/{len(plddt_scores)} ({medium_plddt / len(plddt_scores) * 100:.1f}%)\n")
+        f.write(f"# Low (<50): {low_plddt}/{len(plddt_scores)} ({low_plddt / len(plddt_scores) * 100:.1f}%)\n")
+
+        # pTM quality assessment
+        f.write(f"#\n")
+        f.write(f"# pTM Quality Assessment:\n")
+        if ptm_score >= 0.7:
+            f.write(f"# pTM Quality: HIGH CONFIDENCE (≥0.7)\n")
+        elif ptm_score >= 0.5:
+            f.write(f"# pTM Quality: MEDIUM CONFIDENCE (0.5-0.7)\n")
+        else:
+            f.write(f"# pTM Quality: LOW CONFIDENCE (<0.5)\n")
+
+        # Additional information if provided
+        if additional_info:
+            f.write(f"#\n")
+            f.write(f"# Additional Information:\n")
+            for key, value in additional_info.items():
+                f.write(f"# {key}: {value}\n")
+
+        f.write(f"#\n")
+        f.write(f"# Per-residue pLDDT scores:\n")
+        f.write(f"residue_index\tpLDDT\tquality_category\n")
+
+        for i, score in enumerate(plddt_scores):
+            score_val = score.item()
+            if score_val >= 90:
+                category = "very_high"
+            elif score_val >= 70:
+                category = "high"
+            elif score_val >= 50:
+                category = "medium"
+            else:
+                category = "low"
+            f.write(f"{i + 1}\t{score_val:.2f}\t{category}\n")
+
+    logger.info(f"📊 Confidence scores saved to: {scores_file}")
+    return scores_file
+
+
+def save_summary_confidence_scores(protein_id: str, ptm_score: float, plddt_scores: torch.Tensor,
+                                   output_dir: str, append: bool = True):
+    """Save summary confidence scores to a single file for all proteins"""
+
+    summary_file = os.path.join(output_dir, "confidence_scores_summary.txt")
+
+    # Check if file exists and if we should write header
+    write_header = not os.path.exists(summary_file) or not append
+
+    mode = 'a' if append else 'w'
+    with open(summary_file, mode) as f:
+        if write_header:
+            f.write("# OpenFold Confidence Scores Summary\n")
+            f.write(f"# Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"# Source: OpenFold Structure Module with Neural ODE Evoformer representations\n")
+            f.write(f"#\n")
+            f.write("protein_id\tnum_residues\tptm_score\tmean_plddt\tptm_quality\tplddt_quality\n")
+
+        # Determine quality categories
+        if ptm_score >= 0.7:
+            ptm_quality = "high"
+        elif ptm_score >= 0.5:
+            ptm_quality = "medium"
+        else:
+            ptm_quality = "low"
+
+        mean_plddt = plddt_scores.mean().item()
+        if mean_plddt >= 80:
+            plddt_quality = "very_high"
+        elif mean_plddt >= 70:
+            plddt_quality = "high"
+        elif mean_plddt >= 50:
+            plddt_quality = "medium"
+        else:
+            plddt_quality = "low"
+
+        f.write(
+            f"{protein_id}\t{len(plddt_scores)}\t{ptm_score:.4f}\t{mean_plddt:.2f}\t{ptm_quality}\t{plddt_quality}\n")
 
 
 def load_evoformer_outputs(msa_path, pair_path):
@@ -155,12 +267,10 @@ def process_protein(args, config, model, data_processor, feature_processor):
             msa = msa[:512]
         outputs['msa'] = msa[:, :processed_feature_dict["aatype"].shape[0], :]  # Match sequence length
 
-
     # Verify the sequence lengths match
     single_seq_len = outputs['single'].shape[0]
     pair_seq_len = outputs['pair'].shape[0]
     aatype_seq_len = processed_feature_dict['aatype'].shape[0]
-
 
     if not (single_seq_len == pair_seq_len == aatype_seq_len):
         raise ValueError(
@@ -202,6 +312,46 @@ def process_protein(args, config, model, data_processor, feature_processor):
             aux_output = model.aux_heads(outputs_for_aux)
 
         logger.info(f"Keys in aux_output: {list(aux_output.keys())}")
+
+        # Extract and save confidence scores
+        ptm_score = None
+        plddt_scores = None
+
+        if "ptm" in aux_output:
+            ptm_score = aux_output["ptm"].item()
+            logger.info(f"✅ pTM score: {ptm_score:.4f}")
+
+        if "plddt" in aux_output:
+            plddt_scores = aux_output["plddt"]
+            mean_plddt = plddt_scores.mean().item()
+            logger.info(f"✅ Mean pLDDT: {mean_plddt:.2f}")
+
+            # Save confidence scores to files
+            if ptm_score is not None and plddt_scores is not None:
+                additional_info = {
+                    'model_device': args.model_device,
+                    'config_preset': args.config_preset,
+                    'structure_module_inference_time': f"{inference_time:.2f}s",
+                    'sequence_length': single_seq_len,
+                    'msa_method': 'neural_ode_evoformer',
+                    'pair_method': 'neural_ode_evoformer'
+                }
+
+                # Save detailed scores for this protein
+                detailed_scores_file = save_confidence_scores(
+                    tag, ptm_score, plddt_scores, args.output_dir, additional_info
+                )
+
+                # Save to summary file
+                save_summary_confidence_scores(
+                    tag, ptm_score, plddt_scores, args.output_dir, append=True
+                )
+
+                logger.info(f"📊 Confidence scores saved for {tag}")
+                print(f"🔮 Confidence Scores:")
+                print(f"   pTM: {ptm_score:.4f}")
+                print(f"   Mean pLDDT: {mean_plddt:.2f}")
+                print(f"   Detailed scores: {detailed_scores_file}")
 
         # Add aux outputs to main outputs dict
         for key, value in aux_output.items():

@@ -42,7 +42,7 @@ def main():
         "/media/visitor/Extreme SSD/data/complete_blocks",
         "/media/visitor/Extreme SSD/data/endpoint_blocks",
     ]
-    splits_dir = script_dir / "data_splits" / "1fv5"  # Changed to jumbo
+    splits_dir = script_dir / "data_splits" / "jumbo"  # Changed to jumbo
     test_script = script_dir / "test_model.py"
     outputs_dir = script_dir / "trained_models"
 
@@ -80,7 +80,7 @@ def main():
         return 1
 
     # Find the specific model
-    target_model_name = "20250617_133821_1fve_final_model.pt"
+    target_model_name = "20250617_180948_fast_ode_with_prelim_final_model.pt"
     print(f"🔍 Looking for specific model: {target_model_name}")
 
     model_path = find_specific_model(outputs_dir, target_model_name)

@@ -13,8 +13,8 @@ DATA_DIR="/media/visitor/Extreme SSD/data"
 # =======================================================================================
 
 # CONFIGURATION SECTION - Edit these variables directly:
-PDB_ID="1fv5_A"                    # Change this to your protein ID
-STRUCTURE_TYPE="unrelaxed"           # Change to "unrelaxed" if you want unrelaxed structures
+PDB_ID="2rbf_A"                    # Change this to your protein ID
+STRUCTURE_TYPE="relaxed"           # Change to "unrelaxed" if you want unrelaxed structures
 
 # Neural ODE predictions to include (leave empty to auto-discover all available)
 # Example: NEURAL_ODE_PREDICTIONS=("predictions_20250613_180436_baseline_no_prelim" "predictions_20250614_120000_fast_ode")
@@ -169,7 +169,7 @@ launch_pymol() {
             local pred_name=$(echo "$method_name" | sed 's/Neural ODE (\(.*\))/\1/')
             # Shorten prediction name for PyMOL object
             local short_name=$(echo "$pred_name" | sed 's/predictions_//' | sed 's/_[0-9]*_[0-9]*_/_/')
-            object_name="NeuralODE_${short_name}_${PDB_ID}"
+            object_name="${short_name}_${PDB_ID}"
             ;;
         "OpenFold Deconstructed")
             object_name="OpenFoldDecon_${PDB_ID}"

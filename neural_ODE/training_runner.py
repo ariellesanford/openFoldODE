@@ -27,7 +27,7 @@ def main():
     # NEW: Preliminary training directory (for intermediate blocks)
     prelim_data_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
 
-    splits_dir = script_dir / "data_splits" / "1fv5"
+    splits_dir = script_dir / "data_splits" / "jumbo"
     output_dir = script_dir / "trained_models"
     training_script = script_dir / "train_evoformer_ode.py"
 
@@ -56,7 +56,7 @@ def main():
     output_dir.mkdir(exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    experiment_name = f"{timestamp}_1fve"
+    experiment_name = f"{timestamp}_full_ode_with_prelim2"
 
     # Configuration - simplified for restructured script
     config = {
@@ -65,10 +65,10 @@ def main():
         'device': 'cuda' if torch.cuda.is_available() else 'cpu',
         'epochs': 10000,
         'learning_rate': 1e-3,
-        'reduced_cluster_size': 256,
-        'hidden_dim': 256,
+        'reduced_cluster_size': 64,
+        'hidden_dim': 64,
         'integrator': 'rk4',
-        'use_fast_ode': True,
+        'use_fast_ode': False,
         'use_amp': torch.cuda.is_available(),
         'output_dir': str(output_dir),
         'experiment_name': experiment_name,
@@ -78,15 +78,15 @@ def main():
         'min_lr': 1e-6,
         'early_stopping_patience': 10,
         'early_stopping_min_delta': 0.0001,
-        'max_time_hours': .2,
+        'max_time_hours': 23,
         # Memory optimizations (aggressive_cleanup is the only configurable one now)
         'aggressive_cleanup': True,
         # NEW: Preliminary training settings
         'enable_preliminary_training': True,  # Set to True to enable
         'prelim_data_dir': str(prelim_data_dir),
-        'prelim_block_stride': 1,
-        'prelim_max_epochs': 40,
-        'prelim_chunk_size': 4,  # Good balance of memory and stability
+        'prelim_block_stride': 4,
+        'prelim_max_epochs': 20,
+        'prelim_chunk_size': 2,  # Good balance of memory and stability
     }
 
     # Parse command line arguments
