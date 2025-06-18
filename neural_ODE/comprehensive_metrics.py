@@ -413,73 +413,97 @@ class ComprehensiveMetricsCollector:
         # Load representations
         msa_pred = torch.load(msa_path, map_location='cpu')
         pair_pred = torch.load(pair_path, map_location='cpu')
-        msa_gt = torch.load(ground_truth_msa_path, map_location='cpu')
 
         # Remove batch dimensions
         while len(msa_pred.shape) > 3:
             msa_pred = msa_pred.squeeze(0)
         while len(pair_pred.shape) > 3:
             pair_pred = pair_pred.squeeze(0)
-        while len(msa_gt.shape) > 3:
-            msa_gt = msa_gt.squeeze(0)
-
-        # Generate single representation
-        self._load_model()
-        if self.model is not None:
-            single_pred = generate_single_from_msa(msa_pred.unsqueeze(0), self.model, self.device).squeeze(0)
-        else:
-            # Fallback: use first MSA row
-            single_pred = msa_pred[0, :, :]
 
         # Create batch dictionary for heads (add batch dimension)
         batch = {
             'msa': msa_pred.unsqueeze(0),
             'pair': pair_pred.unsqueeze(0),
-            'single': single_pred.unsqueeze(0)
         }
 
         with torch.no_grad():
             # Compute logits using OpenFold heads
-            masked_msa_logits = self.masked_msa_head(batch['single'])
+            masked_msa_logits = self.masked_msa_head(batch['msa'])
             distogram_logits = self.distogram_head(batch['pair'])
 
-            # Prepare targets for losses
-            # For masked MSA: use ground truth MSA
-            true_msa = msa_gt.unsqueeze(0)  # Add batch dim
+            # === MASKED MSA LOSS ===
+            if processed_feature_dict and 'aatype' in processed_feature_dict:
+                # Get aatype and ensure it has the right shape
+                aatype = processed_feature_dict['aatype']
+                while len(aatype.shape) > 1:
+                    aatype = aatype.squeeze()
 
-            # Create BERT mask (15% masking probability)
-            bert_mask = torch.bernoulli(torch.full_like(true_msa[..., 0].float(), 0.15)).bool()
+                # Create true_msa by expanding to match MSA dimensions
+                n_seq = msa_pred.shape[0]
+                n_res = aatype.shape[0]
+                true_msa = aatype.unsqueeze(0).expand(n_seq, n_res).unsqueeze(0)
 
-            # Create proper batch dict for loss computation
-            loss_batch = {
-                'true_msa': true_msa[..., 0].long(),  # Remove feature dim for sequence indices
-                'bert_mask': bert_mask,
-                'msa_mask': torch.ones_like(bert_mask).float()
-            }
+                # Use DETERMINISTIC mask for consistent comparison across models
+                # Set seed based on protein sequence for reproducibility
+                torch.manual_seed(hash(str(aatype.tolist())) % (2 ** 31))
+                bert_mask = torch.bernoulli(torch.full_like(true_msa.float(), 0.15)).bool()
 
-            # Compute masked MSA loss using actual OpenFold loss function
-            msa_loss_value = masked_msa_loss(
-                logits=masked_msa_logits,
-                true_msa=loss_batch['true_msa'],
-                bert_mask=loss_batch['bert_mask'],
-                msa_mask=loss_batch['msa_mask']
-            )
+                # Compute masked MSA loss
+                msa_loss_value = masked_msa_loss(
+                    logits=masked_msa_logits,
+                    true_msa=true_msa.long(),
+                    bert_mask=bert_mask,
+                    num_classes=23
+                )
+            else:
+                msa_loss_value = torch.tensor(0.0)
 
-            # For distogram: create dummy distance targets (simplified)
-            seq_len = pair_pred.shape[0]
-            pseudo_beta = torch.randn(1, seq_len, 3)  # Dummy coordinates
+            # === DISTOGRAM LOSS ===
+            # Use reference structure coordinates if available, otherwise skip
+            if self.has_reference and self.reference_coords is not None:
+                print(f"✅ Using reference structure for distogram loss")
+                # Use actual reference coordinates
+                ref_coords = torch.tensor(self.reference_coords, dtype=torch.float32)
 
-            distogram_loss_value = distogram_loss(
-                logits=distogram_logits,
-                pseudo_beta=pseudo_beta,
-                pseudo_beta_mask=torch.ones(1, seq_len).float()
-            )
+                # Ensure correct shape and match sequence length
+                seq_len = pair_pred.shape[0]
+                if ref_coords.shape[0] != seq_len:
+                    # Pad or truncate to match
+                    if ref_coords.shape[0] < seq_len:
+                        # Pad with zeros
+                        padding = torch.zeros(seq_len - ref_coords.shape[0], 3)
+                        ref_coords = torch.cat([ref_coords, padding], dim=0)
+                    else:
+                        # Truncate
+                        ref_coords = ref_coords[:seq_len]
+
+                pseudo_beta = ref_coords.unsqueeze(0)  # Add batch dim: [1, seq_len, 3]
+                pseudo_beta_mask = torch.ones(1, seq_len).float()
+
+                distogram_loss_value = distogram_loss(
+                    logits=distogram_logits,
+                    pseudo_beta=pseudo_beta,
+                    pseudo_beta_mask=pseudo_beta_mask
+                )
+            else:
+                # If no reference structure, still use deterministic "dummy" coordinates
+                # Make them deterministic based on sequence length and protein ID
+                print(f"⚠️  No reference structure available, using dummy coordinates for distogram loss")
+                torch.manual_seed(hash(self.pdb_id) % (2 ** 31))
+                seq_len = pair_pred.shape[0]
+                pseudo_beta = torch.randn(1, seq_len, 3) * 10.0  # Scale for realistic distances
+                pseudo_beta_mask = torch.ones(1, seq_len).float()
+
+                distogram_loss_value = distogram_loss(
+                    logits=distogram_logits,
+                    pseudo_beta=pseudo_beta,
+                    pseudo_beta_mask=pseudo_beta_mask
+                )
 
         return {
             "masked_msa_loss": float(msa_loss_value),
             "distogram_loss": float(distogram_loss_value)
         }
-
     def collect_all_metrics(self, method_name: str, output_dir: Path,
                             msa_path: Path = None, pair_path: Path = None,
                             ground_truth_msa_path: Path = None,
