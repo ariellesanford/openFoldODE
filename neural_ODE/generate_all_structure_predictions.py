@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Multi-Method Structure Prediction Script
+Multi-Method Structure Prediction Script (Cleaned Version)
 Generates structure predictions using 4 different methods for a given PDB_ID
-FIXED: Auto-discover Neural ODE predictions and skip existing outputs
+Metrics collection handled by comprehensive_metrics module
 """
 
 import os
 import sys
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional
 import shutil
 
 
@@ -41,12 +41,17 @@ class StructurePredictionRunner:
         self.precomputed_alignments = self.data_dir / "alignments"
 
         # Method output directories
-        self.openfold_decon_output_dir = self.data_dir / "structure_predictions" / pdb_id / "openfold_deconstructed"
-        self.openfold_full_output_dir = self.data_dir / "structure_predictions" / pdb_id / "openfold_0recycles"
-        self.half_evoformer_output_dir = self.data_dir / "structure_predictions" / pdb_id / "half_evoformer"
+        self.predictions_base_dir = self.data_dir / "structure_predictions" / pdb_id
+        self.openfold_decon_output_dir = self.predictions_base_dir / "openfold_deconstructed"
+        self.openfold_full_output_dir = self.predictions_base_dir / "openfold_0recycles"
+        self.half_evoformer_output_dir = self.predictions_base_dir / "half_evoformer"
+
+        # Ground truth data (48th block)
+        blocks_dir = self.data_dir / "complete_blocks" / f"{pdb_id}_evoformer_blocks" / "recycle_0"
+        self.ground_truth_msa_path = blocks_dir / "m_block_48.pt"
+        self.ground_truth_pair_path = blocks_dir / "z_block_48.pt"
 
         # Method input files
-        blocks_dir = self.data_dir / "complete_blocks" / f"{pdb_id}_evoformer_blocks" / "recycle_0"
         self.openfold_decon_msa_path = blocks_dir / "m_block_48.pt"
         self.openfold_decon_pair_path = blocks_dir / "z_block_48.pt"
         self.half_evoformer_msa_path = blocks_dir / "m_block_24.pt"
@@ -140,7 +145,7 @@ class StructurePredictionRunner:
         predictions_dir = self.neural_ode_predictions_base_dir / pred_name / self.pdb_id
         msa_path = predictions_dir / "msa_representation.pt"
         pair_path = predictions_dir / "pair_representation.pt"
-        output_dir = self.data_dir / "structure_predictions" / self.pdb_id / "neuralODE" / pred_name
+        output_dir = self.predictions_base_dir / "neuralODE" / pred_name
 
         print(f"🧬 Running Neural ODE Structure Module ({pred_name})...")
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -195,7 +200,7 @@ class StructurePredictionRunner:
             "--output_dir", str(output_dir),
             "--config_preset", self.config_preset,
             "--model_device", self.model_device,
-            "--save_outputs"
+            "--save_intermediates"
         ]
         cmd.extend(self.build_optional_args())
 
@@ -228,7 +233,7 @@ class StructurePredictionRunner:
         for pred_name in neural_ode_predictions:
             print(f"\n🔄 Processing Neural ODE prediction: {pred_name}")
 
-            output_dir = self.data_dir / "structure_predictions" / self.pdb_id / "neuralODE" / pred_name
+            output_dir = self.predictions_base_dir / "neuralODE" / pred_name
 
             # Check if output already exists
             if self.output_exists(output_dir):
@@ -242,7 +247,7 @@ class StructurePredictionRunner:
             pair_path = predictions_dir / "pair_representation.pt"
 
             if not self.check_requirements(f"Neural ODE ({pred_name})", msa_path, pair_path,
-                                         self.fasta_dir, self.template_mmcif_dir):
+                                           self.fasta_dir, self.template_mmcif_dir):
                 print("   ❌ Missing requirements - skipping")
                 neural_ode_failed += 1
                 continue
@@ -260,8 +265,8 @@ class StructurePredictionRunner:
         print(f"   Skipped (already exists): {neural_ode_skipped}")
         print(f"   Failed: {neural_ode_failed}")
 
-        if neural_ode_processed > 0:
-            self.successful_methods.append(f"Neural ODE ({neural_ode_processed} models)")
+        if neural_ode_processed > 0 or neural_ode_skipped > 0:
+            self.successful_methods.append(f"Neural ODE ({neural_ode_processed + neural_ode_skipped} models)")
         if neural_ode_failed > 0:
             self.failed_methods.append(f"Neural ODE ({neural_ode_failed} failed)")
 
@@ -274,12 +279,12 @@ class StructurePredictionRunner:
             print("✅ OpenFold Deconstructed output already exists - skipping")
             self.successful_methods.append("OpenFold Deconstructed (skipped)")
         elif self.check_requirements("OpenFold Deconstructed",
-                                   self.openfold_decon_msa_path, self.openfold_decon_pair_path,
-                                   self.fasta_dir, self.template_mmcif_dir):
+                                     self.openfold_decon_msa_path, self.openfold_decon_pair_path,
+                                     self.fasta_dir, self.template_mmcif_dir):
             if self.run_structure_module("OpenFold Deconstructed",
-                                       self.openfold_decon_msa_path,
-                                       self.openfold_decon_pair_path,
-                                       self.openfold_decon_output_dir):
+                                         self.openfold_decon_msa_path,
+                                         self.openfold_decon_pair_path,
+                                         self.openfold_decon_output_dir):
                 self.successful_methods.append("OpenFold Deconstructed")
             else:
                 self.failed_methods.append("OpenFold Deconstructed")
@@ -315,12 +320,12 @@ class StructurePredictionRunner:
             print("✅ Half Evoformer output already exists - skipping")
             self.successful_methods.append("Half Evoformer (skipped)")
         elif self.check_requirements("Half Evoformer",
-                                   self.half_evoformer_msa_path, self.half_evoformer_pair_path,
-                                   self.fasta_dir, self.template_mmcif_dir):
+                                     self.half_evoformer_msa_path, self.half_evoformer_pair_path,
+                                     self.fasta_dir, self.template_mmcif_dir):
             if self.run_structure_module("Half Evoformer",
-                                       self.half_evoformer_msa_path,
-                                       self.half_evoformer_pair_path,
-                                       self.half_evoformer_output_dir):
+                                         self.half_evoformer_msa_path,
+                                         self.half_evoformer_pair_path,
+                                         self.half_evoformer_output_dir):
                 self.successful_methods.append("Half Evoformer")
             else:
                 self.failed_methods.append("Half Evoformer")
@@ -349,6 +354,8 @@ class StructurePredictionRunner:
                 print(f"   - {method}")
 
         print("\n🎯 Structure prediction pipeline completed!")
+        print("📊 Run comprehensive metrics analysis to compare methods:")
+        print(f"   python comprehensive_metrics.py --pdb_id {self.pdb_id}")
 
     def run_all_methods(self):
         """Run all structure prediction methods"""
@@ -385,14 +392,16 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='Multi-method structure prediction')
-    parser.add_argument('--pdb_id', type=str, default="2rbf_A",
-                       help='Protein ID to process')
+    parser.add_argument('--pdb_id', type=str, default="1fv5_A",
+                        help='Protein ID to process')
     parser.add_argument('--use_cpu', action='store_true',
-                       help='Force CPU usage')
+                        help='Force CPU usage')
     parser.add_argument('--skip_relaxation', action='store_true',
-                       help='Skip amber relaxation')
+                        help='Skip amber relaxation')
     parser.add_argument('--cif_output', action='store_true',
-                       help='Output in CIF format')
+                        help='Output in CIF format')
+    parser.add_argument('--run_metrics', action='store_true',
+                        help='Run comprehensive metrics analysis after predictions')
 
     args = parser.parse_args()
 
@@ -410,18 +419,73 @@ def main():
     # Run all methods
     success = runner.run_all_methods()
 
+    # Optionally run metrics analysis
+    if args.run_metrics and success:
+        print("\n" + "=" * 50)
+        print("RUNNING COMPREHENSIVE METRICS ANALYSIS")
+        print("=" * 50)
+
+        try:
+            # Import and run comprehensive metrics
+            from comprehensive_metrics import integrate_comprehensive_metrics
+
+            # Add metrics collection to the runner
+            integrate_comprehensive_metrics(runner)
+
+            # Now collect metrics for all successful methods
+            runner.method_metrics = {}
+
+            # Collect for Neural ODE methods
+            neural_ode_predictions = runner.discover_neural_ode_predictions()
+            for pred_name in neural_ode_predictions:
+                output_dir = runner.predictions_base_dir / "neuralODE" / pred_name
+                if runner.output_exists(output_dir):
+                    predictions_dir = runner.neural_ode_predictions_base_dir / pred_name / runner.pdb_id
+                    msa_path = predictions_dir / "msa_representation.pt"
+                    pair_path = predictions_dir / "pair_representation.pt"
+
+                    metrics = runner.collect_method_metrics(
+                        f"Neural ODE ({pred_name})", output_dir, msa_path, pair_path
+                    )
+                    runner.method_metrics[f"neural_ode_{pred_name}"] = metrics
+
+            # Collect for other methods
+            methods_to_check = [
+                ("OpenFold Deconstructed", runner.openfold_decon_output_dir,
+                 runner.openfold_decon_msa_path, runner.openfold_decon_pair_path),
+                ("Full OpenFold", runner.openfold_full_output_dir / "predictions", None, None),
+                ("Half Evoformer", runner.half_evoformer_output_dir,
+                 runner.half_evoformer_msa_path, runner.half_evoformer_pair_path)
+            ]
+
+            for method_name, output_dir, msa_path, pair_path in methods_to_check:
+                if runner.output_exists(output_dir):
+                    metrics = runner.collect_method_metrics(method_name, output_dir, msa_path, pair_path)
+                    method_key = method_name.lower().replace(" ", "_").replace("(", "").replace(")", "")
+                    runner.method_metrics[method_key] = metrics
+
+            # Generate comprehensive summary
+            runner.save_metrics_summary()
+
+        except ImportError as e:
+            print(f"⚠️  Could not run metrics analysis: {e}")
+            print(f"   Please run: python comprehensive_metrics.py --pdb_id {args.pdb_id}")
+
     return 0 if success else 1
 
 
 if __name__ == "__main__":
-    print("🧬 Multi-Method Structure Prediction Script (Python)")
-    print("Automatically discovers Neural ODE predictions and skips existing outputs")
+    print("🧬 Multi-Method Structure Prediction Script")
+    print("Generates predictions using Neural ODE, OpenFold Deconstructed, Full OpenFold, and Half Evoformer")
     print("")
     print("Usage:")
-    print("  python structure_predictions.py                    # Default: 1fv5_A")
-    print("  python structure_predictions.py --pdb_id 2abc_A    # Custom protein")
-    print("  python structure_predictions.py --use_cpu          # Force CPU")
-    print("  python structure_predictions.py --skip_relaxation  # Skip relaxation")
+    print("  python generate_all_structure_predictions.py                              # Default: 1fv5_A")
+    print("  python generate_all_structure_predictions.py --pdb_id 2abc_A              # Custom protein")
+    print("  python generate_all_structure_predictions.py --pdb_id 1fv5_A --run_metrics # With metrics")
+    print("  python generate_all_structure_predictions.py --use_cpu                     # Force CPU")
+    print("")
+    print("For comprehensive metrics analysis:")
+    print("  python comprehensive_metrics.py --pdb_id 1fv5_A")
     print("")
 
     sys.exit(main())
