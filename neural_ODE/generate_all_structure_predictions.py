@@ -400,7 +400,7 @@ def main():
                         help='Skip amber relaxation')
     parser.add_argument('--cif_output', action='store_true',
                         help='Output in CIF format')
-    parser.add_argument('--run_metrics', action='store_true',
+    parser.add_argument('--run_metrics', default='True',
                         help='Run comprehensive metrics analysis after predictions')
 
     args = parser.parse_args()

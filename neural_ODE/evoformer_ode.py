@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+from openfold.model.heads import MaskedMSAHead, DistogramHead
 
 class EvoformerODEFunc(nn.Module):
     """
@@ -68,6 +69,12 @@ class EvoformerODEFunc(nn.Module):
             nn.SiLU(),
             nn.Linear(hidden_dim, 2)
         )
+
+        # # Add auxiliary heads
+        # self.auxiliary_heads = nn.ModuleDict({
+        #     'masked_msa_head': MaskedMSAHead(c_m=c_m, c_out=23),  # 23 amino acids
+        #     'distogram_head': DistogramHead(c_z=c_z, no_bins=64)  # Standard bins
+        # })
 
     def simplified_msa_row_attention(self, m, z):
         """Simplified MSA row attention with pair bias"""

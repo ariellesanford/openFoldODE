@@ -40,6 +40,7 @@ except ImportError as e:
     print(f"⚠️  Could not import OpenFold components: {e}")
     OPENFOLD_AVAILABLE = False
 
+OPENFOLD_AVAILABLE = False  #I DONT WANT TO GENERATE AUXILLARY METRICS
 
 class ComprehensiveMetricsCollector:
     """Complete metrics collection for structure prediction accuracy"""
@@ -69,8 +70,8 @@ class ComprehensiveMetricsCollector:
 
     def _load_model(self):
         """Load the OpenFold model for generate_single_from_msa"""
-        if not OPENFOLD_AVAILABLE or self.model is not None:
-            return
+        # if not OPENFOLD_AVAILABLE or self.model is not None:
+        #     return
 
         try:
             config = model_config(self.config_preset)
@@ -588,6 +589,25 @@ class ComprehensiveMetricsCollector:
                         if metrics.get("total_adaptive_loss") is not None]
         if loss_methods:
             rankings["by_total_adaptive_loss"] = sorted(loss_methods, key=lambda x: x[1])
+
+        msa_mse_methods = [(name, metrics.get("msa_mse_loss"))
+                           for name, metrics in all_methods.items()
+                           if metrics.get("msa_mse_loss") is not None]
+        if msa_mse_methods:
+            rankings["by_msa_mse_loss"] = sorted(msa_mse_methods, key=lambda x: x[1])
+
+        pair_mse_methods = [(name, metrics.get("pair_mse_loss"))
+                            for name, metrics in all_methods.items()
+                            if metrics.get("pair_mse_loss") is not None]
+        if pair_mse_methods:
+            rankings["by_pair_mse_loss"] = sorted(pair_mse_methods, key=lambda x: x[1])
+
+        single_mse_methods = [(name, metrics.get("single_mse_loss"))
+                              for name, metrics in all_methods.items()
+                              if metrics.get("single_mse_loss") is not None]
+        if single_mse_methods:
+            rankings["by_single_mse_loss"] = sorted(single_mse_methods, key=lambda x: x[1])
+
 
         # MSA similarity ranking
         msa_sim_methods = [(name, metrics.get("msa_cosine_similarity"))
