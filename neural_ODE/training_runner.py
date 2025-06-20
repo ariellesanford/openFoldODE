@@ -84,10 +84,10 @@ def main():
         # Memory optimizations (aggressive_cleanup is the only configurable one now)
         'aggressive_cleanup': True,
         # NEW: Preliminary training settings
-        'enable_preliminary_training': True,  # Set to True to enable
+        'enable_preliminary_training': False,  # Set to True to enable
         'prelim_data_dir': str(prelim_data_dir),
         'prelim_block_stride': 4,
-        'prelim_max_epochs': 20,
+        'prelim_max_epochs': 40,
         'prelim_chunk_size': 2,  # Good balance of memory and stability
     }
 

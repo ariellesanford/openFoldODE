@@ -702,8 +702,8 @@ def setup_logging(config: TrainingConfig):
         return None
 
 
-def setup_schedulers(optimizer, config: TrainingConfig, has_validation: bool):
-    """Setup LR scheduler and early stopping"""
+def setup_schedulers(optimizer, config: TrainingConfig, has_validation: bool, reset_state: bool = False):
+    """Setup LR scheduler and early stopping with optional state reset"""
     if not has_validation:
         return None, None
 
@@ -715,9 +715,21 @@ def setup_schedulers(optimizer, config: TrainingConfig, has_validation: bool):
         patience=config.early_stopping_patience, min_delta=config.early_stopping_min_delta
     )
 
+    # If resetting state, ensure fresh start
+    if reset_state:
+        lr_scheduler.best_loss = float('inf')
+        lr_scheduler.patience_counter = 0
+        lr_scheduler.lr_reductions = 0
+
+        early_stopping.best_loss = float('inf')
+        early_stopping.best_epoch = 0
+        early_stopping.patience_counter = 0
+        early_stopping.best_model_state = None
+        early_stopping.should_stop = False
+
     return lr_scheduler, early_stopping
 
-def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, logger, lr_scheduler=None) -> bool:
+def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, logger) -> bool:
     """Run preliminary training phase - now with LR scheduling support"""
     if not config.enable_preliminary_training:
         return True
@@ -740,7 +752,7 @@ def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, l
 
     # Setup preliminary phase
     prelim_phase = TrainingPhase(config, is_preliminary=True)
-    prelim_early_stopping = EarlyStopping(patience=config.early_stopping_patience, min_delta=config.early_stopping_min_delta)
+    prelim_lr_scheduler, prelim_early_stopping = setup_schedulers(optimizer, config, bool(prelim_val_proteins))
 
     # Training loop
     for epoch in range(config.prelim_max_epochs):
@@ -764,8 +776,8 @@ def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, l
             print(f"📊 Training: {avg_train_loss:.5f} ({successful_proteins}/{len(prelim_train_proteins)})")
 
             # LR scheduling - NEW: Add LR scheduler step for preliminary training
-            if lr_scheduler and val_results:
-                lr_scheduler.step(val_results['avg_loss'], epoch + 1)
+            if prelim_lr_scheduler and val_results:
+                prelim_lr_scheduler.step(val_results['avg_loss'], epoch + 1)
 
         # Early stopping check
         if val_results and prelim_early_stopping(val_results['avg_loss'], epoch + 1, model):
@@ -843,7 +855,6 @@ def main():
         logger.config['train_proteins'] = len(train_proteins)
         logger.config['val_proteins'] = len(val_proteins)
 
-    #lr_scheduler, early_stopping = setup_schedulers(optimizer, config, bool(val_proteins))
 
     print(f"🤖 Model: {sum(p.numel() for p in model.parameters())} parameters")
     print(f"🧬 Training proteins: {len(train_proteins)}")
@@ -854,13 +865,27 @@ def main():
         logger.log_training_start()
 
     if config.enable_preliminary_training:
-        lr_scheduler, early_stopping = setup_schedulers(optimizer, config, bool(val_proteins))
-        success = run_preliminary_training(config, model, optimizer, scaler, logger, lr_scheduler)
+        success = run_preliminary_training(config, model, optimizer, scaler, logger)
+        # At this point, model already has best preliminary weights loaded
         if success and logger:
             logger.log_main_training_start()
 
     print(f"\n🚀 MAIN TRAINING PHASE (0→48 blocks)")
     print(f"=" * 60)
+    print("🔄 Resetting optimizer and schedulers for main training...")
+
+
+    # Reset learning rate and optimizer state
+    for group in optimizer.param_groups:
+        group['lr'] = config.learning_rate
+    optimizer.state.clear()
+
+    # Create FRESH schedulers with reset_state=True
+    lr_scheduler, early_stopping = setup_schedulers(optimizer, config, bool(val_proteins), reset_state=True)
+
+    # Force early stopping to start fresh (no best model state from preliminary)
+    if early_stopping:
+        early_stopping.best_model_state = None  # Ensure no preliminary state carries over
 
     main_phase = TrainingPhase(config, is_preliminary=False)
     interrupted_by_timeout = False
