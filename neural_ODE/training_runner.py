@@ -27,7 +27,7 @@ def main():
     # NEW: Preliminary training directory (for intermediate blocks)
     prelim_data_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
 
-    splits_dir = script_dir / "data_splits" / "jumbo"
+    splits_dir = script_dir / "data_splits" / "1fv5"
     output_dir = script_dir / "trained_models"
     training_script = script_dir / "train_evoformer_ode.py"
 
@@ -69,7 +69,7 @@ def main():
         'hidden_dim': 64,
         'integrator': 'rk4',
         'use_fast_ode': False,
-        'max_residues': 300,
+        'max_residues': 350,
         'loss': 'single_row',
         'use_amp': torch.cuda.is_available(),
         'output_dir': str(output_dir),
@@ -87,7 +87,7 @@ def main():
         'enable_preliminary_training': True,  # Set to True to enable
         'prelim_data_dir': str(prelim_data_dir),
         'prelim_block_stride': 4,
-        'prelim_max_epochs': 5,
+        'prelim_max_epochs': 1000,
         'prelim_chunk_size': 2,  # Good balance of memory and stability
     }
 

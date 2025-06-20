@@ -59,44 +59,59 @@ class TrainingLogger:
         # Initialize file
         self._write_header()
 
-    def log_configuration(self, args, model_info: Dict, optimizer_info: Dict):
-        """Log all configuration parameters"""
+    def log_configuration(self, config, model_info: Dict, optimizer_info: Dict):
+        """Log all configuration parameters - updated to match current TrainingConfig"""
         self.config = {
-            'data_dir': getattr(args, 'data_dir', 'N/A'),
-            'splits_dir': getattr(args, 'splits_dir', 'N/A'),
-            'mode': getattr(args, 'mode', 'N/A'),
-            'output_dir': getattr(args, 'output_dir', 'N/A'),
-            'use_fast_ode': getattr(args, 'use_fast_ode', False),
-            'reduced_cluster_size': getattr(args, 'reduced_cluster_size', 'N/A'),
-            'hidden_dim': getattr(args, 'hidden_dim', 'N/A'),
+            # Core training config
+            'data_dirs': getattr(config, 'data_dirs', 'N/A'),
+            'splits_dir': getattr(config, 'splits_dir', 'N/A'),
+            'output_dir': getattr(config, 'output_dir', 'N/A'),
+            'experiment_name': getattr(config, 'experiment_name', 'N/A'),
+            'device': getattr(config, 'device', 'N/A'),
+            'epochs': getattr(config, 'epochs', 'N/A'),
+            'learning_rate': getattr(config, 'learning_rate', 'N/A'),
+
+            # LR scheduling and early stopping
+            'lr_patience': getattr(config, 'lr_patience', 'N/A'),
+            'lr_factor': getattr(config, 'lr_factor', 'N/A'),
+            'min_lr': getattr(config, 'min_lr', 'N/A'),
+            'early_stopping_patience': getattr(config, 'early_stopping_patience', 'N/A'),
+            'early_stopping_min_delta': getattr(config, 'early_stopping_min_delta', 'N/A'),
+
+            # Model config
+            'use_fast_ode': getattr(config, 'use_fast_ode', False),
+            'loss': getattr(config, 'loss', 'N/A'),
+            'reduced_cluster_size': getattr(config, 'reduced_cluster_size', 'N/A'),
+            'hidden_dim': getattr(config, 'hidden_dim', 'N/A'),
+            'integrator': getattr(config, 'integrator', 'N/A'),
+            'use_amp': getattr(config, 'use_amp', False),
+
+            # Training limits
+            'max_residues': getattr(config, 'max_residues', 'N/A'),
+            'max_time_hours': getattr(config, 'max_time_hours', 'N/A'),
+            'aggressive_cleanup': getattr(config, 'aggressive_cleanup', False),
+
+            # Preliminary training config
+            'enable_preliminary_training': getattr(config, 'enable_preliminary_training', False),
+            'prelim_data_dir': getattr(config, 'prelim_data_dir', 'N/A'),
+            'prelim_block_stride': getattr(config, 'prelim_block_stride', 'N/A'),
+            'prelim_max_epochs': getattr(config, 'prelim_max_epochs', 'N/A'),
+            'prelim_chunk_size': getattr(config, 'prelim_chunk_size', 'N/A'),
+
+            # Model info from setup
             'model_parameters': model_info.get('total_params', 'N/A'),
             'model_type': model_info.get('model_type', 'N/A'),
-            'epochs': getattr(args, 'epochs', 'N/A'),
-            'learning_rate': optimizer_info.get('learning_rate', 'N/A'),
-            'batch_size': getattr(args, 'batch_size', 'N/A'),
-            'integrator': getattr(args, 'integrator', 'N/A'),
-            'use_amp': getattr(args, 'use_amp', False),
-            'max_residues': getattr(args, 'max_residues', 'N/A'),
-            'loss_function': model_info.get('loss_function', 'Adaptive MSE'),
             'train_proteins': model_info.get('train_proteins', 'N/A'),
             'val_proteins': model_info.get('val_proteins', 'N/A'),
-            'use_sequential_loading': getattr(args, 'use_sequential_loading', False),
-            'aggressive_cleanup': getattr(args, 'aggressive_cleanup', False),
-            # Preliminary training config
-            'preliminary_training_enabled': getattr(args, 'enable_preliminary_training', False),
-            'prelim_data_dir': getattr(args, 'prelim_data_dir', 'N/A'),
-            'prelim_block_stride': getattr(args, 'prelim_block_stride', 'N/A'),
-            'prelim_max_epochs': getattr(args, 'prelim_max_epochs', 'N/A'),
-            'prelim_early_stopping_min_delta': getattr(args, 'prelim_early_stopping_min_delta', 'N/A'),
         }
 
         self.system_info = {
             'cuda_available': torch.cuda.is_available(),
-            'device': getattr(args, 'device', 'N/A'),
+            'device': getattr(config, 'device', 'N/A'),
             'pytorch_version': torch.__version__,
         }
 
-        if torch.cuda.is_available() and getattr(args, 'device', '') == 'cuda':
+        if torch.cuda.is_available() and getattr(config, 'device', '') == 'cuda':
             self.system_info.update({
                 'gpu_name': torch.cuda.get_device_name(0),
                 'cuda_version': torch.version.cuda,
@@ -128,7 +143,8 @@ class TrainingLogger:
             'total_proteins': len(proteins),
             'memory_stats': {},
             'validation': None,
-            'is_preliminary': is_preliminary
+            'is_preliminary': is_preliminary,
+            'learning_rate': None  # Will be set in log_epoch_end
         }
 
         if is_preliminary:
@@ -183,8 +199,8 @@ class TrainingLogger:
         if self.current_epoch:
             self.current_epoch['protein_results'][protein_id] = protein_result
 
-    def log_epoch_end(self, val_results: Dict = None, is_preliminary: bool = False):
-        """Log the end of an epoch and compute summaries"""
+    def log_epoch_end(self, val_results: Dict = None, is_preliminary: bool = False, optimizer=None):
+        """Log the end of an epoch and compute summaries - now includes learning rate logging"""
         current_epoch = self.current_preliminary_epoch if is_preliminary else self.current_main_epoch
 
         if not current_epoch:
@@ -193,6 +209,10 @@ class TrainingLogger:
         current_epoch['end_time'] = datetime.datetime.now()
         current_epoch['duration'] = (
                 current_epoch['end_time'] - current_epoch['start_time']).total_seconds()
+
+        # Store current learning rate
+        if optimizer:
+            current_epoch['learning_rate'] = optimizer.param_groups[0]['lr']
 
         # Store validation results
         if val_results:
@@ -322,8 +342,8 @@ class TrainingLogger:
             f.write("Preliminary Training Progress:\n")
             f.write("-" * 30 + "\n")
             f.write(
-                f"{'Epoch':<8} {'Train Loss':<14} {'Train Success':<14} {'Val Loss':<14} {'Val Success':<14} {'Duration (s)':<12}\n")
-            f.write("-" * 88 + "\n")
+                f"{'Epoch':<8} {'Train Loss':<14} {'Train Success':<14} {'Val Loss':<14} {'Val Success':<14} {'LR':<12} {'Duration (s)':<12}\n")
+            f.write("-" * 100 + "\n")
 
             for epoch_data in self.preliminary_epoch_summaries:
                 epoch = epoch_data['epoch']
@@ -336,36 +356,19 @@ class TrainingLogger:
                     val_data = epoch_data['validation']
                     val_success = f"{val_data.get('successful_validations', 0)}/{val_data.get('num_proteins', 0)}"
 
+                learning_rate = epoch_data.get('learning_rate', 'N/A')
+                if isinstance(learning_rate, float):
+                    learning_rate = f"{learning_rate:.2e}"
+
                 duration = epoch_data['duration']
 
                 if isinstance(val_loss, (int, float)):
                     val_loss = f"{val_loss:.5f}"
 
                 f.write(
-                    f"{epoch:<8} {train_loss:<14.5f} {train_success:<14} {val_loss:<14} {val_success:<14} {duration:<12.1f}\n")
+                    f"{epoch:<8} {train_loss:<14.5f} {train_success:<14} {val_loss:<14} {val_success:<14} {learning_rate:<12} {duration:<12.1f}\n")
 
-            f.write("-" * 88 + "\n\n")
-
-            # Preliminary training analysis
-            if self.preliminary_epoch_summaries:
-                best_prelim = min(self.preliminary_epoch_summaries, key=lambda x: x['average_loss'])
-                worst_prelim = max(self.preliminary_epoch_summaries, key=lambda x: x['average_loss'])
-
-                f.write("Preliminary Training Analysis:\n")
-                f.write("-" * 30 + "\n")
-                f.write(f"Best Preliminary Epoch: {best_prelim['epoch']} (Loss: {best_prelim['average_loss']:.5f})\n")
-                f.write(
-                    f"Worst Preliminary Epoch: {worst_prelim['epoch']} (Loss: {worst_prelim['average_loss']:.5f})\n")
-
-                final_prelim = self.preliminary_epoch_summaries[-1]
-                train_success_rate = final_prelim['successful_proteins'] / final_prelim['total_proteins'] * 100
-                f.write(f"Final Preliminary Success Rate: {train_success_rate:.1f}%\n")
-
-                if final_prelim.get('validation'):
-                    val_data = final_prelim['validation']
-                    val_success_rate = val_data['successful_validations'] / val_data['num_proteins'] * 100
-                    f.write(f"Final Preliminary Validation Success Rate: {val_success_rate:.1f}%\n")
-                f.write("\n")
+            f.write("\n")
 
         # MAIN TRAINING SECTION
         if self.main_epoch_summaries:
@@ -375,7 +378,7 @@ class TrainingLogger:
             if self.main_training_start_time:
                 f.write(f"Main Training Started: {self.main_training_start_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
 
-            if final and self.training_end_time and self.main_training_start_time:
+            if final and self.training_end_time:
                 main_duration = self.training_end_time - self.main_training_start_time
                 f.write(f"Main Training Completed: {self.training_end_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write(f"Main Training Duration: {main_duration.total_seconds() / 60:.1f} minutes\n")
@@ -385,8 +388,8 @@ class TrainingLogger:
             f.write("Main Training Progress:\n")
             f.write("-" * 30 + "\n")
             f.write(
-                f"{'Epoch':<8} {'Train Loss':<14} {'Train Success':<14} {'Val Loss':<14} {'Val Success':<14} {'Duration (s)':<12}\n")
-            f.write("-" * 88 + "\n")
+                f"{'Epoch':<8} {'Train Loss':<14} {'Train Success':<14} {'Val Loss':<14} {'Val Success':<14} {'LR':<12} {'Duration (s)':<12}\n")
+            f.write("-" * 100 + "\n")
 
             for epoch_data in self.main_epoch_summaries:
                 epoch = epoch_data['epoch']
@@ -399,42 +402,23 @@ class TrainingLogger:
                     val_data = epoch_data['validation']
                     val_success = f"{val_data.get('successful_validations', 0)}/{val_data.get('num_proteins', 0)}"
 
+                learning_rate = epoch_data.get('learning_rate', 'N/A')
+                if isinstance(learning_rate, float):
+                    learning_rate = f"{learning_rate:.2e}"
+
                 duration = epoch_data['duration']
 
                 if isinstance(val_loss, (int, float)):
                     val_loss = f"{val_loss:.5f}"
 
                 f.write(
-                    f"{epoch:<8} {train_loss:<14.5f} {train_success:<14} {val_loss:<14} {val_success:<14} {duration:<12.1f}\n")
+                    f"{epoch:<8} {train_loss:<14.5f} {train_success:<14} {val_loss:<14} {val_success:<14} {learning_rate:<12} {duration:<12.1f}\n")
 
-            f.write("-" * 88 + "\n\n")
-
-            # Main training analysis
-            best_main = min(self.main_epoch_summaries, key=lambda x: x['average_loss'])
-            worst_main = max(self.main_epoch_summaries, key=lambda x: x['average_loss'])
-
-            f.write("Main Training Analysis:\n")
-            f.write("-" * 30 + "\n")
-            f.write(f"Best Main Training Epoch: {best_main['epoch']} (Loss: {best_main['average_loss']:.5f})\n")
-            f.write(f"Worst Main Training Epoch: {worst_main['epoch']} (Loss: {worst_main['average_loss']:.5f})\n")
-
-            final_main = self.main_epoch_summaries[-1]
-            train_success_rate = final_main['successful_proteins'] / final_main['total_proteins'] * 100
-            f.write(f"Final Main Training Success Rate: {train_success_rate:.1f}%\n")
-
-            if final_main.get('validation'):
-                val_data = final_main['validation']
-                val_success_rate = val_data['successful_validations'] / val_data['num_proteins'] * 100
-                f.write(f"Final Main Training Validation Success Rate: {val_success_rate:.1f}%\n")
             f.write("\n")
 
-        # OVERALL SUMMARY (combines both phases)
-        all_epochs = self.preliminary_epoch_summaries + self.main_epoch_summaries
-        if all_epochs:
-            f.write("OVERALL TRAINING SUMMARY\n")
-            f.write("=" * 50 + "\n\n")
-
-            # Performance analysis across both phases
+        # OVERALL PERFORMANCE ANALYSIS
+        if self.epoch_summaries:
+            all_epochs = self.preliminary_epoch_summaries + self.main_epoch_summaries
             best_overall = min(all_epochs, key=lambda x: x['average_loss'])
             worst_overall = max(all_epochs, key=lambda x: x['average_loss'])
 
@@ -468,6 +452,10 @@ class TrainingLogger:
                     val_data = final_epoch['validation']
                     val_success_rate = val_data['successful_validations'] / val_data['num_proteins'] * 100
                     f.write(f"Final Validation Success Rate: {val_success_rate:.1f}%\n")
+
+                # Final learning rate
+                if final_epoch.get('learning_rate'):
+                    f.write(f"Final Learning Rate: {final_epoch['learning_rate']:.2e}\n")
 
             f.write("\n")
 

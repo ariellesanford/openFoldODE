@@ -195,13 +195,15 @@ class DataManager:
 
     @staticmethod
     def filter_proteins_by_size(proteins: Union[List[str], List[Tuple[str, str]]],
-                               max_residues: int, data_dir: str = None) -> Union[List[str], List[Tuple[str, str]]]:
+                                max_residues: int, data_dir: str = None) -> Union[List[str], List[Tuple[str, str]]]:
         """Unified size filtering"""
         if max_residues is None:
             return proteins
-        print("Filter proteins by size")
+
+        print(f"🔍 Filtering {len(proteins)} proteins by size (max: {max_residues} residues)")
         valid_proteins = []
-        for protein in proteins:
+
+        for i, protein in enumerate(proteins):
             try:
                 if isinstance(protein, tuple):
                     protein_id, protein_data_dir = protein
@@ -218,8 +220,14 @@ class DataManager:
 
                     if num_residues <= max_residues:
                         valid_proteins.append(protein)
+                        print(f"  ✅ {protein_id}: {num_residues} residues")
+                    else:
+                        print(f"  ❌ {protein_id}: {num_residues} residues (too large)")
             except Exception:
+                print(f"  ⚠️  {protein_id}: Error loading")
                 continue
+
+        print(f"📊 Kept {len(valid_proteins)}/{len(proteins)} proteins")
         return valid_proteins
 
     @staticmethod
@@ -467,8 +475,7 @@ class TrainingPhase:
                 chunk_times.append(t)
 
             chunk_time_points = torch.tensor(chunk_times, device=self.config.device)
-            print(
-                f"  📦 Chunk {len(chunk_blocks)} blocks: {chunk_blocks} (t={chunk_times[0]:.3f}→{chunk_times[-1]:.3f})")
+            #print(f"  📦 Chunk {len(chunk_blocks)} blocks: {chunk_blocks} (t={chunk_times[0]:.3f}→{chunk_times[-1]:.3f})")
 
             with autocast(enabled=self.config.use_amp):
                 # MEMORY FIX: Move current state back to GPU
@@ -507,6 +514,7 @@ class TrainingPhase:
                     )
 
                     chunk_loss += step_loss.item() if not training else step_loss
+                    print()
                     chunk_steps += 1
                     del m_target, z_target
 
@@ -701,9 +709,8 @@ def setup_schedulers(optimizer, config: TrainingConfig, has_validation: bool):
 
     return lr_scheduler, early_stopping
 
-
-def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, logger) -> bool:
-    """Run preliminary training phase"""
+def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, logger, lr_scheduler=None) -> bool:
+    """Run preliminary training phase - now with LR scheduling support"""
     if not config.enable_preliminary_training:
         return True
 
@@ -725,11 +732,12 @@ def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, l
 
     # Setup preliminary phase
     prelim_phase = TrainingPhase(config, is_preliminary=True)
-    prelim_early_stopping = EarlyStopping(patience=config.early_stopping_patience, min_delta=config.early_stopping_min_delta)  # Same as main training
+    prelim_early_stopping = EarlyStopping(patience=config.early_stopping_patience, min_delta=config.early_stopping_min_delta)
 
     # Training loop
     for epoch in range(config.prelim_max_epochs):
         print(f"\n📈 Preliminary Epoch {epoch + 1}/{config.prelim_max_epochs}")
+        print(f"🎛️  LR: {optimizer.param_groups[0]['lr']:.2e}")  # Show current LR
 
         epoch_losses, successful_proteins = prelim_phase.run_epoch(prelim_train_proteins, model, optimizer, scaler, logger, epoch + 1, config.prelim_max_epochs)
 
@@ -739,15 +747,25 @@ def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, l
             print(f"\n🔍 Preliminary validation on {len(prelim_val_proteins)} proteins...")
             val_results = prelim_phase.validate(prelim_val_proteins, model)
 
-        logger.log_epoch_end(val_results, is_preliminary=True)
+        if logger:
+            logger.log_epoch_end(val_results, is_preliminary=True, optimizer=optimizer)
+
+        # Training summary
+        if epoch_losses:
+            avg_train_loss = sum(epoch_losses) / len(epoch_losses)
+            print(f"📊 Training: {avg_train_loss:.5f} ({successful_proteins}/{len(prelim_train_proteins)})")
+
+            # LR scheduling - NEW: Add LR scheduler step for preliminary training
+            if lr_scheduler and val_results:
+                lr_scheduler.step(val_results['avg_loss'], epoch + 1)
 
         # Early stopping check
         if val_results and prelim_early_stopping(val_results['avg_loss'], epoch + 1, model):
+            print(f"\n🛑 Early stopping triggered in preliminary training!")
             break
 
     print(f"\n✅ Preliminary training completed!")
     return True
-
 
 def save_final_model(model, config: TrainingConfig, logger, training_stats: Dict):
     """Save final model and complete logging"""
@@ -817,7 +835,7 @@ def main():
         logger.config['train_proteins'] = len(train_proteins)
         logger.config['val_proteins'] = len(val_proteins)
 
-    lr_scheduler, early_stopping = setup_schedulers(optimizer, config, bool(val_proteins))
+    #lr_scheduler, early_stopping = setup_schedulers(optimizer, config, bool(val_proteins))
 
     print(f"🤖 Model: {sum(p.numel() for p in model.parameters())} parameters")
     print(f"🧬 Training proteins: {len(train_proteins)}")
@@ -828,13 +846,15 @@ def main():
         logger.log_training_start()
 
     if config.enable_preliminary_training:
-        success = run_preliminary_training(config, model, optimizer, scaler, logger)
+        lr_scheduler, early_stopping = setup_schedulers(optimizer, config, bool(val_proteins))
+        success = run_preliminary_training(config, model, optimizer, scaler, logger, lr_scheduler)
         if success and logger:
             logger.log_main_training_start()
 
     print(f"\n🚀 MAIN TRAINING PHASE (0→48 blocks)")
     print(f"=" * 60)
 
+    lr_scheduler, early_stopping = setup_schedulers(optimizer, config, bool(val_proteins))
     main_phase = TrainingPhase(config, is_preliminary=False)
     interrupted_by_timeout = False
     final_epoch = 0
@@ -866,7 +886,7 @@ def main():
                   f"({val_results['successful_validations']}/{len(val_proteins)})")
 
         if logger:
-            logger.log_epoch_end(val_results, is_preliminary=False)
+            logger.log_epoch_end(val_results, is_preliminary=False, optimizer=optimizer)
 
         if epoch_losses:
             avg_train_loss = sum(epoch_losses) / len(epoch_losses)
