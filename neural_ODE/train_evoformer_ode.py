@@ -124,6 +124,15 @@ class LearningRateScheduler:
     def get_last_lr(self):
         return self.optimizer.param_groups[0]['lr']
 
+    def reset(self):
+        """Reset scheduler state while preserving optimizer"""
+        self.best_loss = float('inf')
+        self.patience_counter = 0
+        self.lr_reductions = 0
+        # Optionally reset LR to initial value
+        for param_group in self.optimizer.param_groups:
+            param_group['lr'] = self.initial_lr  # Store this in __init__
+
 
 class EarlyStopping:
     """Early stopping handler"""
@@ -427,207 +436,6 @@ class TrainingPhase:
         del m0, z0, m48, z48, m_pred, z_pred, loss
 
         return {'protein': protein_id, 'loss': loss_value}
-
-    # def _process_protein_strided(self, protein_id: str, data_dir: str, model: torch.nn.Module,
-    #                              optimizer: torch.optim.Optimizer, scaler: GradScaler, training: bool) -> Dict:
-    #     """FIXED: True sequential continuation strided processing with consistent training/validation losses"""
-    #
-    #     # DEBUG: Initial state
-    #     print(f"\n🔍 DEBUG {protein_id} - Mode: {'TRAINING' if training else 'VALIDATION'}")
-    #     print(f"   Model training mode: {model.training}")
-    #     print(f"   Gradient enabled: {torch.is_grad_enabled()}")
-    #     print(f"   Autocast enabled: {torch.is_autocast_enabled()}")
-    #
-    #     # Load initial state and selected blocks
-    #     m_init, z_init, selected_blocks = DataManager.load_protein_blocks(
-    #         protein_id, data_dir, self.config.device, self.config.reduced_cluster_size,
-    #         strided=True, block_stride=self.config.prelim_block_stride, max_blocks=49
-    #     )
-    #
-    #     if training:
-    #         optimizer.zero_grad()
-    #
-    #     chunk_size = self.config.prelim_chunk_size
-    #     total_loss = 0.0  # Always use scalar accumulation for final consistency
-    #     total_chunks = 0
-    #
-    #     # Start with initial state
-    #     current_m, current_z = m_init, z_init
-    #     current_block_idx = selected_blocks[0]  # Track current position (starts at block 0)
-    #
-    #     # Process overlapping chunks for true sequential continuation
-    #     while current_block_idx < selected_blocks[-1]:
-    #         # Find next chunk starting from current_block_idx
-    #         try:
-    #             start_pos = selected_blocks.index(current_block_idx)
-    #         except ValueError:
-    #             print(f"❌ Current block {current_block_idx} not in selected_blocks")
-    #             break
-    #
-    #         # Create chunk from current position
-    #         chunk_end_pos = min(start_pos + chunk_size, len(selected_blocks))
-    #         chunk_blocks = selected_blocks[start_pos:chunk_end_pos]
-    #
-    #         # Skip if chunk is too small
-    #         if len(chunk_blocks) <= 1:
-    #             print(f"⚠️  Skipping single-block chunk: {chunk_blocks}")
-    #             break
-    #
-    #         # Create time points for this chunk
-    #         chunk_times = []
-    #         for block_idx in chunk_blocks:
-    #             # Map block index to time: block 0 → t=0, block 48 → t=1
-    #             t = float(block_idx) / 48.0
-    #             chunk_times.append(t)
-    #
-    #         chunk_time_points = torch.tensor(chunk_times, device=self.config.device)
-    #
-    #         # DEBUG: Chunk info
-    #         print(f"   📦 Chunk {total_chunks + 1}: blocks {chunk_blocks}, times {chunk_times}")
-    #
-    #         with autocast(enabled=self.config.use_amp):
-    #             # MEMORY FIX: Move current state back to GPU
-    #             current_m = current_m.to(self.config.device)
-    #             current_z = current_z.to(self.config.device)
-    #
-    #             # DEBUG: Input state stats
-    #             print(
-    #                 f"      Input m: shape={current_m.shape}, mean={current_m.mean().item():.6f}, std={current_m.std().item():.6f}")
-    #             print(
-    #                 f"      Input z: shape={current_z.shape}, mean={current_z.mean().item():.6f}, std={current_z.std().item():.6f}")
-    #
-    #             # Integrate from current state through this chunk
-    #             trajectory = odeint(
-    #                 model, (current_m, current_z), chunk_time_points,
-    #                 method=self.config.integrator, rtol=1e-4, atol=1e-5
-    #             )
-    #
-    #             # DEBUG: Trajectory stats
-    #             final_m = trajectory[0][-1]
-    #             final_z = trajectory[1][-1]
-    #             print(
-    #                 f"      Output m: shape={final_m.shape}, mean={final_m.mean().item():.6f}, std={final_m.std().item():.6f}")
-    #             print(
-    #                 f"      Output z: shape={final_z.shape}, mean={final_z.mean().item():.6f}, std={final_z.std().item():.6f}")
-    #
-    #             # CRITICAL FIX: Use consistent tensor accumulation for both training and validation
-    #             chunk_loss = None  # Will be set on first iteration
-    #             chunk_steps = 0
-    #
-    #             # Skip the first block only if we're starting from it
-    #             # (i.e., don't compare predicted block X to target block X)
-    #             for i in range(len(chunk_blocks)):
-    #                 block_idx = chunk_blocks[i]
-    #
-    #                 # Skip if this is the starting block (we're already at this state)
-    #                 if block_idx == current_block_idx and i == 0:
-    #                     continue
-    #
-    #                 # Load target for this block
-    #                 m_target, z_target = DataManager.load_protein_blocks(
-    #                     protein_id, data_dir, self.config.device, self.config.reduced_cluster_size,
-    #                     target_block=block_idx
-    #                 )
-    #
-    #                 # Compare trajectory prediction to target
-    #                 step_loss = self.compute_adaptive_loss(
-    #                     trajectory[0][i], m_target,
-    #                     trajectory[1][i], z_target
-    #                 )
-    #
-    #                 # DEBUG: Step loss info
-    #                 print(
-    #                     f"         Step {i}: block {block_idx}, step_loss={step_loss.item():.8f}, requires_grad={step_loss.requires_grad}")
-    #
-    #                 # CRITICAL FIX: Always use tensor arithmetic, detach during validation
-    #                 if training:
-    #                     step_loss_to_add = step_loss  # Keep gradients for training
-    #                 else:
-    #                     step_loss_to_add = step_loss.detach()  # Same arithmetic, no gradients
-    #
-    #                 # DEBUG: Step loss to add
-    #                 print(
-    #                     f"         step_loss_to_add: {step_loss_to_add.item():.8f}, requires_grad={step_loss_to_add.requires_grad}")
-    #
-    #                 # Initialize or accumulate
-    #                 if chunk_loss is None:
-    #                     chunk_loss = step_loss_to_add
-    #                     print(
-    #                         f"         chunk_loss initialized: {chunk_loss.item():.8f}, requires_grad={chunk_loss.requires_grad}")
-    #                 else:
-    #                     old_chunk_loss = chunk_loss.item()
-    #                     chunk_loss = chunk_loss + step_loss_to_add  # Avoid in-place operation
-    #                     print(
-    #                         f"         chunk_loss: {old_chunk_loss:.8f} + {step_loss_to_add.item():.8f} = {chunk_loss.item():.8f}")
-    #
-    #                 chunk_steps += 1
-    #                 del m_target, z_target
-    #
-    #             # Average loss for this chunk (tensor arithmetic in both modes)
-    #             if chunk_steps > 0 and chunk_loss is not None:
-    #                 pre_avg_loss = chunk_loss.item()
-    #                 chunk_loss = chunk_loss / chunk_steps
-    #                 post_avg_loss = chunk_loss.item()
-    #
-    #                 # DEBUG: Chunk averaging
-    #                 print(f"      Chunk averaging: {pre_avg_loss:.8f} / {chunk_steps} = {post_avg_loss:.8f}")
-    #                 print(f"      chunk_loss type: {type(chunk_loss)}, requires_grad: {chunk_loss.requires_grad}")
-    #
-    #                 # MEMORY EFFICIENT TRAINING: Backward pass per chunk instead of accumulating
-    #                 if training:
-    #                     print(f"      Performing backward pass...")
-    #                     if self.config.use_amp:
-    #                         scaler.scale(chunk_loss).backward()
-    #                         scaler.step(optimizer)
-    #                         scaler.update()
-    #                         optimizer.zero_grad()
-    #                     else:
-    #                         chunk_loss.backward()
-    #                         optimizer.step()
-    #                         optimizer.zero_grad()
-    #
-    #                 # CRITICAL FIX: Always convert to scalar consistently for both modes
-    #                 chunk_loss_scalar = chunk_loss.item()
-    #                 print(f"      chunk_loss.item(): {chunk_loss_scalar:.8f}")
-    #                 total_loss += chunk_loss_scalar  # Always use .item() for final scalar accumulation
-    #                 total_chunks += 1
-    #                 print(f"      total_loss updated: {total_loss:.8f} (chunks: {total_chunks})")
-    #             else:
-    #                 print(f"⚠️  Chunk had no valid comparisons")
-    #
-    #             # SEQUENTIAL CONTINUATION: Update current state to last prediction
-    #             # Move to the last block of this chunk
-    #             current_block_idx = chunk_blocks[-1]
-    #             # MEMORY FIX: Store on CPU to free GPU memory
-    #             current_m = trajectory[0][-1].detach().cpu()
-    #             current_z = trajectory[1][-1].detach().cpu()
-    #
-    #             del trajectory
-    #             torch.cuda.empty_cache()  # Force cleanup
-    #
-    #     # Final average loss (identical scalar arithmetic for both modes)
-    #     if total_chunks > 0:
-    #         avg_loss = total_loss / total_chunks
-    #         print(f"   Final: total_loss={total_loss:.8f} / {total_chunks} chunks = {avg_loss:.8f}")
-    #     else:
-    #         print(f"❌ No valid chunks for protein {protein_id}")
-    #         return {'protein': protein_id, 'loss': 0.0, 'error': 'no_valid_chunks'}
-    #
-    #     # CRITICAL FIX: Always return scalar - no difference between training and validation
-    #     loss_value = avg_loss  # Already a scalar from consistent .item() usage above
-    #     print(f"   FINAL LOSS: {loss_value:.8f} ({'TRAINING' if training else 'VALIDATION'})")
-    #
-    #     # Cleanup
-    #     del m_init, z_init, current_m, current_z
-    #
-    #     return {
-    #         'protein': protein_id,
-    #         'loss': loss_value,
-    #         'selected_blocks': selected_blocks,
-    #         'num_chunks': total_chunks,
-    #         'cluster_size': self.config.reduced_cluster_size,
-    #         'approach': 'true_sequential_continuation_strided'
-    #     }
 
     def _process_protein_strided(self, protein_id: str, data_dir: str, model: torch.nn.Module,
                                  optimizer: torch.optim.Optimizer, scaler: GradScaler, training: bool) -> Dict:
@@ -1053,12 +861,6 @@ def main():
 
     print(f"\n🚀 MAIN TRAINING PHASE (0→48 blocks)")
     print(f"=" * 60)
-
-    #RESET SCHEDULER
-    lr_scheduler, early_stopping = setup_schedulers(optimizer, config, bool(val_proteins))
-    for group in optimizer.param_groups:
-        group['lr'] = config.learning_rate  # Reset learning rate
-    optimizer.state.clear()  # Clear momentum/variance terms
 
     main_phase = TrainingPhase(config, is_preliminary=False)
     interrupted_by_timeout = False
