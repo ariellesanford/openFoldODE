@@ -47,7 +47,8 @@ class StructurePredictionRunner:
         self.half_evoformer_output_dir = self.predictions_base_dir / "half_evoformer"
 
         # Ground truth data (48th block)
-        blocks_dir = self.data_dir / "complete_blocks" / f"{pdb_id}_evoformer_blocks" / "recycle_0"
+        blocks_dir = blocks_dir = self._find_blocks_directory(pdb_id)
+        print(blocks_dir)
         self.ground_truth_msa_path = blocks_dir / "m_block_48.pt"
         self.ground_truth_pair_path = blocks_dir / "z_block_48.pt"
 
@@ -63,6 +64,26 @@ class StructurePredictionRunner:
 
         self._setup_device()
         self.python_path = self._get_python_path()
+
+    def _find_blocks_directory(self, pdb_id: str) -> Path:
+        """Find blocks directory, checking both complete_blocks and incomplete_blocks"""
+        possible_dirs = [
+            self.data_dir / "complete_blocks" / f"{pdb_id}_evoformer_blocks" / "recycle_0",
+            self.data_dir / "endpoint_blocks" / f"{pdb_id}_evoformer_blocks" / "recycle_0"
+        ]
+        print(possible_dirs)
+        for blocks_dir in possible_dirs:
+            if blocks_dir.exists():
+                # Check if required files exist
+                if (blocks_dir / "m_block_48.pt").exists() and (blocks_dir / "z_block_48.pt").exists():
+                    print(f"✅ Found blocks directory: {blocks_dir}")
+                    return blocks_dir
+
+        # If neither directory has the required files, default to complete_blocks
+        # (the original behavior - will fail later with appropriate error messages)
+        default_dir = self.data_dir / "complete_blocks" / f"{pdb_id}_evoformer_blocks" / "recycle_0"
+        print(f"⚠️  No valid blocks directory found, defaulting to: {default_dir}")
+        return default_dir
 
     def _setup_device(self):
         """Set device based on CUDA availability"""
@@ -179,7 +200,7 @@ class StructurePredictionRunner:
             "--pair_path", str(pair_path),
             "--output_dir", str(output_dir),
             "--model_device", self.model_device,
-            "--config_preset", self.config_preset
+            "--config_preset", self.config_preset,
         ]
         cmd.extend(self.build_optional_args())
 
@@ -392,7 +413,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='Multi-method structure prediction')
-    parser.add_argument('--pdb_id', type=str, default="1fv5_A",
+    parser.add_argument('--pdb_id', type=str, default="1neu_A",
                         help='Protein ID to process')
     parser.add_argument('--use_cpu', action='store_true',
                         help='Force CPU usage')

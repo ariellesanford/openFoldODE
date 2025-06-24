@@ -13,7 +13,7 @@ DATA_DIR="/media/visitor/Extreme SSD/data"
 # =======================================================================================
 
 # CONFIGURATION SECTION - Edit these variables directly:
-PDB_ID="1fv5_A"                    # Change this to your protein ID
+PDB_ID="1ioj_A"                    # Change this to your protein ID
 STRUCTURE_TYPE="relaxed"           # Change to "unrelaxed" if you want unrelaxed structures
 
 # Neural ODE predictions to include (leave empty to auto-discover all available)
