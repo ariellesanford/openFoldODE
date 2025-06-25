@@ -69,7 +69,8 @@ class StructurePredictionRunner:
         """Find blocks directory, checking both complete_blocks and incomplete_blocks"""
         possible_dirs = [
             self.data_dir / "complete_blocks" / f"{pdb_id}_evoformer_blocks" / "recycle_0",
-            self.data_dir / "endpoint_blocks" / f"{pdb_id}_evoformer_blocks" / "recycle_0"
+            self.data_dir / "endpoint_blocks" / f"{pdb_id}_evoformer_blocks" / "recycle_0",
+            self.data_dir / "incomplete_blocks" / f"{pdb_id}_evoformer_blocks" / "recycle_0"
         ]
         print(possible_dirs)
         for blocks_dir in possible_dirs:

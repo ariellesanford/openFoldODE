@@ -66,7 +66,7 @@ def create_experiment_configs():
         'min_lr': 1e-6,
         'early_stopping_patience': 10,
         'early_stopping_min_delta': 0.0001,
-        'max_time_hours': 16,  #change back
+        'max_time_hours': 17,  #change back
         # Memory optimizations
         'aggressive_cleanup': True,
         # Preliminary training settings
@@ -80,20 +80,15 @@ def create_experiment_configs():
     # Create experiments (timestamps will be added when training starts)
     experiments = [
         # Three different loss function experiments
-        ("Loss Comparison: Weighted Row", {
-            **base_config,
-            'loss': 'weighted_row',
-            'experiment_name': "loss_comparison_weighted_row"
-        }),
         ("Loss Comparison: Default", {
             **base_config,
             'loss': 'default',
             'experiment_name': "loss_comparison_default"  # No timestamp yet
         }),
-        ("Loss Comparison: Single Row (Structure Focused)", {
+        ("Loss Comparison: Weighted Row", {
             **base_config,
-            'loss': 'single_row',
-            'experiment_name': "loss_comparison_single_row_structure_focused"
+            'loss': 'weighted_row',
+            'experiment_name': "loss_comparison_weighted_row"
         }),
         # Additional experiment with different preliminary training settings
         ("Enhanced Preliminary Training", {

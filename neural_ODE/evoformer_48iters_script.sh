@@ -61,8 +61,8 @@ class EvoformerIterationRunner:
     def _find_evoformer_script(self) -> Path:
         """Find the evoformer iteration script"""
         possible_locations = [
-            self.project_root / "evoformer_iter" / "run_evoformer_iter.py",
-            self.script_dir / "evoformer_iter" / "run_evoformer_iter.py",
+            self.project_root / "save_intermediates" / "run_evoformer_iter.py",
+            self.script_dir / "save_intermediates" / "run_evoformer_iter.py",
             self.script_dir / "run_evoformer_iter.py",
             self.project_root / "run_evoformer_iter.py"
         ]
@@ -344,7 +344,7 @@ class EvoformerIterationRunner:
 SCRIPT_DIR = Path(__file__).parent.absolute()
 
 # Set these values for direct execution in PyCharm
-PROTEIN_ID = "5i5h_A"  # Change this to your protein ID
+PROTEIN_ID = "1neu_A"  # Change this to your protein ID
 
 # Set paths relative to script directory
 DATA_DIR = SCRIPT_DIR / "data" / "quick_inference_data"  # Relative to script location

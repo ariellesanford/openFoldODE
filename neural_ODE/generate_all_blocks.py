@@ -27,8 +27,8 @@ def find_evoformer_script():
     project_root = script_dir.parent
 
     possible_locations = [
-        project_root / "evoformer_iter" / "run_evoformer_iter.py",
-        script_dir / "evoformer_iter" / "run_evoformer_iter.py",
+        project_root / "save_intermediates" / "run_evoformer_iter.py",
+        script_dir / "save_intermediates" / "run_evoformer_iter.py",
         script_dir / "run_evoformer_iter.py"
     ]
 
