@@ -126,7 +126,7 @@ def run_training_experiment(name, config):
 
     # Build command with all parameters
     cmd_args = [
-                   sys.executable, 'train_evoformer_ode.py',
+                   sys.executable, 'train_evoformer_ode_new.py',
                    '--data_dirs'] + config['data_dirs'] + [
                    '--splits_dir', config['splits_dir'],
                    '--device', config['device'],

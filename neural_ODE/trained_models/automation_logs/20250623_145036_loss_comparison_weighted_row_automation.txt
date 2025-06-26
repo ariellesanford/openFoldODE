@@ -1,0 +1,2311 @@
+Experiment: Loss Comparison: Weighted Row
+Actual experiment name: 20250623_145036_loss_comparison_weighted_row
+Started: 2025-06-23 14:50:36
+Ended: 2025-06-23 14:57:08
+Duration: 0.11 hours
+Return code: 1
+Command: /home/visitor/anaconda3/envs/openfold_env/bin/python train_evoformer_ode.py --data_dirs /media/visitor/Extreme SSD/data/complete_blocks /media/visitor/Extreme SSD/data/endpoint_blocks --splits_dir /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/jumbo --device cuda --epochs 10000 --learning_rate 0.01 --reduced_cluster_size 64 --hidden_dim 64 --integrator rk4 --loss weighted_row --max_residues 450 --output_dir /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models --experiment_name 20250623_145036_loss_comparison_weighted_row --lr_patience 3 --lr_factor 0.5 --min_lr 1e-06 --early_stopping_patience 10 --early_stopping_min_delta 0.0001 --max_time_hours 0.5 --prelim_data_dir /media/visitor/Extreme SSD/data/complete_blocks --prelim_block_stride 4 --prelim_max_epochs 40 --prelim_chunk_size 2 --use_amp --aggressive_cleanup --enable_preliminary_training
+
+CONFIGURATION:
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/jumbo
+  device: cuda
+  epochs: 10000
+  learning_rate: 0.01
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_fast_ode: False
+  max_residues: 450
+  loss: weighted_row
+  use_amp: True
+  output_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  max_time_hours: 0.5
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 4
+  prelim_max_epochs: 40
+  prelim_chunk_size: 2
+  experiment_name: 20250623_145036_loss_comparison_weighted_row
+
+OUTPUT:
+[2025-06-23 14:50:39,341] [INFO] [real_accelerator.py:239:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+🚀 Neural ODE Training - Restructured Version
+📁 Data directories: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+💻 Device: cuda
+🔧 Model: Full ODE
+🔄 Preliminary training enabled
+🔍 Filtering 492 proteins by size (max: 450 residues)
+  ✅ 7d60_A: 288 residues
+  ✅ 1kqy_A: 273 residues
+  ✅ 3eba_A: 127 residues
+  ❌ 3foa_A: 510 residues (too large)
+  ❌ 3eps_A: 578 residues (too large)
+  ✅ 4j7z_A: 113 residues
+  ✅ 2cbp_A: 96 residues
+  ✅ 2wvq_A: 225 residues
+  ✅ 5wrf_A: 145 residues
+  ✅ 3ob6_A: 445 residues
+  ✅ 1mzw_A: 177 residues
+  ✅ 7bln_A: 182 residues
+  ✅ 3st1_A: 214 residues
+  ✅ 1z84_A: 351 residues
+  ✅ 5jir_A: 421 residues
+  ❌ 5wup_A: 482 residues (too large)
+  ✅ 1tpg_A: 91 residues
+  ✅ 6dzg_A: 300 residues
+  ✅ 1b08_A: 158 residues
+  ✅ 7k6p_A: 98 residues
+  ✅ 6h05_A: 426 residues
+  ✅ 1pzx_A: 289 residues
+  ✅ 6fl1_A: 14 residues
+  ✅ 2wwn_A: 169 residues
+  ✅ 3zxf_A: 138 residues
+  ✅ 4n8p_A: 135 residues
+  ✅ 3e62_A: 293 residues
+  ✅ 5veo_A: 416 residues
+  ✅ 4i05_A: 285 residues
+  ✅ 4b7i_A: 218 residues
+  ✅ 1rij_A: 23 residues
+  ✅ 2pwj_A: 171 residues
+  ✅ 4z7x_A: 238 residues
+  ✅ 2f2x_A: 62 residues
+  ✅ 6vjo_A: 38 residues
+  ✅ 3q54_A: 368 residues
+  ✅ 2cb3_A: 175 residues
+  ✅ 3gai_A: 194 residues
+  ✅ 3dm8_A: 143 residues
+  ✅ 4x51_A: 162 residues
+  ✅ 1wlt_A: 196 residues
+  ✅ 4edp_A: 351 residues
+  ✅ 4yk0_A: 114 residues
+  ✅ 6neg_A: 375 residues
+  ✅ 5uag_A: 320 residues
+  ✅ 2gp6_A: 434 residues
+  ✅ 1t1h_A: 78 residues
+  ✅ 1pt4_A: 29 residues
+  ✅ 1su1_A: 208 residues
+  ✅ 1fdy_A: 297 residues
+  ✅ 7lca_A: 398 residues
+  ✅ 6fcm_A: 282 residues
+  ✅ 2cwx_A: 430 residues
+  ✅ 1i5z_A: 209 residues
+  ✅ 6abq_A: 114 residues
+  ✅ 1esi_A: 262 residues
+  ✅ 4ekx_A: 116 residues
+  ✅ 5khg_A: 204 residues
+  ✅ 1ehj_A: 68 residues
+  ❌ 6v42_A: 467 residues (too large)
+  ✅ 5uqi_A: 198 residues
+  ✅ 3tkp_A: 246 residues
+  ✅ 3gbw_A: 164 residues
+  ✅ 2qht_A: 210 residues
+  ✅ 2r9p_A: 224 residues
+  ✅ 3ga0_A: 358 residues
+  ✅ 2g19_A: 244 residues
+  ✅ 4nwb_A: 278 residues
+  ✅ 2zc1_A: 333 residues
+  ✅ 3dp6_A: 279 residues
+  ✅ 2uy9_A: 385 residues
+  ✅ 3o4r_A: 261 residues
+  ✅ 2pku_A: 87 residues
+  ✅ 6yjn_A: 256 residues
+  ✅ 1sgv_A: 316 residues
+  ✅ 1uv7_A: 110 residues
+  ✅ 6jko_A: 380 residues
+  ✅ 6sw8_A: 77 residues
+  ✅ 2ztm_A: 260 residues
+  ✅ 4cew_A: 297 residues
+  ✅ 6k6r_A: 149 residues
+  ✅ 4wcz_A: 272 residues
+  ✅ 3g4a_A: 232 residues
+  ✅ 6dwx_A: 174 residues
+  ❌ 6cek_A: 728 residues (too large)
+  ✅ 2zx0_A: 195 residues
+  ✅ 6leo_A: 339 residues
+  ✅ 5vo7_A: 110 residues
+  ✅ 4fcg_A: 328 residues
+  ✅ 2f4p_A: 147 residues
+  ✅ 1b09_A: 206 residues
+  ✅ 2h61_A: 92 residues
+  ✅ 6fsn_A: 299 residues
+  ✅ 6fj4_A: 283 residues
+  ❌ 5wk6_A: 488 residues (too large)
+  ✅ 4rc1_A: 242 residues
+  ❌ 2r02_A: 697 residues (too large)
+  ✅ 3mra_A: 25 residues
+  ✅ 2lp8_A: 185 residues
+  ✅ 5uxd_A: 300 residues
+  ✅ 4yxm_A: 377 residues
+  ✅ 2chu_A: 296 residues
+  ✅ 1dew_A: 15 residues
+  ✅ 4pkl_A: 119 residues
+  ✅ 3zrp_A: 384 residues
+  ✅ 4o1k_A: 233 residues
+  ✅ 5uxv_A: 265 residues
+  ✅ 5cqq_A: 82 residues
+  ✅ 2pk9_A: 317 residues
+  ❌ 7jot_A: 518 residues (too large)
+  ❌ 5yp1_A: 745 residues (too large)
+  ❌ 3b0m_A: 584 residues (too large)
+  ✅ 4o4v_A: 252 residues
+  ✅ 1lr1_A: 61 residues
+  ✅ 3et1_A: 291 residues
+  ✅ 1yaf_A: 263 residues
+  ✅ 2q2j_A: 121 residues
+  ✅ 1nqd_A: 122 residues
+  ✅ 3a9w_A: 317 residues
+  ✅ 2gic_A: 45 residues
+  ✅ 4tw8_A: 235 residues
+  ✅ 5jp1_A: 220 residues
+  ❌ 6p62_A: 675 residues (too large)
+  ✅ 1l9c_A: 389 residues
+  ✅ 2rhb_A: 353 residues
+  ✅ 2afs_A: 329 residues
+  ❌ 3t8o_A: 543 residues (too large)
+  ✅ 3hrs_A: 214 residues
+  ✅ 2wfx_A: 152 residues
+  ✅ 4p3b_A: 78 residues
+  ✅ 2zf9_A: 194 residues
+  ✅ 6cpd_A: 128 residues
+  ✅ 1na8_A: 154 residues
+  ✅ 4etq_A: 221 residues
+  ✅ 3a75_A: 384 residues
+  ✅ 5ufq_A: 166 residues
+  ✅ 2gim_A: 106 residues
+  ✅ 4i5f_A: 262 residues
+  ✅ 3wt1_A: 247 residues
+  ❌ 6sz9_A: 783 residues (too large)
+  ❌ 7dev_A: 476 residues (too large)
+  ✅ 6zmu_A: 109 residues
+  ✅ 1ega_A: 301 residues
+  ✅ 3lb6_A: 132 residues
+  ✅ 5iaw_A: 228 residues
+  ✅ 2o8e_A: 15 residues
+  ✅ 7aon_A: 64 residues
+  ✅ 1ft2_A: 315 residues
+  ✅ 6thb_A: 426 residues
+  ✅ 1esm_A: 316 residues
+  ✅ 5yuf_A: 51 residues
+  ✅ 1h5y_A: 253 residues
+  ✅ 3q9b_A: 341 residues
+  ✅ 2rio_A: 434 residues
+  ✅ 5f67_A: 108 residues
+  ❌ 5t7z_A: 541 residues (too large)
+  ✅ 3dt5_A: 135 residues
+  ✅ 7bv6_A: 68 residues
+  ✅ 4an6_A: 185 residues
+  ❌ 2yey_A: 524 residues (too large)
+  ✅ 2pfw_A: 116 residues
+  ✅ 3mxi_A: 242 residues
+  ✅ 5k8m_A: 425 residues
+  ✅ 3ry9_A: 250 residues
+  ✅ 3toc_A: 224 residues
+  ✅ 6y6l_A: 216 residues
+  ✅ 3dpj_A: 194 residues
+  ✅ 5w0j_A: 31 residues
+  ✅ 5tih_A: 335 residues
+  ✅ 1tza_A: 134 residues
+  ✅ 3dvu_A: 143 residues
+  ✅ 6rum_A: 279 residues
+  ✅ 2ls5_A: 159 residues
+  ✅ 5f1f_A: 366 residues
+  ✅ 1ah5_A: 313 residues
+  ❌ 5kne_A: 852 residues (too large)
+  ✅ 1wq9_A: 96 residues
+  ✅ 6jrq_A: 408 residues
+  ✅ 1l09_A: 164 residues
+  ✅ 4i69_A: 87 residues
+  ✅ 5wxv_A: 217 residues
+  ✅ 4f4w_A: 361 residues
+  ✅ 2k1w_A: 85 residues
+  ✅ 4y68_A: 312 residues
+  ✅ 4cbj_A: 69 residues
+  ✅ 1iy5_A: 54 residues
+  ✅ 7sk0_A: 336 residues
+  ✅ 3dp5_A: 99 residues
+  ✅ 4p99_A: 437 residues
+  ✅ 1wdc_A: 64 residues
+  ✅ 1ios_A: 129 residues
+  ✅ 1ch2_A: 154 residues
+  ✅ 2pmp_A: 160 residues
+  ✅ 1kdk_A: 177 residues
+  ❌ 1qht_A: 775 residues (too large)
+  ✅ 6t6i_A: 59 residues
+  ✅ 1bus_A: 57 residues
+  ✅ 5vmt_A: 342 residues
+  ✅ 2rdn_A: 288 residues
+  ✅ 2r6o_A: 294 residues
+  ✅ 3lr5_A: 144 residues
+  ✅ 1w4s_A: 174 residues
+  ✅ 2wzv_A: 235 residues
+  ✅ 6wcv_A: 315 residues
+  ✅ 6qms_A: 21 residues
+  ✅ 7c50_A: 215 residues
+  ✅ 1bh3_A: 289 residues
+  ✅ 6i6c_A: 276 residues
+  ✅ 6gpm_A: 92 residues
+  ❌ 3l6x_A: 584 residues (too large)
+  ✅ 6aj6_A: 413 residues
+  ✅ 6fas_A: 119 residues
+  ✅ 1z91_A: 147 residues
+  ✅ 5c7j_A: 382 residues
+  ✅ 4fuw_A: 161 residues
+  ✅ 6xs5_A: 192 residues
+  ✅ 1p3b_A: 146 residues
+  ✅ 6h7c_A: 386 residues
+  ✅ 2gw4_A: 63 residues
+  ✅ 1fqm_A: 260 residues
+  ✅ 1lb1_A: 353 residues
+  ✅ 6bdx_A: 270 residues
+  ✅ 3l04_A: 359 residues
+  ❌ 6yd3_A: 480 residues (too large)
+  ✅ 2pyu_A: 219 residues
+  ✅ 3b36_A: 192 residues
+  ✅ 6ldq_A: 219 residues
+  ✅ 1wo5_A: 25 residues
+  ✅ 4h3w_A: 330 residues
+  ✅ 3vkz_A: 375 residues
+  ❌ 3o0h_A: 484 residues (too large)
+  ❌ 4ax4_A: 710 residues (too large)
+  ✅ 2f4j_A: 287 residues
+  ✅ 1t6l_A: 290 residues
+  ✅ 5aef_A: 28 residues
+  ✅ 1uub_A: 56 residues
+  ✅ 1mjh_A: 162 residues
+  ✅ 3iln_A: 251 residues
+  ✅ 1l8g_A: 321 residues
+  ✅ 3sx0_A: 421 residues
+  ✅ 5e5q_A: 63 residues
+  ✅ 7bqs_A: 122 residues
+  ✅ 4ba7_A: 106 residues
+  ✅ 5k9q_A: 320 residues
+  ✅ 6gw4_A: 307 residues
+  ❌ 3s9i_A: 741 residues (too large)
+  ✅ 7eql_A: 342 residues
+  ✅ 5h54_A: 259 residues
+  ✅ 6ai5_A: 106 residues
+  ✅ 2fyz_A: 63 residues
+  ❌ 5vl1_A: 506 residues (too large)
+  ✅ 5lq6_A: 219 residues
+  ✅ 6pqe_A: 89 residues
+  ✅ 2xt3_A: 344 residues
+  ❌ 6aft_A: 766 residues (too large)
+  ✅ 6ywh_A: 113 residues
+  ✅ 4wvo_A: 181 residues
+  ✅ 2v0o_A: 276 residues
+  ✅ 16vp_A: 366 residues
+  ✅ 2iha_A: 12 residues
+  ✅ 1ogu_A: 302 residues
+  ✅ 2ocy_A: 154 residues
+  ✅ 4pv0_A: 275 residues
+  ✅ 4yov_A: 233 residues
+  ❌ 7jjt_A: 524 residues (too large)
+  ✅ 7lgc_A: 110 residues
+  ❌ 7lpo_A: 797 residues (too large)
+  ✅ 5k8j_A: 85 residues
+  ✅ 2q87_A: 110 residues
+  ✅ 5bpe_A: 180 residues
+  ❌ 5wc0_A: 472 residues (too large)
+  ✅ 3gdj_A: 141 residues
+  ✅ 2hio_A: 128 residues
+  ✅ 4tgl_A: 269 residues
+  ✅ 5vnd_A: 309 residues
+  ✅ 2g6u_A: 15 residues
+  ✅ 2ztb_A: 252 residues
+  ✅ 4ehs_A: 155 residues
+  ✅ 3ao9_A: 116 residues
+  ✅ 4ygo_A: 173 residues
+  ❌ 5fs8_A: 515 residues (too large)
+  ✅ 7bhe_A: 138 residues
+  ✅ 6nrr_A: 114 residues
+  ✅ 5mla_A: 169 residues
+  ✅ 1jml_A: 72 residues
+  ✅ 1v5n_A: 89 residues
+  ✅ 2enq_A: 158 residues
+  ✅ 6btj_A: 233 residues
+  ✅ 2f07_A: 197 residues
+  ✅ 3dup_A: 300 residues
+  ✅ 6kwa_A: 270 residues
+  ✅ 6uuk_A: 349 residues
+  ✅ 1sro_A: 76 residues
+  ✅ 1o7s_A: 127 residues
+  ✅ 6gol_A: 72 residues
+  ✅ 4apw_A: 329 residues
+  ✅ 1tro_A: 19 residues
+  ✅ 2afc_A: 168 residues
+  ✅ 5u4h_A: 421 residues
+  ✅ 1uwj_A: 276 residues
+  ❌ 1shn_A: 478 residues (too large)
+  ✅ 2xr6_A: 170 residues
+  ✅ 3no7_A: 80 residues
+  ✅ 5jso_A: 201 residues
+  ✅ 1t2l_A: 141 residues
+  ❌ 7bsl_A: 566 residues (too large)
+  ✅ 1fvi_A: 297 residues
+  ✅ 1hv5_A: 165 residues
+  ✅ 2cyu_A: 40 residues
+  ✅ 7n50_A: 259 residues
+  ✅ 2vy1_A: 194 residues
+  ✅ 1i6j_A: 6 residues
+  ❌ 4kir_A: 460 residues (too large)
+  ❌ 2w02_A: 620 residues (too large)
+  ✅ 1vrk_A: 148 residues
+  ❌ 3alw_A: 559 residues (too large)
+  ✅ 2cdb_A: 366 residues
+  ✅ 2zay_A: 147 residues
+  ✅ 4kp2_A: 441 residues
+  ✅ 4rck_A: 220 residues
+  ✅ 4qlh_A: 203 residues
+  ✅ 1rja_A: 100 residues
+  ✅ 1gnk_A: 112 residues
+  ✅ 5aon_A: 53 residues
+  ✅ 4ndk_A: 299 residues
+  ❌ 3dgz_A: 488 residues (too large)
+  ✅ 1u36_A: 106 residues
+  ✅ 5v8w_A: 78 residues
+  ❌ 6iad_A: 483 residues (too large)
+  ✅ 1kyn_A: 235 residues
+  ✅ 4o5m_A: 390 residues
+  ✅ 1af4_A: 274 residues
+  ✅ 2uyh_A: 327 residues
+  ✅ 2gpy_A: 233 residues
+  ✅ 4xa9_A: 297 residues
+  ✅ 4ep6_A: 392 residues
+  ✅ 5ft0_A: 281 residues
+  ✅ 4xlt_A: 133 residues
+  ✅ 2ey4_A: 333 residues
+  ✅ 2e31_A: 297 residues
+  ✅ 5j49_A: 301 residues
+  ✅ 5tpx_A: 123 residues
+  ✅ 4ny0_A: 376 residues
+  ✅ 6s1v_A: 114 residues
+  ✅ 1zu1_A: 127 residues
+  ✅ 5x3s_A: 224 residues
+  ✅ 4ese_A: 204 residues
+  ✅ 2na5_A: 34 residues
+  ✅ 1sv0_A: 85 residues
+  ✅ 1a7m_A: 180 residues
+  ✅ 5c54_A: 312 residues
+  ❌ 3wnz_A: 470 residues (too large)
+  ❌ 3dlb_A: 685 residues (too large)
+  ✅ 3o4o_A: 158 residues
+  ✅ 5z8s_A: 182 residues
+  ✅ 3e8j_A: 306 residues
+  ✅ 4jwy_A: 286 residues
+  ✅ 1ni7_A: 155 residues
+  ✅ 7mgj_A: 330 residues
+  ✅ 5x1e_A: 110 residues
+  ✅ 6j2h_A: 274 residues
+  ✅ 2jxj_A: 96 residues
+  ✅ 3e81_A: 164 residues
+  ✅ 6bvp_A: 195 residues
+  ✅ 5z09_A: 409 residues
+  ✅ 3ggh_A: 275 residues
+  ✅ 1ptq_A: 50 residues
+  ✅ 5yft_A: 324 residues
+  ✅ 2lr3_A: 47 residues
+  ✅ 1r7m_A: 25 residues
+  ✅ 2l2e_A: 190 residues
+  ✅ 3q87_A: 125 residues
+  ✅ 6won_A: 255 residues
+  ✅ 5fc9_A: 95 residues
+  ✅ 1wf7_A: 103 residues
+  ✅ 3okk_A: 220 residues
+  ✅ 5v45_A: 253 residues
+  ✅ 1uku_A: 102 residues
+  ✅ 3fad_A: 164 residues
+  ✅ 2van_A: 245 residues
+  ✅ 3kn3_A: 242 residues
+  ❌ 3om2_A: 456 residues (too large)
+  ✅ 3vpp_A: 132 residues
+  ✅ 2fmr_A: 65 residues
+  ✅ 6ig4_A: 313 residues
+  ✅ 2h9m_A: 313 residues
+  ✅ 4nv2_A: 291 residues
+  ✅ 6tzl_A: 425 residues
+  ✅ 6m0v_A: 71 residues
+  ✅ 1hdp_A: 63 residues
+  ✅ 4nbc_A: 392 residues
+  ✅ 1p2c_A: 212 residues
+  ✅ 1ltk_A: 425 residues
+  ❌ 5ikq_A: 551 residues (too large)
+  ✅ 3thp_A: 345 residues
+  ✅ 2w8i_A: 329 residues
+  ✅ 6a6q_A: 351 residues
+  ✅ 2kpj_A: 94 residues
+  ✅ 1n0d_A: 12 residues
+  ✅ 2as0_A: 396 residues
+  ✅ 2w7v_A: 95 residues
+  ❌ 5jon_A: 517 residues (too large)
+  ✅ 1tqd_A: 413 residues
+  ✅ 6fkg_A: 186 residues
+  ✅ 4lo9_A: 219 residues
+  ✅ 2wz9_A: 153 residues
+  ✅ 1jo3_A: 16 residues
+  ✅ 6wt8_A: 365 residues
+  ✅ 1uem_A: 117 residues
+  ❌ 1ehn_A: 540 residues (too large)
+  ✅ 2c1y_A: 248 residues
+  ❌ 1wqa_A: 455 residues (too large)
+  ✅ 2ens_A: 96 residues
+  ✅ 7khe_A: 236 residues
+  ✅ 3gd0_A: 367 residues
+  ❌ 4zgh_A: 477 residues (too large)
+  ❌ 3frp_A: 627 residues (too large)
+  ✅ 1zg3_A: 358 residues
+  ❌ 1dq8_A: 467 residues (too large)
+  ✅ 4jnn_A: 194 residues
+  ✅ 6fpa_A: 164 residues
+  ✅ 5yda_A: 433 residues
+  ✅ 1zzz_A: 237 residues
+  ✅ 2n64_A: 75 residues
+  ❌ 4zdn_A: 639 residues (too large)
+  ✅ 3afa_A: 139 residues
+  ✅ 2nrj_A: 346 residues
+  ✅ 1onc_A: 104 residues
+  ✅ 2b7e_A: 59 residues
+  ✅ 6scq_A: 74 residues
+  ✅ 1fe5_A: 118 residues
+  ✅ 2fq6_A: 415 residues
+  ❌ 6ei3_A: 514 residues (too large)
+  ✅ 6x8o_A: 27 residues
+  ✅ 1b4m_A: 134 residues
+  ✅ 2n6h_A: 16 residues
+  ✅ 2zg1_A: 214 residues
+  ✅ 3hq9_A: 345 residues
+  ✅ 1b88_A: 114 residues
+  ✅ 2qcf_A: 260 residues
+  ❌ 4em6_A: 553 residues (too large)
+  ✅ 3dzc_A: 396 residues
+  ✅ 2u2f_A: 85 residues
+  ✅ 5xyb_A: 396 residues
+  ✅ 6ki2_A: 163 residues
+  ✅ 1uz3_A: 102 residues
+  ✅ 4ckn_A: 226 residues
+  ✅ 6q0i_A: 224 residues
+  ✅ 4o91_A: 314 residues
+  ✅ 2jov_A: 85 residues
+  ✅ 2lye_A: 18 residues
+  ❌ 4jc8_A: 669 residues (too large)
+  ✅ 3edm_A: 259 residues
+  ✅ 4ljr_A: 221 residues
+  ❌ 1vm8_A: 534 residues (too large)
+  ❌ 7eux_A: 732 residues (too large)
+  ✅ 1ib2_A: 349 residues
+  ❌ 5svd_A: 600 residues (too large)
+  ✅ 3mah_A: 157 residues
+  ❌ 1bj4_A: 470 residues (too large)
+  ✅ 3h5g_A: 31 residues
+  ❌ 2qju_A: 511 residues (too large)
+  ✅ 3geu_A: 189 residues
+  ✅ 1q0r_A: 298 residues
+  ✅ 5y26_A: 241 residues
+  ✅ 3tny_A: 303 residues
+  ❌ 3gh4_A: 525 residues (too large)
+  ✅ 2ps4_A: 374 residues
+  ✅ 7d11_A: 83 residues
+  ✅ 6umy_A: 128 residues
+  ✅ 4xc2_A: 117 residues
+  ✅ 1wmt_A: 41 residues
+  ✅ 4nvr_A: 307 residues
+  ✅ 6nko_A: 216 residues
+  ✅ 5t66_A: 291 residues
+  ✅ 6o4p_A: 349 residues
+  ✅ 1yir_A: 408 residues
+  ✅ 3x0g_A: 93 residues
+  ✅ 3e9a_A: 286 residues
+  ✅ 1krl_A: 44 residues
+  ✅ 2pbo_A: 400 residues
+  ✅ 4dd8_A: 208 residues
+  ✅ 3u59_A: 101 residues
+  ❌ 4w8i_A: 551 residues (too large)
+  ✅ 4bbq_A: 117 residues
+  ✅ 2ccm_A: 191 residues
+  ✅ 1o1x_A: 155 residues
+  ✅ 3uen_A: 203 residues
+  ❌ 6e68_A: 480 residues (too large)
+  ✅ 5f3b_A: 221 residues
+  ✅ 3o8q_A: 281 residues
+  ✅ 4iyh_A: 98 residues
+📊 Kept 434/492 proteins
+🔍 Filtering 50 proteins by size (max: 450 residues)
+  ✅ 2p9r_A: 102 residues
+  ✅ 4w82_A: 339 residues
+  ✅ 1npy_A: 271 residues
+  ❌ 2w5f_A: 540 residues (too large)
+  ✅ 3d94_A: 301 residues
+  ✅ 2vxs_A: 137 residues
+  ✅ 2gu4_A: 263 residues
+  ✅ 6tqr_A: 213 residues
+  ❌ 7jtv_A: 885 residues (too large)
+  ❌ 1fsu_A: 492 residues (too large)
+  ✅ 6jzh_A: 447 residues
+  ✅ 4eoi_A: 299 residues
+  ✅ 4air_A: 354 residues
+  ✅ 2ifc_A: 385 residues
+  ✅ 2n4t_A: 37 residues
+  ✅ 4p48_A: 277 residues
+  ✅ 6aci_A: 306 residues
+  ✅ 3uap_A: 227 residues
+  ✅ 2c0s_A: 64 residues
+  ✅ 3jui_A: 182 residues
+  ❌ 6pt6_A: 497 residues (too large)
+  ✅ 6wyi_A: 284 residues
+  ✅ 6bn3_A: 267 residues
+  ✅ 6rsg_A: 25 residues
+  ✅ 1usz_A: 149 residues
+  ✅ 1jjo_A: 40 residues
+  ✅ 4cdo_A: 185 residues
+  ✅ 2g3h_A: 153 residues
+  ✅ 2xh8_A: 291 residues
+  ❌ 3k09_A: 519 residues (too large)
+  ✅ 6vs7_A: 409 residues
+  ✅ 3cxz_A: 396 residues
+  ✅ 1hep_A: 129 residues
+  ✅ 4kji_A: 79 residues
+  ✅ 2m2y_A: 18 residues
+  ✅ 2y7w_A: 228 residues
+  ✅ 2y25_A: 317 residues
+  ✅ 4ls9_A: 341 residues
+  ✅ 3jxv_A: 356 residues
+  ✅ 6ejs_A: 110 residues
+  ✅ 3rj6_A: 153 residues
+  ✅ 6z35_A: 109 residues
+  ✅ 5d2i_A: 269 residues
+  ✅ 4a0q_A: 201 residues
+  ✅ 4jcu_A: 150 residues
+  ✅ 1mfz_A: 436 residues
+  ✅ 1l4x_A: 16 residues
+  ✅ 6iji_A: 324 residues
+  ✅ 1nkr_A: 201 residues
+  ✅ 2rbi_A: 109 residues
+📊 Kept 45/50 proteins
+🤖 Model: 854854 parameters
+🧬 Training proteins: 434
+🔍 Validation proteins: 45
+
+🚀 PRELIMINARY TRAINING PHASE
+============================================================
+🎛️  Using original LR for preliminary: 1.00e-02
+🔍 Filtering 80 proteins by size (max: 450 residues)
+  ✅ 7d60_A: 288 residues
+  ✅ 1kqy_A: 273 residues
+  ✅ 3eba_A: 127 residues
+  ❌ 3foa_A: 510 residues (too large)
+  ❌ 3eps_A: 578 residues (too large)
+  ✅ 4j7z_A: 113 residues
+  ✅ 2cbp_A: 96 residues
+  ✅ 2wvq_A: 225 residues
+  ✅ 5wrf_A: 145 residues
+  ✅ 3ob6_A: 445 residues
+  ✅ 1mzw_A: 177 residues
+  ✅ 7bln_A: 182 residues
+  ✅ 3st1_A: 214 residues
+  ✅ 1z84_A: 351 residues
+  ✅ 5jir_A: 421 residues
+  ❌ 5wup_A: 482 residues (too large)
+  ✅ 1tpg_A: 91 residues
+  ✅ 6dzg_A: 300 residues
+  ✅ 1b08_A: 158 residues
+  ✅ 7k6p_A: 98 residues
+  ✅ 6h05_A: 426 residues
+  ✅ 1pzx_A: 289 residues
+  ✅ 6fl1_A: 14 residues
+  ✅ 2wwn_A: 169 residues
+  ✅ 3zxf_A: 138 residues
+  ✅ 4n8p_A: 135 residues
+  ✅ 3e62_A: 293 residues
+  ✅ 5veo_A: 416 residues
+  ✅ 4i05_A: 285 residues
+  ✅ 4b7i_A: 218 residues
+  ✅ 1rij_A: 23 residues
+  ✅ 2pwj_A: 171 residues
+  ✅ 4z7x_A: 238 residues
+  ✅ 2f2x_A: 62 residues
+  ✅ 6vjo_A: 38 residues
+  ✅ 3q54_A: 368 residues
+  ✅ 2cb3_A: 175 residues
+  ✅ 3gai_A: 194 residues
+  ✅ 3dm8_A: 143 residues
+  ✅ 4x51_A: 162 residues
+  ✅ 1wlt_A: 196 residues
+  ✅ 4edp_A: 351 residues
+  ✅ 4yk0_A: 114 residues
+  ✅ 6neg_A: 375 residues
+  ✅ 5uag_A: 320 residues
+  ✅ 2gp6_A: 434 residues
+  ✅ 1t1h_A: 78 residues
+  ✅ 1pt4_A: 29 residues
+  ✅ 1su1_A: 208 residues
+  ✅ 1fdy_A: 297 residues
+  ✅ 7lca_A: 398 residues
+  ✅ 6fcm_A: 282 residues
+  ✅ 2cwx_A: 430 residues
+  ✅ 1i5z_A: 209 residues
+  ✅ 6abq_A: 114 residues
+  ✅ 1esi_A: 262 residues
+  ✅ 4ekx_A: 116 residues
+  ✅ 5khg_A: 204 residues
+  ✅ 1ehj_A: 68 residues
+  ❌ 6v42_A: 467 residues (too large)
+  ✅ 5uqi_A: 198 residues
+  ✅ 3tkp_A: 246 residues
+  ✅ 3gbw_A: 164 residues
+  ✅ 2qht_A: 210 residues
+  ✅ 2r9p_A: 224 residues
+  ✅ 3ga0_A: 358 residues
+  ✅ 2g19_A: 244 residues
+  ✅ 4nwb_A: 278 residues
+  ✅ 2zc1_A: 333 residues
+  ✅ 3dp6_A: 279 residues
+  ✅ 2uy9_A: 385 residues
+  ✅ 3o4r_A: 261 residues
+  ✅ 2pku_A: 87 residues
+  ✅ 6yjn_A: 256 residues
+  ✅ 1sgv_A: 316 residues
+  ✅ 1uv7_A: 110 residues
+  ✅ 6jko_A: 380 residues
+  ✅ 6sw8_A: 77 residues
+  ✅ 2ztm_A: 260 residues
+  ✅ 4cew_A: 297 residues
+📊 Kept 76/80 proteins
+🔍 Filtering 25 proteins by size (max: 450 residues)
+  ✅ 2p9r_A: 102 residues
+  ✅ 4w82_A: 339 residues
+  ✅ 1npy_A: 271 residues
+  ❌ 2w5f_A: 540 residues (too large)
+  ✅ 3d94_A: 301 residues
+  ✅ 2vxs_A: 137 residues
+  ✅ 2gu4_A: 263 residues
+  ✅ 6tqr_A: 213 residues
+  ❌ 7jtv_A: 885 residues (too large)
+  ❌ 1fsu_A: 492 residues (too large)
+  ✅ 6jzh_A: 447 residues
+  ✅ 4eoi_A: 299 residues
+  ✅ 4air_A: 354 residues
+  ✅ 2ifc_A: 385 residues
+  ✅ 2n4t_A: 37 residues
+  ✅ 4p48_A: 277 residues
+  ✅ 6aci_A: 306 residues
+  ✅ 3uap_A: 227 residues
+  ✅ 2c0s_A: 64 residues
+  ✅ 3jui_A: 182 residues
+  ❌ 6pt6_A: 497 residues (too large)
+  ✅ 6wyi_A: 284 residues
+  ✅ 6bn3_A: 267 residues
+  ✅ 6rsg_A: 25 residues
+  ✅ 1usz_A: 149 residues
+📊 Kept 21/25 proteins
+🧬 Preliminary training: 76 proteins
+🔍 Preliminary validation: 21 proteins
+
+🔍 DEBUG: Initial model parameter check
+✅ DEBUG: Model parameters are clean initially
+  msa_row_norm.weight: min=1.000, max=1.000, mean=1.000, std=0.000
+  msa_row_norm.bias: min=0.000, max=0.000, mean=0.000, std=0.000
+  msa_row_qkv.weight: min=-0.062, max=0.062, mean=0.000, std=0.036
+  msa_row_qkv.bias: min=-0.062, max=0.062, mean=-0.003, std=0.036
+  msa_row_gate.weight: min=-0.062, max=0.062, mean=-0.000, std=0.036
+  msa_row_gate.bias: min=-0.061, max=0.062, mean=0.002, std=0.037
+  msa_row_out.weight: min=-0.125, max=0.125, mean=0.001, std=0.072
+  msa_row_out.bias: min=-0.124, max=0.125, mean=-0.001, std=0.073
+  pair_bias_norm.weight: min=1.000, max=1.000, mean=1.000, std=0.000
+  pair_bias_norm.bias: min=0.000, max=0.000, mean=0.000, std=0.000
+  pair_bias_proj.weight: min=-0.087, max=0.088, mean=0.004, std=0.050
+  pair_bias_proj.bias: min=-0.084, max=0.064, mean=-0.001, std=0.064
+  msa_col_norm.weight: min=1.000, max=1.000, mean=1.000, std=0.000
+  msa_col_norm.bias: min=0.000, max=0.000, mean=0.000, std=0.000
+  msa_col_proj.weight: min=-0.062, max=0.062, mean=0.001, std=0.036
+  msa_col_proj.bias: min=-0.060, max=0.062, mean=0.002, std=0.035
+  msa_col_gate.weight: min=-0.062, max=0.062, mean=0.001, std=0.036
+  msa_col_gate.bias: min=-0.060, max=0.058, mean=-0.003, std=0.039
+  msa_col_out.weight: min=-0.125, max=0.125, mean=0.000, std=0.072
+  msa_col_out.bias: min=-0.125, max=0.124, mean=-0.004, std=0.073
+  msa_trans_norm.weight: min=1.000, max=1.000, mean=1.000, std=0.000
+  msa_trans_norm.bias: min=0.000, max=0.000, mean=0.000, std=0.000
+  msa_trans.0.weight: min=-0.062, max=0.062, mean=0.000, std=0.036
+  msa_trans.0.bias: min=-0.062, max=0.062, mean=-0.002, std=0.037
+  msa_trans.2.weight: min=-0.031, max=0.031, mean=0.000, std=0.018
+  msa_trans.2.bias: min=-0.031, max=0.031, mean=0.001, std=0.018
+  outer_norm.weight: min=1.000, max=1.000, mean=1.000, std=0.000
+  outer_norm.bias: min=0.000, max=0.000, mean=0.000, std=0.000
+  outer_proj_a.weight: min=-0.062, max=0.062, mean=-0.000, std=0.036
+  outer_proj_a.bias: min=-0.057, max=0.045, mean=-0.007, std=0.028
+  outer_proj_b.weight: min=-0.062, max=0.062, mean=-0.000, std=0.036
+  outer_proj_b.bias: min=-0.058, max=0.057, mean=0.003, std=0.039
+  outer_out.weight: min=-0.177, max=0.177, mean=0.003, std=0.102
+  outer_out.bias: min=-0.176, max=0.170, mean=-0.007, std=0.104
+  tri_norm.weight: min=1.000, max=1.000, mean=1.000, std=0.000
+  tri_norm.bias: min=0.000, max=0.000, mean=0.000, std=0.000
+  tri_proj_a.weight: min=-0.088, max=0.088, mean=0.001, std=0.051
+  tri_proj_a.bias: min=-0.087, max=0.084, mean=-0.003, std=0.053
+  tri_proj_b.weight: min=-0.088, max=0.088, mean=0.001, std=0.051
+  tri_proj_b.bias: min=-0.088, max=0.088, mean=0.005, std=0.054
+  tri_gate.weight: min=-0.088, max=0.088, mean=-0.000, std=0.051
+  tri_gate.bias: min=-0.088, max=0.088, mean=0.001, std=0.052
+  tri_out.weight: min=-0.125, max=0.125, mean=0.000, std=0.071
+  tri_out.bias: min=-0.125, max=0.125, mean=0.002, std=0.075
+  pair_trans_norm.weight: min=1.000, max=1.000, mean=1.000, std=0.000
+  pair_trans_norm.bias: min=0.000, max=0.000, mean=0.000, std=0.000
+  pair_trans.0.weight: min=-0.088, max=0.088, mean=0.000, std=0.051
+  pair_trans.0.bias: min=-0.088, max=0.088, mean=-0.003, std=0.050
+  pair_trans.2.weight: min=-0.044, max=0.044, mean=-0.000, std=0.025
+  pair_trans.2.bias: min=-0.044, max=0.044, mean=-0.001, std=0.023
+  time_mlp.0.weight: min=-0.910, max=0.956, mean=-0.001, std=0.525
+  time_mlp.0.bias: min=-0.972, max=0.978, mean=0.082, std=0.584
+  time_mlp.2.weight: min=-0.120, max=0.125, mean=-0.003, std=0.069
+  time_mlp.2.bias: min=-0.060, max=0.092, mean=0.016, std=0.107
+
+📈 Preliminary Epoch 1/40
+🎛️  LR: 1.00e-02
+  [1/76] 7d60_A... 🔍 DEBUG 7d60_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+  ✅ Chunk 1 loss: 36217.77344 (1 steps)
+🚨 DEBUG: NaN gradients detected in chunk 1
+  NaN gradient in: time_mlp.0.weight
+  NaN gradient in: time_mlp.0.bias
+  NaN gradient in: time_mlp.2.weight
+  📦 DEBUG Chunk 2: blocks [4, 8], times ['0.083', '0.167']
+  ✅ Chunk 2 loss: 93956.57812 (1 steps)
+🚨 DEBUG: NaN gradients detected in chunk 2
+  NaN gradient in: time_mlp.0.weight
+  NaN gradient in: time_mlp.0.bias
+  NaN gradient in: time_mlp.2.weight
+  📦 DEBUG Chunk 3: blocks [8, 12], times ['0.167', '0.250']
+  ✅ Chunk 3 loss: 140796.87500 (1 steps)
+🚨 DEBUG: NaN gradients detected in chunk 3
+  NaN gradient in: time_mlp.0.weight
+  NaN gradient in: time_mlp.0.bias
+  📦 DEBUG Chunk 4: blocks [12, 16], times ['0.250', '0.333']
+  ✅ Chunk 4 loss: 200344.00000 (1 steps)
+  📦 DEBUG Chunk 5: blocks [16, 20], times ['0.333', '0.417']
+  ✅ Chunk 5 loss: 421077.71875 (1 steps)
+  📦 DEBUG Chunk 6: blocks [20, 24], times ['0.417', '0.500']
+  ✅ Chunk 6 loss: 593613.68750 (1 steps)
+  📦 DEBUG Chunk 7: blocks [24, 28], times ['0.500', '0.583']
+  ✅ Chunk 7 loss: 838191.62500 (1 steps)
+  📦 DEBUG Chunk 8: blocks [28, 32], times ['0.583', '0.667']
+  ✅ Chunk 8 loss: 963877.62500 (1 steps)
+  📦 DEBUG Chunk 9: blocks [32, 36], times ['0.667', '0.750']
+  ✅ Chunk 9 loss: 1029532.37500 (1 steps)
+🚨 DEBUG: NaN gradients detected in chunk 9
+  NaN gradient in: time_mlp.0.weight
+  NaN gradient in: time_mlp.0.bias
+  NaN gradient in: time_mlp.2.weight
+  📦 DEBUG Chunk 10: blocks [36, 40], times ['0.750', '0.833']
+  ✅ Chunk 10 loss: 1104782.12500 (1 steps)
+🚨 DEBUG: NaN gradients detected in chunk 10
+  NaN gradient in: time_mlp.0.weight
+  NaN gradient in: time_mlp.0.bias
+  📦 DEBUG Chunk 11: blocks [40, 44], times ['0.833', '0.917']
+  ✅ Chunk 11 loss: 1290561.87500 (1 steps)
+🚨 DEBUG: NaN gradients detected in chunk 11
+  NaN gradient in: time_mlp.0.weight
+  NaN gradient in: time_mlp.0.bias
+  📦 DEBUG Chunk 12: blocks [44, 48], times ['0.917', '1.000']
+  ✅ Chunk 12 loss: 1525744.00000 (1 steps)
+🎯 DEBUG 7d60_A: Final avg loss: 686558.02148 from 12 chunks
+✅ Loss: 686558.02148
+  [2/76] 1kqy_A... 🔍 DEBUG 1kqy_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+  ✅ Chunk 1 loss: 33006.28906 (1 steps)
+  📦 DEBUG Chunk 2: blocks [4, 8], times ['0.083', '0.167']
+  ✅ Chunk 2 loss: 86673.65625 (1 steps)
+  📦 DEBUG Chunk 3: blocks [8, 12], times ['0.167', '0.250']
+  ✅ Chunk 3 loss: 130173.79688 (1 steps)
+  📦 DEBUG Chunk 4: blocks [12, 16], times ['0.250', '0.333']
+  ✅ Chunk 4 loss: 175994.85938 (1 steps)
+🚨 DEBUG: NaN gradients detected in chunk 4
+  NaN gradient in: time_mlp.0.weight
+  NaN gradient in: time_mlp.0.bias
+  📦 DEBUG Chunk 5: blocks [16, 20], times ['0.333', '0.417']
+  ✅ Chunk 5 loss: 388230.56250 (1 steps)
+  📦 DEBUG Chunk 6: blocks [20, 24], times ['0.417', '0.500']
+  ✅ Chunk 6 loss: 526529.50000 (1 steps)
+  📦 DEBUG Chunk 7: blocks [24, 28], times ['0.500', '0.583']
+  ✅ Chunk 7 loss: 678779.75000 (1 steps)
+  📦 DEBUG Chunk 8: blocks [28, 32], times ['0.583', '0.667']
+  ✅ Chunk 8 loss: 765743.12500 (1 steps)
+🚨 DEBUG: NaN gradients detected in chunk 8
+  NaN gradient in: time_mlp.2.weight
+  📦 DEBUG Chunk 9: blocks [32, 36], times ['0.667', '0.750']
+  ✅ Chunk 9 loss: 820727.00000 (1 steps)
+  📦 DEBUG Chunk 10: blocks [36, 40], times ['0.750', '0.833']
+  ✅ Chunk 10 loss: 860542.93750 (1 steps)
+  📦 DEBUG Chunk 11: blocks [40, 44], times ['0.833', '0.917']
+  ✅ Chunk 11 loss: 1056935.62500 (1 steps)
+  📦 DEBUG Chunk 12: blocks [44, 48], times ['0.917', '1.000']
+  ✅ Chunk 12 loss: 1328346.00000 (1 steps)
+🎯 DEBUG 1kqy_A: Final avg loss: 570973.59180 from 12 chunks
+✅ Loss: 570973.59180
+  [3/76] 3eba_A... 🔍 DEBUG 3eba_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+  ✅ Chunk 1 loss: 22943.76172 (1 steps)
+  📦 DEBUG Chunk 2: blocks [4, 8], times ['0.083', '0.167']
+  ✅ Chunk 2 loss: 69840.82812 (1 steps)
+  📦 DEBUG Chunk 3: blocks [8, 12], times ['0.167', '0.250']
+  ✅ Chunk 3 loss: 150708.54688 (1 steps)
+  📦 DEBUG Chunk 4: blocks [12, 16], times ['0.250', '0.333']
+  ✅ Chunk 4 loss: 263469.46875 (1 steps)
+🚨 DEBUG: NaN gradients detected in chunk 4
+  NaN gradient in: time_mlp.2.weight
+  📦 DEBUG Chunk 5: blocks [16, 20], times ['0.333', '0.417']
+  ✅ Chunk 5 loss: 373746.87500 (1 steps)
+  📦 DEBUG Chunk 6: blocks [20, 24], times ['0.417', '0.500']
+  ✅ Chunk 6 loss: 475106.50000 (1 steps)
+  📦 DEBUG Chunk 7: blocks [24, 28], times ['0.500', '0.583']
+  ✅ Chunk 7 loss: 481942.50000 (1 steps)
+  📦 DEBUG Chunk 8: blocks [28, 32], times ['0.583', '0.667']
+  ✅ Chunk 8 loss: 506975.31250 (1 steps)
+  📦 DEBUG Chunk 9: blocks [32, 36], times ['0.667', '0.750']
+  ✅ Chunk 9 loss: 450570.21875 (1 steps)
+  📦 DEBUG Chunk 10: blocks [36, 40], times ['0.750', '0.833']
+  ✅ Chunk 10 loss: 408518.12500 (1 steps)
+  📦 DEBUG Chunk 11: blocks [40, 44], times ['0.833', '0.917']
+  ✅ Chunk 11 loss: 333982.78125 (1 steps)
+  📦 DEBUG Chunk 12: blocks [44, 48], times ['0.917', '1.000']
+  ✅ Chunk 12 loss: 334466.90625 (1 steps)
+🎯 DEBUG 3eba_A: Final avg loss: 322689.31868 from 12 chunks
+✅ Loss: 322689.31868
+  [4/76] 4j7z_A... 🔍 DEBUG 4j7z_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+  ✅ Chunk 1 loss: 13667.79785 (1 steps)
+  📦 DEBUG Chunk 2: blocks [4, 8], times ['0.083', '0.167']
+  ✅ Chunk 2 loss: 36814.59375 (1 steps)
+  📦 DEBUG Chunk 3: blocks [8, 12], times ['0.167', '0.250']
+  ✅ Chunk 3 loss: 59815.00781 (1 steps)
+  📦 DEBUG Chunk 4: blocks [12, 16], times ['0.250', '0.333']
+  ✅ Chunk 4 loss: 88503.85156 (1 steps)
+  📦 DEBUG Chunk 5: blocks [16, 20], times ['0.333', '0.417']
+  ✅ Chunk 5 loss: 185582.28125 (1 steps)
+  📦 DEBUG Chunk 6: blocks [20, 24], times ['0.417', '0.500']
+  ✅ Chunk 6 loss: 259310.68750 (1 steps)
+  📦 DEBUG Chunk 7: blocks [24, 28], times ['0.500', '0.583']
+  ✅ Chunk 7 loss: 324239.56250 (1 steps)
+  📦 DEBUG Chunk 8: blocks [28, 32], times ['0.583', '0.667']
+  ✅ Chunk 8 loss: 372470.12500 (1 steps)
+  📦 DEBUG Chunk 9: blocks [32, 36], times ['0.667', '0.750']
+  ✅ Chunk 9 loss: 426112.03125 (1 steps)
+  📦 DEBUG Chunk 10: blocks [36, 40], times ['0.750', '0.833']
+  ✅ Chunk 10 loss: 503478.50000 (1 steps)
+  📦 DEBUG Chunk 11: blocks [40, 44], times ['0.833', '0.917']
+  ✅ Chunk 11 loss: 621843.75000 (1 steps)
+  📦 DEBUG Chunk 12: blocks [44, 48], times ['0.917', '1.000']
+  ✅ Chunk 12 loss: 744195.18750 (1 steps)
+🎯 DEBUG 4j7z_A: Final avg loss: 303002.78133 from 12 chunks
+✅ Loss: 303002.78133
+  [5/76] 2cbp_A... 🔍 DEBUG 2cbp_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+  ✅ Chunk 1 loss: 20829.31055 (1 steps)
+  📦 DEBUG Chunk 2: blocks [4, 8], times ['0.083', '0.167']
+  ✅ Chunk 2 loss: 65488.60156 (1 steps)
+  📦 DEBUG Chunk 3: blocks [8, 12], times ['0.167', '0.250']
+  ✅ Chunk 3 loss: 133439.84375 (1 steps)
+  📦 DEBUG Chunk 4: blocks [12, 16], times ['0.250', '0.333']
+  ✅ Chunk 4 loss: 209148.46875 (1 steps)
+  📦 DEBUG Chunk 5: blocks [16, 20], times ['0.333', '0.417']
+  ✅ Chunk 5 loss: 285006.31250 (1 steps)
+  📦 DEBUG Chunk 6: blocks [20, 24], times ['0.417', '0.500']
+  ✅ Chunk 6 loss: 369554.50000 (1 steps)
+  📦 DEBUG Chunk 7: blocks [24, 28], times ['0.500', '0.583']
+  ✅ Chunk 7 loss: 361415.50000 (1 steps)
+  📦 DEBUG Chunk 8: blocks [28, 32], times ['0.583', '0.667']
+  ✅ Chunk 8 loss: 359431.96875 (1 steps)
+  📦 DEBUG Chunk 9: blocks [32, 36], times ['0.667', '0.750']
+  ✅ Chunk 9 loss: 371258.75000 (1 steps)
+  📦 DEBUG Chunk 10: blocks [36, 40], times ['0.750', '0.833']
+  ✅ Chunk 10 loss: 381046.56250 (1 steps)
+  📦 DEBUG Chunk 11: blocks [40, 44], times ['0.833', '0.917']
+  ✅ Chunk 11 loss: 412767.46875 (1 steps)
+  📦 DEBUG Chunk 12: blocks [44, 48], times ['0.917', '1.000']
+  ✅ Chunk 12 loss: 485382.18750 (1 steps)
+🎯 DEBUG 2cbp_A: Final avg loss: 287897.45622 from 12 chunks
+✅ Loss: 287897.45622
+  [6/76] 2wvq_A... 🔍 DEBUG 2wvq_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+  ✅ Chunk 1 loss: 30781.00000 (1 steps)
+  📦 DEBUG Chunk 2: blocks [4, 8], times ['0.083', '0.167']
+  ✅ Chunk 2 loss: 80058.41406 (1 steps)
+  📦 DEBUG Chunk 3: blocks [8, 12], times ['0.167', '0.250']
+  ✅ Chunk 3 loss: 115065.47656 (1 steps)
+  📦 DEBUG Chunk 4: blocks [12, 16], times ['0.250', '0.333']
+  ✅ Chunk 4 loss: 140715.39062 (1 steps)
+  📦 DEBUG Chunk 5: blocks [16, 20], times ['0.333', '0.417']
+  ✅ Chunk 5 loss: 257739.39062 (1 steps)
+  📦 DEBUG Chunk 6: blocks [20, 24], times ['0.417', '0.500']
+  ✅ Chunk 6 loss: 378391.65625 (1 steps)
+  📦 DEBUG Chunk 7: blocks [24, 28], times ['0.500', '0.583']
+  ✅ Chunk 7 loss: 525037.56250 (1 steps)
+  📦 DEBUG Chunk 8: blocks [28, 32], times ['0.583', '0.667']
+  ✅ Chunk 8 loss: 598731.56250 (1 steps)
+  📦 DEBUG Chunk 9: blocks [32, 36], times ['0.667', '0.750']
+  ✅ Chunk 9 loss: 632937.75000 (1 steps)
+  📦 DEBUG Chunk 10: blocks [36, 40], times ['0.750', '0.833']
+  ✅ Chunk 10 loss: 652799.62500 (1 steps)
+  📦 DEBUG Chunk 11: blocks [40, 44], times ['0.833', '0.917']
+  ✅ Chunk 11 loss: 774044.93750 (1 steps)
+  📦 DEBUG Chunk 12: blocks [44, 48], times ['0.917', '1.000']
+  ✅ Chunk 12 loss: 938923.37500 (1 steps)
+🎯 DEBUG 2wvq_A: Final avg loss: 427102.17839 from 12 chunks
+✅ Loss: 427102.17839
+  [7/76] 5wrf_A... 🔍 DEBUG 5wrf_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+  ✅ Chunk 1 loss: 18237.00977 (1 steps)
+  📦 DEBUG Chunk 2: blocks [4, 8], times ['0.083', '0.167']
+  ✅ Chunk 2 loss: 48833.05859 (1 steps)
+  📦 DEBUG Chunk 3: blocks [8, 12], times ['0.167', '0.250']
+  ✅ Chunk 3 loss: 79331.65625 (1 steps)
+  📦 DEBUG Chunk 4: blocks [12, 16], times ['0.250', '0.333']
+  ✅ Chunk 4 loss: 115139.88281 (1 steps)
+  📦 DEBUG Chunk 5: blocks [16, 20], times ['0.333', '0.417']
+  ✅ Chunk 5 loss: 163195.84375 (1 steps)
+  📦 DEBUG Chunk 6: blocks [20, 24], times ['0.417', '0.500']
+  ✅ Chunk 6 loss: 228174.59375 (1 steps)
+  📦 DEBUG Chunk 7: blocks [24, 28], times ['0.500', '0.583']
+  ✅ Chunk 7 loss: 249444.14062 (1 steps)
+  📦 DEBUG Chunk 8: blocks [28, 32], times ['0.583', '0.667']
+  ✅ Chunk 8 loss: 272961.71875 (1 steps)
+  📦 DEBUG Chunk 9: blocks [32, 36], times ['0.667', '0.750']
+  ✅ Chunk 9 loss: 269338.71875 (1 steps)
+  📦 DEBUG Chunk 10: blocks [36, 40], times ['0.750', '0.833']
+  ✅ Chunk 10 loss: 264503.68750 (1 steps)
+  📦 DEBUG Chunk 11: blocks [40, 44], times ['0.833', '0.917']
+  ✅ Chunk 11 loss: 328477.25000 (1 steps)
+  📦 DEBUG Chunk 12: blocks [44, 48], times ['0.917', '1.000']
+  ✅ Chunk 12 loss: 472341.96875 (1 steps)
+🎯 DEBUG 5wrf_A: Final avg loss: 209164.96077 from 12 chunks
+✅ Loss: 209164.96077
+  [8/76] 3ob6_A... 🔍 DEBUG 3ob6_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 50.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 29.81 MiB is free. Including non-PyTorch memory, this process has 7.53 GiB memory in use. Of the allocated memory 7.30 GiB is allocated by PyTorch, and 119.79 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 3ob6_A: No valid chunks processed
+✅ Loss: 0.00000
+  [9/76] 1mzw_A... 🔍 DEBUG 1mzw_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+  ✅ Chunk 1 loss: 23185.71484 (1 steps)
+  📦 DEBUG Chunk 2: blocks [4, 8], times ['0.083', '0.167']
+  ✅ Chunk 2 loss: 57394.22656 (1 steps)
+  📦 DEBUG Chunk 3: blocks [8, 12], times ['0.167', '0.250']
+  ✅ Chunk 3 loss: 91938.99219 (1 steps)
+  📦 DEBUG Chunk 4: blocks [12, 16], times ['0.250', '0.333']
+  ✅ Chunk 4 loss: 126594.81250 (1 steps)
+  📦 DEBUG Chunk 5: blocks [16, 20], times ['0.333', '0.417']
+  ✅ Chunk 5 loss: 250966.64062 (1 steps)
+  📦 DEBUG Chunk 6: blocks [20, 24], times ['0.417', '0.500']
+  ✅ Chunk 6 loss: 349365.18750 (1 steps)
+  📦 DEBUG Chunk 7: blocks [24, 28], times ['0.500', '0.583']
+  ✅ Chunk 7 loss: 470524.84375 (1 steps)
+  📦 DEBUG Chunk 8: blocks [28, 32], times ['0.583', '0.667']
+  ✅ Chunk 8 loss: 537384.93750 (1 steps)
+  📦 DEBUG Chunk 9: blocks [32, 36], times ['0.667', '0.750']
+  ✅ Chunk 9 loss: 551774.68750 (1 steps)
+  📦 DEBUG Chunk 10: blocks [36, 40], times ['0.750', '0.833']
+  ✅ Chunk 10 loss: 554236.31250 (1 steps)
+  📦 DEBUG Chunk 11: blocks [40, 44], times ['0.833', '0.917']
+  ✅ Chunk 11 loss: 617781.87500 (1 steps)
+  📦 DEBUG Chunk 12: blocks [44, 48], times ['0.917', '1.000']
+  ✅ Chunk 12 loss: 729016.43750 (1 steps)
+🎯 DEBUG 1mzw_A: Final avg loss: 363347.05566 from 12 chunks
+✅ Loss: 363347.05566
+  [10/76] 7bln_A... 🔍 DEBUG 7bln_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+  ✅ Chunk 1 loss: 49133.81641 (1 steps)
+  📦 DEBUG Chunk 2: blocks [4, 8], times ['0.083', '0.167']
+  ✅ Chunk 2 loss: 123165.55469 (1 steps)
+  📦 DEBUG Chunk 3: blocks [8, 12], times ['0.167', '0.250']
+🚨 DEBUG: ODE trajectory has NaN in chunk 3
+  M trajectory NaN count: 2981888
+  Z trajectory NaN count: 4239872
+🎯 DEBUG 7bln_A: Final avg loss: 86149.68555 from 2 chunks
+✅ Loss: 86149.68555
+  [11/76] 3st1_A... 🔍 DEBUG 3st1_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3506176
+  Z trajectory NaN count: 5861888
+❌ DEBUG 3st1_A: No valid chunks processed
+✅ Loss: 0.00000
+  [12/76] 1z84_A... 🔍 DEBUG 1z84_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5750784
+  Z trajectory NaN count: 15769728
+❌ DEBUG 1z84_A: No valid chunks processed
+✅ Loss: 0.00000
+  [13/76] 5jir_A... 🔍 DEBUG 5jir_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 174.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 157.81 MiB is free. Including non-PyTorch memory, this process has 7.40 GiB memory in use. Of the allocated memory 7.21 GiB is allocated by PyTorch, and 85.15 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 5jir_A: No valid chunks processed
+✅ Loss: 0.00000
+  [14/76] 1tpg_A... 🔍 DEBUG 1tpg_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1490944
+  Z trajectory NaN count: 1059968
+❌ DEBUG 1tpg_A: No valid chunks processed
+✅ Loss: 0.00000
+  [15/76] 6dzg_A... 🔍 DEBUG 6dzg_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4915200
+  Z trajectory NaN count: 11520000
+❌ DEBUG 6dzg_A: No valid chunks processed
+✅ Loss: 0.00000
+  [16/76] 1b08_A... 🔍 DEBUG 1b08_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2588672
+  Z trajectory NaN count: 3195392
+❌ DEBUG 1b08_A: No valid chunks processed
+✅ Loss: 0.00000
+  [17/76] 7k6p_A... 🔍 DEBUG 7k6p_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1605632
+  Z trajectory NaN count: 1229312
+❌ DEBUG 7k6p_A: No valid chunks processed
+✅ Loss: 0.00000
+  [18/76] 6h05_A... 🔍 DEBUG 6h05_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 178.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 161.81 MiB is free. Including non-PyTorch memory, this process has 7.40 GiB memory in use. Of the allocated memory 7.18 GiB is allocated by PyTorch, and 113.12 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 6h05_A: No valid chunks processed
+✅ Loss: 0.00000
+  [19/76] 1pzx_A... 🔍 DEBUG 1pzx_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4734976
+  Z trajectory NaN count: 10690688
+❌ DEBUG 1pzx_A: No valid chunks processed
+✅ Loss: 0.00000
+  [20/76] 6fl1_A... 🔍 DEBUG 6fl1_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 229376
+  Z trajectory NaN count: 25088
+❌ DEBUG 6fl1_A: No valid chunks processed
+✅ Loss: 0.00000
+  [21/76] 2wwn_A... 🔍 DEBUG 2wwn_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2768896
+  Z trajectory NaN count: 3655808
+❌ DEBUG 2wwn_A: No valid chunks processed
+✅ Loss: 0.00000
+  [22/76] 3zxf_A... 🔍 DEBUG 3zxf_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2260992
+  Z trajectory NaN count: 2437632
+❌ DEBUG 3zxf_A: No valid chunks processed
+✅ Loss: 0.00000
+  [23/76] 4n8p_A... 🔍 DEBUG 4n8p_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2211840
+  Z trajectory NaN count: 2332800
+❌ DEBUG 4n8p_A: No valid chunks processed
+✅ Loss: 0.00000
+  [24/76] 3e62_A... 🔍 DEBUG 3e62_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4800512
+  Z trajectory NaN count: 10988672
+❌ DEBUG 3e62_A: No valid chunks processed
+✅ Loss: 0.00000
+  [25/76] 5veo_A... 🔍 DEBUG 5veo_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 86.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 47.81 MiB is free. Including non-PyTorch memory, this process has 7.51 GiB memory in use. Of the allocated memory 7.22 GiB is allocated by PyTorch, and 188.91 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 5veo_A: No valid chunks processed
+✅ Loss: 0.00000
+  [26/76] 4i05_A... 🔍 DEBUG 4i05_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4669440
+  Z trajectory NaN count: 10396800
+❌ DEBUG 4i05_A: No valid chunks processed
+✅ Loss: 0.00000
+  [27/76] 4b7i_A... 🔍 DEBUG 4b7i_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3571712
+  Z trajectory NaN count: 6083072
+❌ DEBUG 4b7i_A: No valid chunks processed
+✅ Loss: 0.00000
+  [28/76] 1rij_A... 🔍 DEBUG 1rij_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 376832
+  Z trajectory NaN count: 67712
+❌ DEBUG 1rij_A: No valid chunks processed
+✅ Loss: 0.00000
+  [29/76] 2pwj_A... 🔍 DEBUG 2pwj_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2801664
+  Z trajectory NaN count: 3742848
+❌ DEBUG 2pwj_A: No valid chunks processed
+✅ Loss: 0.00000
+  [30/76] 4z7x_A... 🔍 DEBUG 4z7x_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3899392
+  Z trajectory NaN count: 7250432
+❌ DEBUG 4z7x_A: No valid chunks processed
+✅ Loss: 0.00000
+  [31/76] 2f2x_A... 🔍 DEBUG 2f2x_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1015808
+  Z trajectory NaN count: 492032
+❌ DEBUG 2f2x_A: No valid chunks processed
+✅ Loss: 0.00000
+  [32/76] 6vjo_A... 🔍 DEBUG 6vjo_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 622592
+  Z trajectory NaN count: 184832
+❌ DEBUG 6vjo_A: No valid chunks processed
+✅ Loss: 0.00000
+  [33/76] 3q54_A... 🔍 DEBUG 3q54_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 134.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 43.81 MiB is free. Including non-PyTorch memory, this process has 7.51 GiB memory in use. Of the allocated memory 7.31 GiB is allocated by PyTorch, and 96.77 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 3q54_A: No valid chunks processed
+✅ Loss: 0.00000
+  [34/76] 2cb3_A... 🔍 DEBUG 2cb3_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2867200
+  Z trajectory NaN count: 3920000
+❌ DEBUG 2cb3_A: No valid chunks processed
+✅ Loss: 0.00000
+  [35/76] 3gai_A... 🔍 DEBUG 3gai_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3178496
+  Z trajectory NaN count: 4817408
+❌ DEBUG 3gai_A: No valid chunks processed
+✅ Loss: 0.00000
+  [36/76] 3dm8_A... 🔍 DEBUG 3dm8_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2342912
+  Z trajectory NaN count: 2617472
+❌ DEBUG 3dm8_A: No valid chunks processed
+✅ Loss: 0.00000
+  [37/76] 4x51_A... 🔍 DEBUG 4x51_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2654208
+  Z trajectory NaN count: 3359232
+❌ DEBUG 4x51_A: No valid chunks processed
+✅ Loss: 0.00000
+  [38/76] 1wlt_A... 🔍 DEBUG 1wlt_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3211264
+  Z trajectory NaN count: 4917248
+❌ DEBUG 1wlt_A: No valid chunks processed
+✅ Loss: 0.00000
+  [39/76] 4edp_A... 🔍 DEBUG 4edp_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5750784
+  Z trajectory NaN count: 15769728
+❌ DEBUG 4edp_A: No valid chunks processed
+✅ Loss: 0.00000
+  [40/76] 4yk0_A... 🔍 DEBUG 4yk0_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1867776
+  Z trajectory NaN count: 1663488
+❌ DEBUG 4yk0_A: No valid chunks processed
+✅ Loss: 0.00000
+  [41/76] 6neg_A... 🔍 DEBUG 6neg_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 36.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 47.81 MiB is free. Including non-PyTorch memory, this process has 7.51 GiB memory in use. Of the allocated memory 7.25 GiB is allocated by PyTorch, and 155.61 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 6neg_A: No valid chunks processed
+✅ Loss: 0.00000
+  [42/76] 5uag_A... 🔍 DEBUG 5uag_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5242880
+  Z trajectory NaN count: 13107200
+❌ DEBUG 5uag_A: No valid chunks processed
+✅ Loss: 0.00000
+  [43/76] 2gp6_A... 🔍 DEBUG 2gp6_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 92.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 105.81 MiB is free. Including non-PyTorch memory, this process has 7.45 GiB memory in use. Of the allocated memory 7.30 GiB is allocated by PyTorch, and 51.78 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 2gp6_A: No valid chunks processed
+✅ Loss: 0.00000
+  [44/76] 1t1h_A... 🔍 DEBUG 1t1h_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1277952
+  Z trajectory NaN count: 778752
+❌ DEBUG 1t1h_A: No valid chunks processed
+✅ Loss: 0.00000
+  [45/76] 1pt4_A... 🔍 DEBUG 1pt4_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 475136
+  Z trajectory NaN count: 107648
+❌ DEBUG 1pt4_A: No valid chunks processed
+✅ Loss: 0.00000
+  [46/76] 1su1_A... 🔍 DEBUG 1su1_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3407872
+  Z trajectory NaN count: 5537792
+❌ DEBUG 1su1_A: No valid chunks processed
+✅ Loss: 0.00000
+  [47/76] 1fdy_A... 🔍 DEBUG 1fdy_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4866048
+  Z trajectory NaN count: 11290752
+❌ DEBUG 1fdy_A: No valid chunks processed
+✅ Loss: 0.00000
+  [48/76] 7lca_A... 🔍 DEBUG 7lca_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 620.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 111.81 MiB is free. Including non-PyTorch memory, this process has 7.45 GiB memory in use. Of the allocated memory 7.18 GiB is allocated by PyTorch, and 162.57 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 7lca_A: No valid chunks processed
+✅ Loss: 0.00000
+  [49/76] 6fcm_A... 🔍 DEBUG 6fcm_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4620288
+  Z trajectory NaN count: 10179072
+❌ DEBUG 6fcm_A: No valid chunks processed
+✅ Loss: 0.00000
+  [50/76] 2cwx_A... 🔍 DEBUG 2cwx_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 182.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 39.81 MiB is free. Including non-PyTorch memory, this process has 7.52 GiB memory in use. Of the allocated memory 7.32 GiB is allocated by PyTorch, and 89.90 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 2cwx_A: No valid chunks processed
+✅ Loss: 0.00000
+  [51/76] 1i5z_A... 🔍 DEBUG 1i5z_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3424256
+  Z trajectory NaN count: 5591168
+❌ DEBUG 1i5z_A: No valid chunks processed
+✅ Loss: 0.00000
+  [52/76] 6abq_A... 🔍 DEBUG 6abq_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1867776
+  Z trajectory NaN count: 1663488
+❌ DEBUG 6abq_A: No valid chunks processed
+✅ Loss: 0.00000
+  [53/76] 1esi_A... 🔍 DEBUG 1esi_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4292608
+  Z trajectory NaN count: 8786432
+❌ DEBUG 1esi_A: No valid chunks processed
+✅ Loss: 0.00000
+  [54/76] 4ekx_A... 🔍 DEBUG 4ekx_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1900544
+  Z trajectory NaN count: 1722368
+❌ DEBUG 4ekx_A: No valid chunks processed
+✅ Loss: 0.00000
+  [55/76] 5khg_A... 🔍 DEBUG 5khg_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3342336
+  Z trajectory NaN count: 5326848
+❌ DEBUG 5khg_A: No valid chunks processed
+✅ Loss: 0.00000
+  [56/76] 1ehj_A... 🔍 DEBUG 1ehj_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1114112
+  Z trajectory NaN count: 591872
+❌ DEBUG 1ehj_A: No valid chunks processed
+✅ Loss: 0.00000
+  [57/76] 5uqi_A... 🔍 DEBUG 5uqi_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3244032
+  Z trajectory NaN count: 5018112
+❌ DEBUG 5uqi_A: No valid chunks processed
+✅ Loss: 0.00000
+  [58/76] 3tkp_A... 🔍 DEBUG 3tkp_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4030464
+  Z trajectory NaN count: 7746048
+❌ DEBUG 3tkp_A: No valid chunks processed
+✅ Loss: 0.00000
+  [59/76] 3gbw_A... 🔍 DEBUG 3gbw_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2686976
+  Z trajectory NaN count: 3442688
+❌ DEBUG 3gbw_A: No valid chunks processed
+✅ Loss: 0.00000
+  [60/76] 2qht_A... 🔍 DEBUG 2qht_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3440640
+  Z trajectory NaN count: 5644800
+❌ DEBUG 2qht_A: No valid chunks processed
+✅ Loss: 0.00000
+  [61/76] 2r9p_A... 🔍 DEBUG 2r9p_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3670016
+  Z trajectory NaN count: 6422528
+❌ DEBUG 2r9p_A: No valid chunks processed
+✅ Loss: 0.00000
+  [62/76] 3ga0_A... 🔍 DEBUG 3ga0_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 86.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 35.81 MiB is free. Including non-PyTorch memory, this process has 7.52 GiB memory in use. Of the allocated memory 7.16 GiB is allocated by PyTorch, and 258.25 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 3ga0_A: No valid chunks processed
+✅ Loss: 0.00000
+  [63/76] 2g19_A... 🔍 DEBUG 2g19_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3997696
+  Z trajectory NaN count: 7620608
+❌ DEBUG 2g19_A: No valid chunks processed
+✅ Loss: 0.00000
+  [64/76] 4nwb_A... 🔍 DEBUG 4nwb_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4554752
+  Z trajectory NaN count: 9892352
+❌ DEBUG 4nwb_A: No valid chunks processed
+✅ Loss: 0.00000
+  [65/76] 2zc1_A... 🔍 DEBUG 2zc1_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5455872
+  Z trajectory NaN count: 14193792
+❌ DEBUG 2zc1_A: No valid chunks processed
+✅ Loss: 0.00000
+  [66/76] 3dp6_A... 🔍 DEBUG 3dp6_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4571136
+  Z trajectory NaN count: 9963648
+❌ DEBUG 3dp6_A: No valid chunks processed
+✅ Loss: 0.00000
+  [67/76] 2uy9_A... 🔍 DEBUG 2uy9_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 580.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 517.81 MiB is free. Including non-PyTorch memory, this process has 7.05 GiB memory in use. Of the allocated memory 6.76 GiB is allocated by PyTorch, and 192.22 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 2uy9_A: No valid chunks processed
+✅ Loss: 0.00000
+  [68/76] 3o4r_A... 🔍 DEBUG 3o4r_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4276224
+  Z trajectory NaN count: 8719488
+❌ DEBUG 3o4r_A: No valid chunks processed
+✅ Loss: 0.00000
+  [69/76] 2pku_A... 🔍 DEBUG 2pku_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1425408
+  Z trajectory NaN count: 968832
+❌ DEBUG 2pku_A: No valid chunks processed
+✅ Loss: 0.00000
+  [70/76] 6yjn_A... 🔍 DEBUG 6yjn_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4194304
+  Z trajectory NaN count: 8388608
+❌ DEBUG 6yjn_A: No valid chunks processed
+✅ Loss: 0.00000
+  [71/76] 1sgv_A... 🔍 DEBUG 1sgv_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5177344
+  Z trajectory NaN count: 12781568
+❌ DEBUG 1sgv_A: No valid chunks processed
+✅ Loss: 0.00000
+  [72/76] 1uv7_A... 🔍 DEBUG 1uv7_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1802240
+  Z trajectory NaN count: 1548800
+❌ DEBUG 1uv7_A: No valid chunks processed
+✅ Loss: 0.00000
+  [73/76] 6jko_A... 🔍 DEBUG 6jko_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 72.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 73.81 MiB is free. Including non-PyTorch memory, this process has 7.48 GiB memory in use. Of the allocated memory 7.27 GiB is allocated by PyTorch, and 112.27 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 6jko_A: No valid chunks processed
+✅ Loss: 0.00000
+  [74/76] 6sw8_A... 🔍 DEBUG 6sw8_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1261568
+  Z trajectory NaN count: 758912
+❌ DEBUG 6sw8_A: No valid chunks processed
+✅ Loss: 0.00000
+  [75/76] 2ztm_A... 🔍 DEBUG 2ztm_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4259840
+  Z trajectory NaN count: 8652800
+❌ DEBUG 2ztm_A: No valid chunks processed
+✅ Loss: 0.00000
+  [76/76] 4cew_A... 🔍 DEBUG 4cew_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4866048
+  Z trajectory NaN count: 11290752
+❌ DEBUG 4cew_A: No valid chunks processed
+✅ Loss: 0.00000
+🔍 DEBUG: Epoch 1 loss analysis:
+  Individual losses: ['686558.021', '570973.592', '322689.319', '303002.781', '287897.456']
+  Min loss: 0.00000
+  Max loss: 686558.02148
+  Avg loss: 42853.75066
+📊 Training: 42853.75066 (76/76)
+
+🔍 Preliminary validation on 21 proteins...
+    [1/21] 2p9r_A... 🔍 DEBUG 2p9r_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1671168
+  Z trajectory NaN count: 1331712
+❌ DEBUG 2p9r_A: No valid chunks processed
+✅ Loss: 0.00000
+    [2/21] 4w82_A... 🔍 DEBUG 4w82_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5554176
+  Z trajectory NaN count: 14709888
+❌ DEBUG 4w82_A: No valid chunks processed
+✅ Loss: 0.00000
+    [3/21] 1npy_A... 🔍 DEBUG 1npy_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4440064
+  Z trajectory NaN count: 9400448
+❌ DEBUG 1npy_A: No valid chunks processed
+✅ Loss: 0.00000
+    [4/21] 3d94_A... 🔍 DEBUG 3d94_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4931584
+  Z trajectory NaN count: 11596928
+❌ DEBUG 3d94_A: No valid chunks processed
+✅ Loss: 0.00000
+    [5/21] 2vxs_A... 🔍 DEBUG 2vxs_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2244608
+  Z trajectory NaN count: 2402432
+❌ DEBUG 2vxs_A: No valid chunks processed
+✅ Loss: 0.00000
+    [6/21] 2gu4_A... 🔍 DEBUG 2gu4_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4308992
+  Z trajectory NaN count: 8853632
+❌ DEBUG 2gu4_A: No valid chunks processed
+✅ Loss: 0.00000
+    [7/21] 6tqr_A... 🔍 DEBUG 6tqr_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3489792
+  Z trajectory NaN count: 5807232
+❌ DEBUG 6tqr_A: No valid chunks processed
+✅ Loss: 0.00000
+    [8/21] 6jzh_A... 🔍 DEBUG 6jzh_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 7323648
+  Z trajectory NaN count: 25575552
+❌ DEBUG 6jzh_A: No valid chunks processed
+✅ Loss: 0.00000
+    [9/21] 4eoi_A... 🔍 DEBUG 4eoi_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4898816
+  Z trajectory NaN count: 11443328
+❌ DEBUG 4eoi_A: No valid chunks processed
+✅ Loss: 0.00000
+    [10/21] 4air_A... 🔍 DEBUG 4air_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5799936
+  Z trajectory NaN count: 16040448
+❌ DEBUG 4air_A: No valid chunks processed
+✅ Loss: 0.00000
+    [11/21] 2ifc_A... 🔍 DEBUG 2ifc_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 6307840
+  Z trajectory NaN count: 18972800
+❌ DEBUG 2ifc_A: No valid chunks processed
+✅ Loss: 0.00000
+    [12/21] 2n4t_A... 🔍 DEBUG 2n4t_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 606208
+  Z trajectory NaN count: 175232
+❌ DEBUG 2n4t_A: No valid chunks processed
+✅ Loss: 0.00000
+    [13/21] 4p48_A... 🔍 DEBUG 4p48_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4538368
+  Z trajectory NaN count: 9821312
+❌ DEBUG 4p48_A: No valid chunks processed
+✅ Loss: 0.00000
+    [14/21] 6aci_A... 🔍 DEBUG 6aci_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5013504
+  Z trajectory NaN count: 11985408
+❌ DEBUG 6aci_A: No valid chunks processed
+✅ Loss: 0.00000
+    [15/21] 3uap_A... 🔍 DEBUG 3uap_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3719168
+  Z trajectory NaN count: 6595712
+❌ DEBUG 3uap_A: No valid chunks processed
+✅ Loss: 0.00000
+    [16/21] 2c0s_A... 🔍 DEBUG 2c0s_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1048576
+  Z trajectory NaN count: 524288
+❌ DEBUG 2c0s_A: No valid chunks processed
+✅ Loss: 0.00000
+    [17/21] 3jui_A... 🔍 DEBUG 3jui_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2981888
+  Z trajectory NaN count: 4239872
+❌ DEBUG 3jui_A: No valid chunks processed
+✅ Loss: 0.00000
+    [18/21] 6wyi_A... 🔍 DEBUG 6wyi_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4653056
+  Z trajectory NaN count: 10323968
+❌ DEBUG 6wyi_A: No valid chunks processed
+✅ Loss: 0.00000
+    [19/21] 6bn3_A... 🔍 DEBUG 6bn3_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4374528
+  Z trajectory NaN count: 9124992
+❌ DEBUG 6bn3_A: No valid chunks processed
+✅ Loss: 0.00000
+    [20/21] 6rsg_A... 🔍 DEBUG 6rsg_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 409600
+  Z trajectory NaN count: 80000
+❌ DEBUG 6rsg_A: No valid chunks processed
+✅ Loss: 0.00000
+    [21/21] 1usz_A... 🔍 DEBUG 1usz_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2441216
+  Z trajectory NaN count: 2841728
+❌ DEBUG 1usz_A: No valid chunks processed
+✅ Loss: 0.00000
+🔍 DEBUG: Validation results:
+  Avg val loss: 0.00000
+  Min val loss: 0.0
+  Max val loss: 0.0
+📈 New best validation loss: 0.0000
+
+📈 Preliminary Epoch 2/40
+🎛️  LR: 1.00e-02
+  [1/76] 7d60_A... 🔍 DEBUG 7d60_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4718592
+  Z trajectory NaN count: 10616832
+❌ DEBUG 7d60_A: No valid chunks processed
+✅ Loss: 0.00000
+  [2/76] 1kqy_A... 🔍 DEBUG 1kqy_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4472832
+  Z trajectory NaN count: 9539712
+❌ DEBUG 1kqy_A: No valid chunks processed
+✅ Loss: 0.00000
+  [3/76] 3eba_A... 🔍 DEBUG 3eba_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2080768
+  Z trajectory NaN count: 2064512
+❌ DEBUG 3eba_A: No valid chunks processed
+✅ Loss: 0.00000
+  [4/76] 4j7z_A... 🔍 DEBUG 4j7z_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1851392
+  Z trajectory NaN count: 1634432
+❌ DEBUG 4j7z_A: No valid chunks processed
+✅ Loss: 0.00000
+  [5/76] 2cbp_A... 🔍 DEBUG 2cbp_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1572864
+  Z trajectory NaN count: 1179648
+❌ DEBUG 2cbp_A: No valid chunks processed
+✅ Loss: 0.00000
+  [6/76] 2wvq_A... 🔍 DEBUG 2wvq_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3686400
+  Z trajectory NaN count: 6480000
+❌ DEBUG 2wvq_A: No valid chunks processed
+✅ Loss: 0.00000
+  [7/76] 5wrf_A... 🔍 DEBUG 5wrf_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2375680
+  Z trajectory NaN count: 2691200
+❌ DEBUG 5wrf_A: No valid chunks processed
+✅ Loss: 0.00000
+  [8/76] 3ob6_A... 🔍 DEBUG 3ob6_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 50.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 29.81 MiB is free. Including non-PyTorch memory, this process has 7.53 GiB memory in use. Of the allocated memory 7.30 GiB is allocated by PyTorch, and 119.79 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 3ob6_A: No valid chunks processed
+✅ Loss: 0.00000
+  [9/76] 1mzw_A... 🔍 DEBUG 1mzw_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2899968
+  Z trajectory NaN count: 4010112
+❌ DEBUG 1mzw_A: No valid chunks processed
+✅ Loss: 0.00000
+  [10/76] 7bln_A... 🔍 DEBUG 7bln_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2981888
+  Z trajectory NaN count: 4239872
+❌ DEBUG 7bln_A: No valid chunks processed
+✅ Loss: 0.00000
+  [11/76] 3st1_A... 🔍 DEBUG 3st1_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3506176
+  Z trajectory NaN count: 5861888
+❌ DEBUG 3st1_A: No valid chunks processed
+✅ Loss: 0.00000
+  [12/76] 1z84_A... 🔍 DEBUG 1z84_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5750784
+  Z trajectory NaN count: 15769728
+❌ DEBUG 1z84_A: No valid chunks processed
+✅ Loss: 0.00000
+  [13/76] 5jir_A... 🔍 DEBUG 5jir_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 174.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 157.81 MiB is free. Including non-PyTorch memory, this process has 7.40 GiB memory in use. Of the allocated memory 7.21 GiB is allocated by PyTorch, and 85.15 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 5jir_A: No valid chunks processed
+✅ Loss: 0.00000
+  [14/76] 1tpg_A... 🔍 DEBUG 1tpg_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1490944
+  Z trajectory NaN count: 1059968
+❌ DEBUG 1tpg_A: No valid chunks processed
+✅ Loss: 0.00000
+  [15/76] 6dzg_A... 🔍 DEBUG 6dzg_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4915200
+  Z trajectory NaN count: 11520000
+❌ DEBUG 6dzg_A: No valid chunks processed
+✅ Loss: 0.00000
+  [16/76] 1b08_A... 🔍 DEBUG 1b08_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2588672
+  Z trajectory NaN count: 3195392
+❌ DEBUG 1b08_A: No valid chunks processed
+✅ Loss: 0.00000
+  [17/76] 7k6p_A... 🔍 DEBUG 7k6p_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1605632
+  Z trajectory NaN count: 1229312
+❌ DEBUG 7k6p_A: No valid chunks processed
+✅ Loss: 0.00000
+  [18/76] 6h05_A... 🔍 DEBUG 6h05_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 178.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 161.81 MiB is free. Including non-PyTorch memory, this process has 7.40 GiB memory in use. Of the allocated memory 7.18 GiB is allocated by PyTorch, and 113.12 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 6h05_A: No valid chunks processed
+✅ Loss: 0.00000
+  [19/76] 1pzx_A... 🔍 DEBUG 1pzx_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4734976
+  Z trajectory NaN count: 10690688
+❌ DEBUG 1pzx_A: No valid chunks processed
+✅ Loss: 0.00000
+  [20/76] 6fl1_A... 🔍 DEBUG 6fl1_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 229376
+  Z trajectory NaN count: 25088
+❌ DEBUG 6fl1_A: No valid chunks processed
+✅ Loss: 0.00000
+  [21/76] 2wwn_A... 🔍 DEBUG 2wwn_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2768896
+  Z trajectory NaN count: 3655808
+❌ DEBUG 2wwn_A: No valid chunks processed
+✅ Loss: 0.00000
+  [22/76] 3zxf_A... 🔍 DEBUG 3zxf_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2260992
+  Z trajectory NaN count: 2437632
+❌ DEBUG 3zxf_A: No valid chunks processed
+✅ Loss: 0.00000
+  [23/76] 4n8p_A... 🔍 DEBUG 4n8p_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2211840
+  Z trajectory NaN count: 2332800
+❌ DEBUG 4n8p_A: No valid chunks processed
+✅ Loss: 0.00000
+  [24/76] 3e62_A... 🔍 DEBUG 3e62_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4800512
+  Z trajectory NaN count: 10988672
+❌ DEBUG 3e62_A: No valid chunks processed
+✅ Loss: 0.00000
+  [25/76] 5veo_A... 🔍 DEBUG 5veo_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 86.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 47.81 MiB is free. Including non-PyTorch memory, this process has 7.51 GiB memory in use. Of the allocated memory 7.22 GiB is allocated by PyTorch, and 188.91 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 5veo_A: No valid chunks processed
+✅ Loss: 0.00000
+  [26/76] 4i05_A... 🔍 DEBUG 4i05_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4669440
+  Z trajectory NaN count: 10396800
+❌ DEBUG 4i05_A: No valid chunks processed
+✅ Loss: 0.00000
+  [27/76] 4b7i_A... 🔍 DEBUG 4b7i_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3571712
+  Z trajectory NaN count: 6083072
+❌ DEBUG 4b7i_A: No valid chunks processed
+✅ Loss: 0.00000
+  [28/76] 1rij_A... 🔍 DEBUG 1rij_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 376832
+  Z trajectory NaN count: 67712
+❌ DEBUG 1rij_A: No valid chunks processed
+✅ Loss: 0.00000
+  [29/76] 2pwj_A... 🔍 DEBUG 2pwj_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2801664
+  Z trajectory NaN count: 3742848
+❌ DEBUG 2pwj_A: No valid chunks processed
+✅ Loss: 0.00000
+  [30/76] 4z7x_A... 🔍 DEBUG 4z7x_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3899392
+  Z trajectory NaN count: 7250432
+❌ DEBUG 4z7x_A: No valid chunks processed
+✅ Loss: 0.00000
+  [31/76] 2f2x_A... 🔍 DEBUG 2f2x_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1015808
+  Z trajectory NaN count: 492032
+❌ DEBUG 2f2x_A: No valid chunks processed
+✅ Loss: 0.00000
+  [32/76] 6vjo_A... 🔍 DEBUG 6vjo_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 622592
+  Z trajectory NaN count: 184832
+❌ DEBUG 6vjo_A: No valid chunks processed
+✅ Loss: 0.00000
+  [33/76] 3q54_A... 🔍 DEBUG 3q54_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 134.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 43.81 MiB is free. Including non-PyTorch memory, this process has 7.51 GiB memory in use. Of the allocated memory 7.31 GiB is allocated by PyTorch, and 96.77 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 3q54_A: No valid chunks processed
+✅ Loss: 0.00000
+  [34/76] 2cb3_A... 🔍 DEBUG 2cb3_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2867200
+  Z trajectory NaN count: 3920000
+❌ DEBUG 2cb3_A: No valid chunks processed
+✅ Loss: 0.00000
+  [35/76] 3gai_A... 🔍 DEBUG 3gai_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3178496
+  Z trajectory NaN count: 4817408
+❌ DEBUG 3gai_A: No valid chunks processed
+✅ Loss: 0.00000
+  [36/76] 3dm8_A... 🔍 DEBUG 3dm8_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2342912
+  Z trajectory NaN count: 2617472
+❌ DEBUG 3dm8_A: No valid chunks processed
+✅ Loss: 0.00000
+  [37/76] 4x51_A... 🔍 DEBUG 4x51_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2654208
+  Z trajectory NaN count: 3359232
+❌ DEBUG 4x51_A: No valid chunks processed
+✅ Loss: 0.00000
+  [38/76] 1wlt_A... 🔍 DEBUG 1wlt_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3211264
+  Z trajectory NaN count: 4917248
+❌ DEBUG 1wlt_A: No valid chunks processed
+✅ Loss: 0.00000
+  [39/76] 4edp_A... 🔍 DEBUG 4edp_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5750784
+  Z trajectory NaN count: 15769728
+❌ DEBUG 4edp_A: No valid chunks processed
+✅ Loss: 0.00000
+  [40/76] 4yk0_A... 🔍 DEBUG 4yk0_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1867776
+  Z trajectory NaN count: 1663488
+❌ DEBUG 4yk0_A: No valid chunks processed
+✅ Loss: 0.00000
+  [41/76] 6neg_A... 🔍 DEBUG 6neg_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 36.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 47.81 MiB is free. Including non-PyTorch memory, this process has 7.51 GiB memory in use. Of the allocated memory 7.25 GiB is allocated by PyTorch, and 155.61 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 6neg_A: No valid chunks processed
+✅ Loss: 0.00000
+  [42/76] 5uag_A... 🔍 DEBUG 5uag_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5242880
+  Z trajectory NaN count: 13107200
+❌ DEBUG 5uag_A: No valid chunks processed
+✅ Loss: 0.00000
+  [43/76] 2gp6_A... 🔍 DEBUG 2gp6_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 92.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 105.81 MiB is free. Including non-PyTorch memory, this process has 7.45 GiB memory in use. Of the allocated memory 7.30 GiB is allocated by PyTorch, and 51.78 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 2gp6_A: No valid chunks processed
+✅ Loss: 0.00000
+  [44/76] 1t1h_A... 🔍 DEBUG 1t1h_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1277952
+  Z trajectory NaN count: 778752
+❌ DEBUG 1t1h_A: No valid chunks processed
+✅ Loss: 0.00000
+  [45/76] 1pt4_A... 🔍 DEBUG 1pt4_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 475136
+  Z trajectory NaN count: 107648
+❌ DEBUG 1pt4_A: No valid chunks processed
+✅ Loss: 0.00000
+  [46/76] 1su1_A... 🔍 DEBUG 1su1_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3407872
+  Z trajectory NaN count: 5537792
+❌ DEBUG 1su1_A: No valid chunks processed
+✅ Loss: 0.00000
+  [47/76] 1fdy_A... 🔍 DEBUG 1fdy_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4866048
+  Z trajectory NaN count: 11290752
+❌ DEBUG 1fdy_A: No valid chunks processed
+✅ Loss: 0.00000
+  [48/76] 7lca_A... 🔍 DEBUG 7lca_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 620.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 107.12 MiB is free. Including non-PyTorch memory, this process has 7.45 GiB memory in use. Of the allocated memory 7.18 GiB is allocated by PyTorch, and 162.57 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 7lca_A: No valid chunks processed
+✅ Loss: 0.00000
+  [49/76] 6fcm_A... 🔍 DEBUG 6fcm_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4620288
+  Z trajectory NaN count: 10179072
+❌ DEBUG 6fcm_A: No valid chunks processed
+✅ Loss: 0.00000
+  [50/76] 2cwx_A... 🔍 DEBUG 2cwx_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 182.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 35.12 MiB is free. Including non-PyTorch memory, this process has 7.52 GiB memory in use. Of the allocated memory 7.32 GiB is allocated by PyTorch, and 89.90 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 2cwx_A: No valid chunks processed
+✅ Loss: 0.00000
+  [51/76] 1i5z_A... 🔍 DEBUG 1i5z_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3424256
+  Z trajectory NaN count: 5591168
+❌ DEBUG 1i5z_A: No valid chunks processed
+✅ Loss: 0.00000
+  [52/76] 6abq_A... 🔍 DEBUG 6abq_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1867776
+  Z trajectory NaN count: 1663488
+❌ DEBUG 6abq_A: No valid chunks processed
+✅ Loss: 0.00000
+  [53/76] 1esi_A... 🔍 DEBUG 1esi_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4292608
+  Z trajectory NaN count: 8786432
+❌ DEBUG 1esi_A: No valid chunks processed
+✅ Loss: 0.00000
+  [54/76] 4ekx_A... 🔍 DEBUG 4ekx_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1900544
+  Z trajectory NaN count: 1722368
+❌ DEBUG 4ekx_A: No valid chunks processed
+✅ Loss: 0.00000
+  [55/76] 5khg_A... 🔍 DEBUG 5khg_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3342336
+  Z trajectory NaN count: 5326848
+❌ DEBUG 5khg_A: No valid chunks processed
+✅ Loss: 0.00000
+  [56/76] 1ehj_A... 🔍 DEBUG 1ehj_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1114112
+  Z trajectory NaN count: 591872
+❌ DEBUG 1ehj_A: No valid chunks processed
+✅ Loss: 0.00000
+  [57/76] 5uqi_A... 🔍 DEBUG 5uqi_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3244032
+  Z trajectory NaN count: 5018112
+❌ DEBUG 5uqi_A: No valid chunks processed
+✅ Loss: 0.00000
+  [58/76] 3tkp_A... 🔍 DEBUG 3tkp_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4030464
+  Z trajectory NaN count: 7746048
+❌ DEBUG 3tkp_A: No valid chunks processed
+✅ Loss: 0.00000
+  [59/76] 3gbw_A... 🔍 DEBUG 3gbw_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2686976
+  Z trajectory NaN count: 3442688
+❌ DEBUG 3gbw_A: No valid chunks processed
+✅ Loss: 0.00000
+  [60/76] 2qht_A... 🔍 DEBUG 2qht_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3440640
+  Z trajectory NaN count: 5644800
+❌ DEBUG 2qht_A: No valid chunks processed
+✅ Loss: 0.00000
+  [61/76] 2r9p_A... 🔍 DEBUG 2r9p_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3670016
+  Z trajectory NaN count: 6422528
+❌ DEBUG 2r9p_A: No valid chunks processed
+✅ Loss: 0.00000
+  [62/76] 3ga0_A... 🔍 DEBUG 3ga0_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 86.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 31.12 MiB is free. Including non-PyTorch memory, this process has 7.52 GiB memory in use. Of the allocated memory 7.16 GiB is allocated by PyTorch, and 258.25 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 3ga0_A: No valid chunks processed
+✅ Loss: 0.00000
+  [63/76] 2g19_A... 🔍 DEBUG 2g19_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3997696
+  Z trajectory NaN count: 7620608
+❌ DEBUG 2g19_A: No valid chunks processed
+✅ Loss: 0.00000
+  [64/76] 4nwb_A... 🔍 DEBUG 4nwb_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4554752
+  Z trajectory NaN count: 9892352
+❌ DEBUG 4nwb_A: No valid chunks processed
+✅ Loss: 0.00000
+  [65/76] 2zc1_A... 🔍 DEBUG 2zc1_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5455872
+  Z trajectory NaN count: 14193792
+❌ DEBUG 2zc1_A: No valid chunks processed
+✅ Loss: 0.00000
+  [66/76] 3dp6_A... 🔍 DEBUG 3dp6_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4571136
+  Z trajectory NaN count: 9963648
+❌ DEBUG 3dp6_A: No valid chunks processed
+✅ Loss: 0.00000
+  [67/76] 2uy9_A... 🔍 DEBUG 2uy9_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 580.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 513.12 MiB is free. Including non-PyTorch memory, this process has 7.05 GiB memory in use. Of the allocated memory 6.76 GiB is allocated by PyTorch, and 192.22 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 2uy9_A: No valid chunks processed
+✅ Loss: 0.00000
+  [68/76] 3o4r_A... 🔍 DEBUG 3o4r_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4276224
+  Z trajectory NaN count: 8719488
+❌ DEBUG 3o4r_A: No valid chunks processed
+✅ Loss: 0.00000
+  [69/76] 2pku_A... 🔍 DEBUG 2pku_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1425408
+  Z trajectory NaN count: 968832
+❌ DEBUG 2pku_A: No valid chunks processed
+✅ Loss: 0.00000
+  [70/76] 6yjn_A... 🔍 DEBUG 6yjn_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4194304
+  Z trajectory NaN count: 8388608
+❌ DEBUG 6yjn_A: No valid chunks processed
+✅ Loss: 0.00000
+  [71/76] 1sgv_A... 🔍 DEBUG 1sgv_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5177344
+  Z trajectory NaN count: 12781568
+❌ DEBUG 1sgv_A: No valid chunks processed
+✅ Loss: 0.00000
+  [72/76] 1uv7_A... 🔍 DEBUG 1uv7_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1802240
+  Z trajectory NaN count: 1548800
+❌ DEBUG 1uv7_A: No valid chunks processed
+✅ Loss: 0.00000
+  [73/76] 6jko_A... 🔍 DEBUG 6jko_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE integration failed chunk 1: CUDA out of memory. Tried to allocate 72.00 MiB. GPU 0 has a total capacty of 7.92 GiB of which 69.12 MiB is free. Including non-PyTorch memory, this process has 7.48 GiB memory in use. Of the allocated memory 7.27 GiB is allocated by PyTorch, and 112.27 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+❌ DEBUG 6jko_A: No valid chunks processed
+✅ Loss: 0.00000
+  [74/76] 6sw8_A... 🔍 DEBUG 6sw8_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1261568
+  Z trajectory NaN count: 758912
+❌ DEBUG 6sw8_A: No valid chunks processed
+✅ Loss: 0.00000
+  [75/76] 2ztm_A... 🔍 DEBUG 2ztm_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4259840
+  Z trajectory NaN count: 8652800
+❌ DEBUG 2ztm_A: No valid chunks processed
+✅ Loss: 0.00000
+  [76/76] 4cew_A... 🔍 DEBUG 4cew_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4866048
+  Z trajectory NaN count: 11290752
+❌ DEBUG 4cew_A: No valid chunks processed
+✅ Loss: 0.00000
+🔍 DEBUG: Epoch 2 loss analysis:
+  Individual losses: ['0.000', '0.000', '0.000', '0.000', '0.000']
+  Min loss: 0.00000
+  Max loss: 0.00000
+  Avg loss: 0.00000
+📊 Training: 0.00000 (76/76)
+
+🔍 Preliminary validation on 21 proteins...
+    [1/21] 2p9r_A... 🔍 DEBUG 2p9r_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1671168
+  Z trajectory NaN count: 1331712
+❌ DEBUG 2p9r_A: No valid chunks processed
+✅ Loss: 0.00000
+    [2/21] 4w82_A... 🔍 DEBUG 4w82_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5554176
+  Z trajectory NaN count: 14709888
+❌ DEBUG 4w82_A: No valid chunks processed
+✅ Loss: 0.00000
+    [3/21] 1npy_A... 🔍 DEBUG 1npy_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4440064
+  Z trajectory NaN count: 9400448
+❌ DEBUG 1npy_A: No valid chunks processed
+✅ Loss: 0.00000
+    [4/21] 3d94_A... 🔍 DEBUG 3d94_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4931584
+  Z trajectory NaN count: 11596928
+❌ DEBUG 3d94_A: No valid chunks processed
+✅ Loss: 0.00000
+    [5/21] 2vxs_A... 🔍 DEBUG 2vxs_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2244608
+  Z trajectory NaN count: 2402432
+❌ DEBUG 2vxs_A: No valid chunks processed
+✅ Loss: 0.00000
+    [6/21] 2gu4_A... 🔍 DEBUG 2gu4_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4308992
+  Z trajectory NaN count: 8853632
+❌ DEBUG 2gu4_A: No valid chunks processed
+✅ Loss: 0.00000
+    [7/21] 6tqr_A... 🔍 DEBUG 6tqr_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3489792
+  Z trajectory NaN count: 5807232
+❌ DEBUG 6tqr_A: No valid chunks processed
+✅ Loss: 0.00000
+    [8/21] 6jzh_A... 🔍 DEBUG 6jzh_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 7323648
+  Z trajectory NaN count: 25575552
+❌ DEBUG 6jzh_A: No valid chunks processed
+✅ Loss: 0.00000
+    [9/21] 4eoi_A... 🔍 DEBUG 4eoi_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4898816
+  Z trajectory NaN count: 11443328
+❌ DEBUG 4eoi_A: No valid chunks processed
+✅ Loss: 0.00000
+    [10/21] 4air_A... 🔍 DEBUG 4air_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5799936
+  Z trajectory NaN count: 16040448
+❌ DEBUG 4air_A: No valid chunks processed
+✅ Loss: 0.00000
+    [11/21] 2ifc_A... 🔍 DEBUG 2ifc_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 6307840
+  Z trajectory NaN count: 18972800
+❌ DEBUG 2ifc_A: No valid chunks processed
+✅ Loss: 0.00000
+    [12/21] 2n4t_A... 🔍 DEBUG 2n4t_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 606208
+  Z trajectory NaN count: 175232
+❌ DEBUG 2n4t_A: No valid chunks processed
+✅ Loss: 0.00000
+    [13/21] 4p48_A... 🔍 DEBUG 4p48_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4538368
+  Z trajectory NaN count: 9821312
+❌ DEBUG 4p48_A: No valid chunks processed
+✅ Loss: 0.00000
+    [14/21] 6aci_A... 🔍 DEBUG 6aci_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 5013504
+  Z trajectory NaN count: 11985408
+❌ DEBUG 6aci_A: No valid chunks processed
+✅ Loss: 0.00000
+    [15/21] 3uap_A... 🔍 DEBUG 3uap_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 3719168
+  Z trajectory NaN count: 6595712
+❌ DEBUG 3uap_A: No valid chunks processed
+✅ Loss: 0.00000
+    [16/21] 2c0s_A... 🔍 DEBUG 2c0s_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 1048576
+  Z trajectory NaN count: 524288
+❌ DEBUG 2c0s_A: No valid chunks processed
+✅ Loss: 0.00000
+    [17/21] 3jui_A... 🔍 DEBUG 3jui_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2981888
+  Z trajectory NaN count: 4239872
+❌ DEBUG 3jui_A: No valid chunks processed
+✅ Loss: 0.00000
+    [18/21] 6wyi_A... 🔍 DEBUG 6wyi_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4653056
+  Z trajectory NaN count: 10323968
+❌ DEBUG 6wyi_A: No valid chunks processed
+✅ Loss: 0.00000
+    [19/21] 6bn3_A... 🔍 DEBUG 6bn3_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 4374528
+  Z trajectory NaN count: 9124992
+❌ DEBUG 6bn3_A: No valid chunks processed
+✅ Loss: 0.00000
+    [20/21] 6rsg_A... 🔍 DEBUG 6rsg_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 409600
+  Z trajectory NaN count: 80000
+❌ DEBUG 6rsg_A: No valid chunks processed
+✅ Loss: 0.00000
+    [21/21] 1usz_A... 🔍 DEBUG 1usz_A: Processing 13 blocks: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]
+  📦 DEBUG Chunk 1: blocks [0, 4], times ['0.000', '0.083']
+🚨 DEBUG: ODE trajectory has NaN in chunk 1
+  M trajectory NaN count: 2441216
+  Z trajectory NaN count: 2841728
+❌ DEBUG 1usz_A: No valid chunks processed
+✅ Loss: 0.00000
+🔍 DEBUG: Validation results:
+  Avg val loss: 0.00000
+  Min val loss: 0.0
+  Max val loss: 0.0
+Traceback (most recent call last):
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 1351, in <module>
+    main()
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 1242, in main
+    success = run_preliminary_training(config, model, optimizer, scaler, logger)
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 1145, in run_preliminary_training
+    logger.log_epoch_end(val_results, is_preliminary=True, optimizer=optimizer)
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/training_logger.py", line 249, in log_epoch_end
+    self._update_log_file()
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/training_logger.py", line 272, in _update_log_file
+    self._write_complete_report(f)
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/training_logger.py", line 436, in _write_complete_report
+    improvement = worst_overall['average_loss'] / best_overall['average_loss']
+ZeroDivisionError: float division by zero

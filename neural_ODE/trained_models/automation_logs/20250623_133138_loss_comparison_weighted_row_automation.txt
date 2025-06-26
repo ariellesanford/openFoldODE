@@ -1,0 +1,67 @@
+Experiment: Loss Comparison: Weighted Row
+Actual experiment name: 20250623_133138_loss_comparison_weighted_row
+Started: 2025-06-23 13:31:38
+Ended: 2025-06-23 13:31:42
+Duration: 0.00 hours
+Return code: 1
+Command: /home/visitor/anaconda3/envs/openfold_env/bin/python train_evoformer_ode.py --data_dirs /media/visitor/Extreme SSD/data/complete_blocks /media/visitor/Extreme SSD/data/endpoint_blocks --splits_dir /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/4n8p --device cuda --epochs 10000 --learning_rate 0.01 --reduced_cluster_size 64 --hidden_dim 64 --integrator rk4 --loss weighted_row --max_residues 450 --output_dir /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models --experiment_name 20250623_133138_loss_comparison_weighted_row --lr_patience 3 --lr_factor 0.5 --min_lr 1e-06 --early_stopping_patience 10 --early_stopping_min_delta 0.0001 --max_time_hours 0.5 --prelim_data_dir /media/visitor/Extreme SSD/data/complete_blocks --prelim_block_stride 4 --prelim_max_epochs 40 --prelim_chunk_size 2 --use_amp --aggressive_cleanup --enable_preliminary_training
+
+CONFIGURATION:
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/4n8p
+  device: cuda
+  epochs: 10000
+  learning_rate: 0.01
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_fast_ode: False
+  max_residues: 450
+  loss: weighted_row
+  use_amp: True
+  output_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  max_time_hours: 0.5
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 4
+  prelim_max_epochs: 40
+  prelim_chunk_size: 2
+  experiment_name: 20250623_133138_loss_comparison_weighted_row
+
+OUTPUT:
+[2025-06-23 13:31:41,034] [INFO] [real_accelerator.py:239:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+🚀 Neural ODE Training - Restructured Version
+📁 Data directories: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+💻 Device: cuda
+🔧 Model: Full ODE
+🔄 Preliminary training enabled
+🔍 Filtering 3 proteins by size (max: 450 residues)
+  ✅ 4n8p_A: 135 residues
+  ✅ 4ekx_A: 116 residues
+  ✅ 7k6p_A: 98 residues
+📊 Kept 3/3 proteins
+🔍 Filtering 3 proteins by size (max: 450 residues)
+  ✅ 4n8p_A: 135 residues
+  ✅ 4ekx_A: 116 residues
+  ✅ 7k6p_A: 98 residues
+📊 Kept 3/3 proteins
+🤖 Model: 854854 parameters
+🧬 Training proteins: 3
+🔍 Validation proteins: 3
+
+🚀 PRELIMINARY TRAINING PHASE
+============================================================
+Traceback (most recent call last):
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 1199, in <module>
+    main()
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 1090, in main
+    success = run_preliminary_training(config, model, optimizer, scaler, logger)
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 930, in run_preliminary_training
+    print(f"🎛️  Using reduced LR for preliminary: {original_lr:.2e} → {prelim_lr:.2e}")
+NameError: name 'original_lr' is not defined

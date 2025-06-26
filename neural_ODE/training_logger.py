@@ -365,6 +365,12 @@ class TrainingLogger:
                 if isinstance(val_loss, (int, float)):
                     val_loss = f"{val_loss:.5f}"
 
+                # FIX: Ensure no None values before formatting
+                val_loss = val_loss if val_loss is not None else 'N/A'
+                val_success = val_success if val_success is not None else 'N/A'
+                learning_rate = learning_rate if learning_rate is not None else 'N/A'
+                duration = duration if duration is not None else 0.0
+
                 f.write(
                     f"{epoch:<8} {train_loss:<14.5f} {train_success:<14} {val_loss:<14} {val_success:<14} {learning_rate:<12} {duration:<12.1f}\n")
 
@@ -410,6 +416,12 @@ class TrainingLogger:
 
                 if isinstance(val_loss, (int, float)):
                     val_loss = f"{val_loss:.5f}"
+
+                # FIX: Ensure no None values before formatting
+                val_loss = val_loss if val_loss is not None else 'N/A'
+                val_success = val_success if val_success is not None else 'N/A'
+                learning_rate = learning_rate if learning_rate is not None else 'N/A'
+                duration = duration if duration is not None else 0.0
 
                 f.write(
                     f"{epoch:<8} {train_loss:<14.5f} {train_success:<14} {val_loss:<14} {val_success:<14} {learning_rate:<12} {duration:<12.1f}\n")

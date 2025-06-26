@@ -35,6 +35,7 @@ class TrainingConfig:
     early_stopping_patience: int = 7
     early_stopping_min_delta: float = 0.001
     use_fast_ode: bool = False
+    loss: str = 'default'
     reduced_cluster_size: int = 64
     hidden_dim: int = 64
     integrator: str = 'rk4'
@@ -123,6 +124,15 @@ class LearningRateScheduler:
     def get_last_lr(self):
         return self.optimizer.param_groups[0]['lr']
 
+    def reset(self):
+        """Reset scheduler state while preserving optimizer"""
+        self.best_loss = float('inf')
+        self.patience_counter = 0
+        self.lr_reductions = 0
+        # Optionally reset LR to initial value
+        for param_group in self.optimizer.param_groups:
+            param_group['lr'] = self.initial_lr  # Store this in __init__
+
 
 class EarlyStopping:
     """Early stopping handler"""
@@ -194,13 +204,15 @@ class DataManager:
 
     @staticmethod
     def filter_proteins_by_size(proteins: Union[List[str], List[Tuple[str, str]]],
-                               max_residues: int, data_dir: str = None) -> Union[List[str], List[Tuple[str, str]]]:
+                                max_residues: int, data_dir: str = None) -> Union[List[str], List[Tuple[str, str]]]:
         """Unified size filtering"""
         if max_residues is None:
             return proteins
 
+        print(f"🔍 Filtering {len(proteins)} proteins by size (max: {max_residues} residues)")
         valid_proteins = []
-        for protein in proteins:
+
+        for i, protein in enumerate(proteins):
             try:
                 if isinstance(protein, tuple):
                     protein_id, protein_data_dir = protein
@@ -217,8 +229,14 @@ class DataManager:
 
                     if num_residues <= max_residues:
                         valid_proteins.append(protein)
+                        print(f"  ✅ {protein_id}: {num_residues} residues")
+                    else:
+                        print(f"  ❌ {protein_id}: {num_residues} residues (too large)")
             except Exception:
+                print(f"  ⚠️  {protein_id}: Error loading")
                 continue
+
+        print(f"📊 Kept {len(valid_proteins)}/{len(proteins)} proteins")
         return valid_proteins
 
     @staticmethod
@@ -307,22 +325,71 @@ class TrainingPhase:
         self.is_preliminary = is_preliminary
         self.memory_manager = MemoryManager(config.aggressive_cleanup)
 
-    def compute_adaptive_loss(self, pred_m: torch.Tensor, target_m: torch.Tensor,
-                             pred_z: torch.Tensor, target_z: torch.Tensor) -> torch.Tensor:
-        """Compute loss with proper scaling"""
+    def compute_adaptive_loss(self, pred_m, target_m, pred_z, target_z):
+        """Unified loss function with configurable strategy and variance normalization"""
+
         num_residues = target_m.shape[1] if target_m.dim() == 3 else target_m.shape[0]
 
-        msa_loss = F.mse_loss(pred_m, target_m)
-        pair_loss = F.mse_loss(pred_z, target_z)
+        # Choose MSA loss strategy based on config
+        if self.config.loss == 'default':
+            # Original: full MSA loss
+            msa_loss_raw = F.mse_loss(pred_m, target_m)
 
-        msa_variance = target_m.var() + 1e-8
+            # Apply variance normalization
+            msa_variance = target_m.var() + 1e-8
+            msa_loss = msa_loss_raw / msa_variance
+
+        elif self.config.loss == 'weighted_row':
+            # Properly normalized per-row weighting
+            num_msa_rows = pred_m.shape[0]
+
+            # Define relative importance (unnormalized)
+            first_row_importance = 5.0  # First row is 5x more important
+            other_row_importance = 1.0  # Each other row has base importance
+
+            # Calculate total importance
+            total_importance = first_row_importance + (num_msa_rows - 1) * other_row_importance
+
+            # Normalize to sum to 1.0
+            first_row_weight = first_row_importance / total_importance
+            other_row_weight = other_row_importance / total_importance
+
+            # Compute weighted MSA loss with variance normalization
+            first_row_loss_raw = F.mse_loss(pred_m[0, :, :], target_m[0, :, :])
+            first_row_variance = target_m[0, :, :].var() + 1e-8
+            first_row_loss = first_row_loss_raw / first_row_variance
+
+            msa_loss = first_row_weight * first_row_loss
+
+            if num_msa_rows > 1:
+                for i in range(1, num_msa_rows):
+                    row_loss_raw = F.mse_loss(pred_m[i, :, :], target_m[i, :, :])
+                    row_variance = target_m[i, :, :].var() + 1e-8
+                    row_loss = row_loss_raw / row_variance
+                    msa_loss += other_row_weight * row_loss
+
+        elif self.config.loss == 'single_row':
+            # First MSA row only (what structure module uses)
+            msa_loss_raw = F.mse_loss(pred_m[0, :, :], target_m[0, :, :])
+
+            # Apply variance normalization
+            msa_variance = target_m[0, :, :].var() + 1e-8
+            msa_loss = msa_loss_raw / msa_variance
+
+        else:
+            raise ValueError(f"Unknown loss strategy: {self.config.loss}")
+
+        # Pair loss (same for all strategies) with variance normalization
+        pair_loss_raw = F.mse_loss(pred_z, target_z)
         pair_variance = target_z.var() + 1e-8
+        pair_loss = pair_loss_raw / pair_variance
 
-        msa_scaled = msa_loss / msa_variance
-        pair_scaled = pair_loss / pair_variance
+        # Combine losses (now both are variance-normalized)
+        base_loss = msa_loss + pair_loss
 
-        base_loss = msa_scaled + pair_scaled
-        return base_loss * float(num_residues)
+        # Scale by residues and apply gradient scaling factor
+        return base_loss * float(num_residues) / 10
+
 
     def process_single_protein(self, protein: Union[str, Tuple[str, str]], model: torch.nn.Module,
                               optimizer: torch.optim.Optimizer = None, scaler: GradScaler = None,
@@ -380,96 +447,127 @@ class TrainingPhase:
         return {'protein': protein_id, 'loss': loss_value}
 
     def _process_protein_strided(self, protein_id: str, data_dir: str, model: torch.nn.Module,
-                               optimizer: torch.optim.Optimizer, scaler: GradScaler, training: bool) -> Dict:
-        """Strided processing for preliminary training"""
+                                 optimizer: torch.optim.Optimizer, scaler: GradScaler, training: bool) -> Dict:
+        """Sequential strided processing with batch gradient updates and memory safety"""
         m_init, z_init, selected_blocks = DataManager.load_protein_blocks(
             protein_id, data_dir, self.config.device, self.config.reduced_cluster_size,
             strided=True, block_stride=self.config.prelim_block_stride, max_blocks=49
         )
 
         if training:
-            optimizer.zero_grad()
+            optimizer.zero_grad()  # ← ONCE at start (like original)
 
-        num_blocks = len(selected_blocks)
         chunk_size = self.config.prelim_chunk_size
-        total_loss = 0
+        accumulated_loss = None  # ← Accumulate actual loss tensors for gradients
+        total_loss_scalar = 0.0  # ← Separate scalar accumulator for reporting
         total_chunks = 0
 
-        # Process in chunks
-        for chunk_start in range(0, num_blocks, chunk_size):
-            chunk_end = min(chunk_start + chunk_size, num_blocks)
-            chunk_blocks = selected_blocks[chunk_start:chunk_end]
+        # Start with initial state
+        current_m, current_z = m_init, z_init
+        current_block = selected_blocks[0]
 
-            # Create time points
-            if num_blocks > 1:
-                chunk_time_start = float(chunk_start) / (num_blocks - 1)
-                chunk_time_end = float(chunk_end - 1) / (num_blocks - 1)
-            else:
-                chunk_time_start, chunk_time_end = 0.0, 1.0
+        # Process sequential chunks (accumulate gradients, don't step)
+        for i in range(0, len(selected_blocks) - 1, chunk_size):
+            # Get target blocks for this chunk
+            target_start = i + 1
+            target_end = min(target_start + chunk_size, len(selected_blocks))
+            target_blocks = selected_blocks[target_start:target_end]
 
-            chunk_time_points = torch.linspace(chunk_time_start, chunk_time_end, len(chunk_blocks)).to(self.config.device)
+            if not target_blocks:
+                break
 
-            # Get initial state for chunk
-            if chunk_start == 0:
-                chunk_m_init, chunk_z_init = m_init, z_init
-            else:
-                chunk_m_init, chunk_z_init = DataManager.load_protein_blocks(
-                    protein_id, data_dir, self.config.device, self.config.reduced_cluster_size,
-                    target_block=selected_blocks[chunk_start]
-                )
+            # Create time points from current block to targets
+            time_points = [float(current_block) / 48.0]
+            for block in target_blocks:
+                time_points.append(float(block) / 48.0)
+
+            chunk_time_points = torch.tensor(time_points, device=self.config.device)
 
             with autocast(enabled=self.config.use_amp):
                 trajectory = odeint(
-                    model, (chunk_m_init, chunk_z_init), chunk_time_points,
-                    method=self.config.integrator, rtol=1e-4, atol=1e-5  # Same as main training
+                    model, (current_m, current_z), chunk_time_points,
+                    method=self.config.integrator, rtol=1e-4, atol=1e-5
                 )
 
-                # Supervise chunk
+                # Supervise each prediction
                 chunk_loss = 0
                 chunk_steps = 0
 
-                for i, block_idx in enumerate(chunk_blocks):
+                for j, target_block in enumerate(target_blocks):
+                    pred_m = trajectory[0][j + 1]  # +1 to skip starting state
+                    pred_z = trajectory[1][j + 1]
+
+                    # Load target
                     m_target, z_target = DataManager.load_protein_blocks(
                         protein_id, data_dir, self.config.device, self.config.reduced_cluster_size,
-                        target_block=block_idx
+                        target_block=target_block
                     )
 
-                    step_loss = self.compute_adaptive_loss(trajectory[0][i], m_target, trajectory[1][i], z_target)
-                    chunk_loss += step_loss.item() if not training else step_loss
+                    step_loss = self.compute_adaptive_loss(pred_m, m_target, pred_z, z_target)
+                    chunk_loss += step_loss  # ← Keep as tensor for gradients
                     chunk_steps += 1
-                    del m_target, z_target
 
-                chunk_loss = chunk_loss / chunk_steps
-                total_loss += chunk_loss
-                total_chunks += 1
+                    # Save last target as next starting state (detached to save memory)
+                    if j == len(target_blocks) - 1:  # Last target in this chunk
+                        current_m = m_target.detach().clone()
+                        current_z = z_target.detach().clone()
+                        current_block = target_block
 
-                del trajectory
-                if chunk_start > 0:
-                    del chunk_m_init, chunk_z_init
+                    del m_target, z_target, step_loss  # ← Cleanup intermediate tensors
 
-        avg_loss = total_loss / total_chunks
+                # Average chunk loss
+                if chunk_steps > 0:
+                    chunk_loss = chunk_loss / chunk_steps
 
-        if training:
-            if self.config.use_amp:
-                scaler.scale(avg_loss).backward()
-                scaler.unscale_(optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-                scaler.step(optimizer)
-                scaler.update()
+                    # Accumulate loss tensor for batch gradient (like original)
+                    if accumulated_loss is None:
+                        accumulated_loss = chunk_loss
+                    else:
+                        accumulated_loss = accumulated_loss + chunk_loss  # ← Tensor accumulation
+
+                    # Store scalar for reporting
+                    chunk_loss_scalar = chunk_loss.item()
+                    print(
+                        f"  📦 Chunk {total_chunks + 1} (from block {selected_blocks[i]} → predict {target_blocks}): loss = {chunk_loss_scalar:.6f}")
+
+                    total_loss_scalar += chunk_loss_scalar
+                    total_chunks += 1
+
+            # Memory cleanup: delete chunk tensors but keep accumulated_loss
+            del trajectory, chunk_time_points, chunk_loss
+            torch.cuda.empty_cache()
+
+        # Single batch backward pass at the end (like original)
+        if total_chunks > 0:
+            avg_loss = accumulated_loss / total_chunks  # ← Still a tensor with gradients
+
+            if training:
+                if self.config.use_amp:
+                    scaler.scale(avg_loss).backward()  # ← ONE backward pass
+                    scaler.unscale_(optimizer)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                    scaler.step(optimizer)  # ← ONE optimizer step
+                    scaler.update()
+                else:
+                    avg_loss.backward()  # ← ONE backward pass
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                    optimizer.step()  # ← ONE optimizer step
+
+                loss_value = avg_loss.item()
             else:
-                avg_loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-                optimizer.step()
-            loss_value = avg_loss.item()
-        else:
-            loss_value = avg_loss
+                loss_value = avg_loss.item()
 
-        del m_init, z_init
+            del accumulated_loss, avg_loss
+        else:
+            loss_value = 0.0
+
+        # Final cleanup
+        del m_init, z_init, current_m, current_z
 
         return {
             'protein': protein_id, 'loss': loss_value, 'selected_blocks': selected_blocks,
-            'num_chunks': total_chunks, 'cluster_size': self.config.reduced_cluster_size,
-            'approach': 'memory_efficient_chunked_unified'
+            'num_chunks': total_chunks,
+            'approach': 'batch_update_sequential_strided'
         }
 
     def run_epoch(self, proteins: List, model: torch.nn.Module, optimizer: torch.optim.Optimizer,
@@ -592,8 +690,8 @@ def setup_logging(config: TrainingConfig):
         return None
 
 
-def setup_schedulers(optimizer, config: TrainingConfig, has_validation: bool):
-    """Setup LR scheduler and early stopping"""
+def setup_schedulers(optimizer, config: TrainingConfig, has_validation: bool, reset_state: bool = False):
+    """Setup LR scheduler and early stopping with optional state reset"""
     if not has_validation:
         return None, None
 
@@ -605,11 +703,81 @@ def setup_schedulers(optimizer, config: TrainingConfig, has_validation: bool):
         patience=config.early_stopping_patience, min_delta=config.early_stopping_min_delta
     )
 
+    # If resetting state, ensure fresh start
+    if reset_state:
+        lr_scheduler.best_loss = float('inf')
+        lr_scheduler.patience_counter = 0
+        lr_scheduler.lr_reductions = 0
+
+        early_stopping.best_loss = float('inf')
+        early_stopping.best_epoch = 0
+        early_stopping.patience_counter = 0
+        early_stopping.best_model_state = None
+        early_stopping.should_stop = False
+
     return lr_scheduler, early_stopping
+
+# def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, logger) -> bool:
+#     """Run preliminary training phase - now with LR scheduling support"""
+#     if not config.enable_preliminary_training:
+#         return True
+#
+#     print(f"\n🚀 PRELIMINARY TRAINING PHASE")
+#     print(f"=" * 60)
+#
+#     # Get preliminary proteins
+#     prelim_train_proteins = DataManager.get_available_proteins([config.prelim_data_dir], config.splits_dir, 'training', single_dir=True)
+#     prelim_val_proteins = DataManager.get_available_proteins([config.prelim_data_dir], config.splits_dir, 'validation', single_dir=True)
+#
+#     # Filter by size
+#     if config.max_residues:
+#         prelim_train_proteins = DataManager.filter_proteins_by_size(prelim_train_proteins, config.max_residues, config.prelim_data_dir)
+#         prelim_val_proteins = DataManager.filter_proteins_by_size(prelim_val_proteins, config.max_residues, config.prelim_data_dir)
+#
+#     if not prelim_train_proteins:
+#         print("❌ No preliminary training proteins found")
+#         return False
+#
+#     # Setup preliminary phase
+#     prelim_phase = TrainingPhase(config, is_preliminary=True)
+#     prelim_lr_scheduler, prelim_early_stopping = setup_schedulers(optimizer, config, bool(prelim_val_proteins))
+#
+#     # Training loop
+#     for epoch in range(config.prelim_max_epochs):
+#         print(f"\n📈 Preliminary Epoch {epoch + 1}/{config.prelim_max_epochs}")
+#         print(f"🎛️  LR: {optimizer.param_groups[0]['lr']:.2e}")  # Show current LR
+#
+#         epoch_losses, successful_proteins = prelim_phase.run_epoch(prelim_train_proteins, model, optimizer, scaler, logger, epoch + 1, config.prelim_max_epochs)
+#
+#         # Validation
+#         val_results = None
+#         if prelim_val_proteins:
+#             print(f"\n🔍 Preliminary validation on {len(prelim_val_proteins)} proteins...")
+#             val_results = prelim_phase.validate(prelim_val_proteins, model)
+#
+#         if logger:
+#             logger.log_epoch_end(val_results, is_preliminary=True, optimizer=optimizer)
+#
+#         # Training summary
+#         if epoch_losses:
+#             avg_train_loss = sum(epoch_losses) / len(epoch_losses)
+#             print(f"📊 Training: {avg_train_loss:.5f} ({successful_proteins}/{len(prelim_train_proteins)})")
+#
+#             # LR scheduling - NEW: Add LR scheduler step for preliminary training
+#             if prelim_lr_scheduler and val_results:
+#                 prelim_lr_scheduler.step(val_results['avg_loss'], epoch + 1)
+#
+#         # Early stopping check
+#         if val_results and prelim_early_stopping(val_results['avg_loss'], epoch + 1, model):
+#             print(f"\n🛑 Early stopping triggered in preliminary training!")
+#             break
+#
+#     print(f"\n✅ Preliminary training completed!")
+#     return True
 
 
 def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, logger) -> bool:
-    """Run preliminary training phase"""
+    """SIMPLIFIED: Back to working approach with just NaN monitoring"""
     if not config.enable_preliminary_training:
         return True
 
@@ -617,42 +785,76 @@ def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, l
     print(f"=" * 60)
 
     # Get preliminary proteins
-    prelim_train_proteins = DataManager.get_available_proteins([config.prelim_data_dir], config.splits_dir, 'training', single_dir=True)
-    prelim_val_proteins = DataManager.get_available_proteins([config.prelim_data_dir], config.splits_dir, 'validation', single_dir=True)
+    prelim_train_proteins = DataManager.get_available_proteins([config.prelim_data_dir], config.splits_dir, 'training',
+                                                               single_dir=True)
+    prelim_val_proteins = DataManager.get_available_proteins([config.prelim_data_dir], config.splits_dir, 'validation',
+                                                             single_dir=True)
 
-    # Filter by size
     if config.max_residues:
-        prelim_train_proteins = DataManager.filter_proteins_by_size(prelim_train_proteins, config.max_residues, config.prelim_data_dir)
-        prelim_val_proteins = DataManager.filter_proteins_by_size(prelim_val_proteins, config.max_residues, config.prelim_data_dir)
+        prelim_train_proteins = DataManager.filter_proteins_by_size(prelim_train_proteins, config.max_residues,
+                                                                    config.prelim_data_dir)
+        prelim_val_proteins = DataManager.filter_proteins_by_size(prelim_val_proteins, config.max_residues,
+                                                                  config.prelim_data_dir)
 
     if not prelim_train_proteins:
         print("❌ No preliminary training proteins found")
         return False
 
-    # Setup preliminary phase
     prelim_phase = TrainingPhase(config, is_preliminary=True)
-    prelim_early_stopping = EarlyStopping(patience=config.early_stopping_patience, min_delta=config.early_stopping_min_delta)  # Same as main training
+    prelim_lr_scheduler, prelim_early_stopping = setup_schedulers(optimizer, config, bool(prelim_val_proteins))
 
-    # Training loop
+    # Simple NaN monitoring (no recovery, just detection)
+    consecutive_nan_epochs = 0
+    max_nan_epochs = 3
+
     for epoch in range(config.prelim_max_epochs):
         print(f"\n📈 Preliminary Epoch {epoch + 1}/{config.prelim_max_epochs}")
+        print(f"🎛️  LR: {optimizer.param_groups[0]['lr']:.2e}")
 
-        epoch_losses, successful_proteins = prelim_phase.run_epoch(prelim_train_proteins, model, optimizer, scaler, logger, epoch + 1, config.prelim_max_epochs)
+        epoch_losses, successful_proteins = prelim_phase.run_epoch(
+            prelim_train_proteins, model, optimizer, scaler, logger, epoch + 1, config.prelim_max_epochs
+        )
+
+        # Check for NaN in results
+        if epoch_losses:
+            avg_train_loss = sum(epoch_losses) / len(epoch_losses)
+
+            if torch.isnan(torch.tensor(avg_train_loss)) or torch.isinf(torch.tensor(avg_train_loss)):
+                consecutive_nan_epochs += 1
+                print(f"⚠️  NaN/Inf training loss detected! ({consecutive_nan_epochs}/{max_nan_epochs})")
+
+                if consecutive_nan_epochs >= max_nan_epochs:
+                    print(f"❌ Too many consecutive NaN epochs, stopping preliminary training")
+                    break
+
+                # Simple LR reduction
+                for group in optimizer.param_groups:
+                    group['lr'] *= 0.5
+                print(f"🔽 Emergency LR reduction: {group['lr']:.2e}")
+                continue
+            else:
+                consecutive_nan_epochs = 0
+                print(f"📊 Training: {avg_train_loss:.5f} ({successful_proteins}/{len(prelim_train_proteins)})")
 
         # Validation
         val_results = None
-        if prelim_val_proteins:
+        if prelim_val_proteins and consecutive_nan_epochs == 0:
             print(f"\n🔍 Preliminary validation on {len(prelim_val_proteins)} proteins...")
             val_results = prelim_phase.validate(prelim_val_proteins, model)
 
-        logger.log_epoch_end(val_results, is_preliminary=True)
+        if logger:
+            logger.log_epoch_end(val_results, is_preliminary=True, optimizer=optimizer)
 
-        # Early stopping check
-        if val_results and prelim_early_stopping(val_results['avg_loss'], epoch + 1, model):
-            break
+        # LR scheduling and early stopping
+        if consecutive_nan_epochs == 0:
+            if prelim_lr_scheduler and val_results:
+                prelim_lr_scheduler.step(val_results['avg_loss'], epoch + 1)
+
+            if val_results and prelim_early_stopping(val_results['avg_loss'], epoch + 1, model):
+                print(f"\n🛑 Early stopping triggered in preliminary training!")
+                break
 
     print(f"\n✅ Preliminary training completed!")
-    return True
 
 
 def save_final_model(model, config: TrainingConfig, logger, training_stats: Dict):
@@ -674,40 +876,29 @@ def save_final_model(model, config: TrainingConfig, logger, training_stats: Dict
 
 
 def main():
-    # Parse arguments
-    parser = argparse.ArgumentParser(description='Neural ODE Training - Restructured')
-
-    # Core settings
-    parser.add_argument('--data_dirs', type=str, nargs='+', required=True)
-    parser.add_argument('--splits_dir', type=str, required=True)
-    parser.add_argument('--output_dir', type=str, required=True)
-    parser.add_argument('--experiment_name', type=str, required=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_dirs', nargs='+', required=True)
+    parser.add_argument('--splits_dir', required=True)
     parser.add_argument('--device', type=str, default='cuda')
-    parser.add_argument('--epochs', type=int, default=20)
+    parser.add_argument('--epochs', type=int, default=10000)
     parser.add_argument('--learning_rate', type=float, default=1e-3)
-
-    # Model settings
-    parser.add_argument('--use_fast_ode', action='store_true')
     parser.add_argument('--reduced_cluster_size', type=int, default=64)
     parser.add_argument('--hidden_dim', type=int, default=64)
-    parser.add_argument('--integrator', choices=['dopri5', 'rk4', 'euler'], default='rk4')
-
-    # Optimization
+    parser.add_argument('--integrator', default='rk4')
+    parser.add_argument('--use_fast_ode', action='store_true')
+    parser.add_argument('--loss', choices=['default', 'weighted_row', 'single_row'], default='default',
+                       help='MSA loss strategy: default (full MSA), weighted_row (emphasize first row), single_row (first row only)')
     parser.add_argument('--use_amp', action='store_true')
+    parser.add_argument('--output_dir', required=True)
+    parser.add_argument('--experiment_name', required=True)
     parser.add_argument('--max_residues', type=int, default=None)
     parser.add_argument('--max_time_hours', type=float, default=None)
-
-    # LR scheduling and early stopping
     parser.add_argument('--lr_patience', type=int, default=3)
     parser.add_argument('--lr_factor', type=float, default=0.5)
     parser.add_argument('--min_lr', type=float, default=1e-6)
     parser.add_argument('--early_stopping_patience', type=int, default=7)
     parser.add_argument('--early_stopping_min_delta', type=float, default=0.001)
-
-    # Memory optimization
     parser.add_argument('--aggressive_cleanup', action='store_true')
-
-    # Preliminary training
     parser.add_argument('--enable_preliminary_training', action='store_true')
     parser.add_argument('--prelim_data_dir', type=str)
     parser.add_argument('--prelim_block_stride', type=int, default=4)
@@ -716,7 +907,6 @@ def main():
 
     args = parser.parse_args()
 
-    # Create and validate configuration
     config = TrainingConfig.from_args(args)
     config.validate()
 
@@ -727,38 +917,45 @@ def main():
     if config.enable_preliminary_training:
         print(f"🔄 Preliminary training enabled")
 
-    # Setup training environment
     model, optimizer, scaler, train_proteins, val_proteins = setup_training_environment(config)
 
-    # Setup logging
     logger = setup_logging(config)
     if logger:
-        # Update model info now that we have the model
         logger.config['model_parameters'] = sum(p.numel() for p in model.parameters())
         logger.config['train_proteins'] = len(train_proteins)
         logger.config['val_proteins'] = len(val_proteins)
 
-    # Setup schedulers
-    lr_scheduler, early_stopping = setup_schedulers(optimizer, config, bool(val_proteins))
 
     print(f"🤖 Model: {sum(p.numel() for p in model.parameters())} parameters")
     print(f"🧬 Training proteins: {len(train_proteins)}")
     print(f"🔍 Validation proteins: {len(val_proteins)}")
 
-    # Start training timing
     training_start_time = time.time()
     if logger:
         logger.log_training_start()
 
-    # Run preliminary training
     if config.enable_preliminary_training:
         success = run_preliminary_training(config, model, optimizer, scaler, logger)
+        # At this point, model already has best preliminary weights loaded
         if success and logger:
             logger.log_main_training_start()
 
-    # Main training phase
     print(f"\n🚀 MAIN TRAINING PHASE (0→48 blocks)")
     print(f"=" * 60)
+    print("🔄 Resetting optimizer and schedulers for main training...")
+
+
+    # Reset learning rate and optimizer state
+    for group in optimizer.param_groups:
+        group['lr'] = config.learning_rate
+    optimizer.state.clear()
+
+    # Create FRESH schedulers with reset_state=True
+    lr_scheduler, early_stopping = setup_schedulers(optimizer, config, bool(val_proteins), reset_state=True)
+
+    # Force early stopping to start fresh (no best model state from preliminary)
+    if early_stopping:
+        early_stopping.best_model_state = None  # Ensure no preliminary state carries over
 
     main_phase = TrainingPhase(config, is_preliminary=False)
     interrupted_by_timeout = False
@@ -768,7 +965,6 @@ def main():
     for epoch in range(config.epochs):
         final_epoch = epoch + 1
 
-        # Check time limit
         if max_time_seconds:
             elapsed_time = time.time() - training_start_time
             if elapsed_time >= max_time_seconds:
@@ -779,12 +975,10 @@ def main():
         print(f"\n📈 Main Epoch {epoch + 1}/{config.epochs}")
         print(f"🎛️  LR: {optimizer.param_groups[0]['lr']:.2e}")
 
-        # Training epoch
         epoch_losses, successful_proteins = main_phase.run_epoch(
             train_proteins, model, optimizer, scaler, logger, epoch + 1, config.epochs
         )
 
-        # Validation
         val_results = None
         if val_proteins:
             print(f"\n🔍 Validation on {len(val_proteins)} proteins...")
@@ -794,31 +988,26 @@ def main():
                   f"({val_results['successful_validations']}/{len(val_proteins)})")
 
         if logger:
-            logger.log_epoch_end(val_results, is_preliminary=False)
+            logger.log_epoch_end(val_results, is_preliminary=False, optimizer=optimizer)
 
-        # Epoch summary
         if epoch_losses:
             avg_train_loss = sum(epoch_losses) / len(epoch_losses)
             print(f"📊 Training: {avg_train_loss:.5f} ({successful_proteins}/{len(train_proteins)})")
 
-            # LR scheduling
             if lr_scheduler and val_results:
                 lr_scheduler.step(val_results['avg_loss'], epoch + 1)
 
-            # Early stopping
             if early_stopping and val_results:
                 if early_stopping(val_results['avg_loss'], epoch + 1, model):
                     print(f"\n🛑 Early stopping triggered!")
                     break
 
-        # Show timing
         elapsed_time = time.time() - training_start_time
         print(f"⏱️  Time: {elapsed_time / 60:.1f} min")
         if max_time_seconds:
             remaining_time = max_time_seconds - elapsed_time
             print(f"⏰ Remaining: {remaining_time / 60:.1f} min")
 
-    # Training completion
     total_time = time.time() - training_start_time
 
     if interrupted_by_timeout:
@@ -835,7 +1024,6 @@ def main():
         print(f"📉 LR reductions: {lr_scheduler.lr_reductions}")
         print(f"🎛️  Final LR: {lr_scheduler.get_last_lr():.2e}")
 
-    # Save final model
     training_stats = {
         'total_epochs': final_epoch,
         'total_time_minutes': total_time / 60,
@@ -846,6 +1034,7 @@ def main():
         'final_lr': lr_scheduler.get_last_lr() if lr_scheduler else config.learning_rate,
         'method': 'adjoint_0_to_48_unified',
         'preliminary_training_enabled': config.enable_preliminary_training,
+        'loss_strategy': config.loss,
     }
 
     if logger:
@@ -853,7 +1042,6 @@ def main():
             logger.interrupted_at_epoch = final_epoch
         save_final_model(model, config, logger, training_stats)
         print(f"📊 Full report: {config.output_dir}/{config.experiment_name}.txt")
-
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,316 @@
+Experiment: Loss Comparison: Weighted Row
+Actual experiment name: 20250623_134836_loss_comparison_weighted_row
+Started: 2025-06-23 13:48:36
+Ended: 2025-06-23 13:53:16
+Duration: 0.08 hours
+Return code: 1
+Command: /home/visitor/anaconda3/envs/openfold_env/bin/python train_evoformer_ode.py --data_dirs /media/visitor/Extreme SSD/data/complete_blocks /media/visitor/Extreme SSD/data/endpoint_blocks --splits_dir /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/4n8p --device cuda --epochs 10000 --learning_rate 0.01 --reduced_cluster_size 64 --hidden_dim 64 --integrator rk4 --loss weighted_row --max_residues 450 --output_dir /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models --experiment_name 20250623_134836_loss_comparison_weighted_row --lr_patience 3 --lr_factor 0.5 --min_lr 1e-06 --early_stopping_patience 10 --early_stopping_min_delta 0.0001 --max_time_hours 0.5 --prelim_data_dir /media/visitor/Extreme SSD/data/complete_blocks --prelim_block_stride 4 --prelim_max_epochs 40 --prelim_chunk_size 2 --use_amp --aggressive_cleanup --enable_preliminary_training
+
+CONFIGURATION:
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/4n8p
+  device: cuda
+  epochs: 10000
+  learning_rate: 0.01
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_fast_ode: False
+  max_residues: 450
+  loss: weighted_row
+  use_amp: True
+  output_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  max_time_hours: 0.5
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 4
+  prelim_max_epochs: 40
+  prelim_chunk_size: 2
+  experiment_name: 20250623_134836_loss_comparison_weighted_row
+
+OUTPUT:
+[2025-06-23 13:48:38,245] [INFO] [real_accelerator.py:239:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+🚀 Neural ODE Training - Restructured Version
+📁 Data directories: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+💻 Device: cuda
+🔧 Model: Full ODE
+🔄 Preliminary training enabled
+🔍 Filtering 3 proteins by size (max: 450 residues)
+  ✅ 4n8p_A: 135 residues
+  ✅ 4ekx_A: 116 residues
+  ✅ 7k6p_A: 98 residues
+📊 Kept 3/3 proteins
+🔍 Filtering 3 proteins by size (max: 450 residues)
+  ✅ 4n8p_A: 135 residues
+  ✅ 4ekx_A: 116 residues
+  ✅ 7k6p_A: 98 residues
+📊 Kept 3/3 proteins
+🤖 Model: 854854 parameters
+🧬 Training proteins: 3
+🔍 Validation proteins: 3
+
+🚀 PRELIMINARY TRAINING PHASE
+============================================================
+🔍 Filtering 3 proteins by size (max: 450 residues)
+  ✅ 4n8p_A: 135 residues
+  ✅ 4ekx_A: 116 residues
+  ✅ 7k6p_A: 98 residues
+📊 Kept 3/3 proteins
+🔍 Filtering 3 proteins by size (max: 450 residues)
+  ✅ 4n8p_A: 135 residues
+  ✅ 4ekx_A: 116 residues
+  ✅ 7k6p_A: 98 residues
+📊 Kept 3/3 proteins
+
+📈 Preliminary Epoch 1/40
+🎛️  LR: 1.00e-02
+  [1/3] 4n8p_A... ✅ Loss: 342945.92725
+  [2/3] 4ekx_A... ✅ Loss: 241984.02653
+  [3/3] 7k6p_A... ✅ Loss: 189989.09440
+📊 Training: 258306.34939 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 336379.84391
+    [2/3] 4ekx_A... ✅ Loss: 288408.39144
+    [3/3] 7k6p_A... ✅ Loss: 256604.14209
+📈 New best validation loss: 293797.4591
+
+📈 Preliminary Epoch 2/40
+🎛️  LR: 1.00e-02
+  [1/3] 4n8p_A... ✅ Loss: 251335.86084
+  [2/3] 4ekx_A... ✅ Loss: 231573.21354
+  [3/3] 7k6p_A... ✅ Loss: 144400.98918
+📊 Training: 209103.35452 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 189417.25732
+    [2/3] 4ekx_A... ✅ Loss: 162152.96989
+    [3/3] 7k6p_A... ✅ Loss: 143122.84814
+📈 New best validation loss: 164897.6918
+
+📈 Preliminary Epoch 3/40
+🎛️  LR: 1.00e-02
+  [1/3] 4n8p_A... ✅ Loss: 191989.13558
+  [2/3] 4ekx_A... ✅ Loss: 178503.26367
+  [3/3] 7k6p_A... ✅ Loss: 174733.76099
+📊 Training: 181742.05341 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 204083.49772
+    [2/3] 4ekx_A... ✅ Loss: 179514.36833
+    [3/3] 7k6p_A... ✅ Loss: 162009.69873
+
+📈 Preliminary Epoch 4/40
+🎛️  LR: 1.00e-02
+  [1/3] 4n8p_A... ✅ Loss: 181252.88477
+  [2/3] 4ekx_A... ✅ Loss: 233151.46029
+  [3/3] 7k6p_A... ✅ Loss: 196518.47274
+📊 Training: 203640.93926 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 291845.10042
+    [2/3] 4ekx_A... ✅ Loss: 262650.63005
+    [3/3] 7k6p_A... ✅ Loss: 227332.86466
+
+📈 Preliminary Epoch 5/40
+🎛️  LR: 1.00e-02
+  [1/3] 4n8p_A... ✅ Loss: 224306.83382
+  [2/3] 4ekx_A... ✅ Loss: 202612.07389
+  [3/3] 7k6p_A... ✅ Loss: 178511.96387
+📊 Training: 201810.29053 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 196235.25098
+    [2/3] 4ekx_A... ✅ Loss: 169939.93205
+    [3/3] 7k6p_A... ✅ Loss: 148440.88883
+🔽 Learning rate reduced: 1.00e-02 → 5.00e-03
+
+📈 Preliminary Epoch 6/40
+🎛️  LR: 5.00e-03
+  [1/3] 4n8p_A... ✅ Loss: 179625.12337
+  [2/3] 4ekx_A... ✅ Loss: 144773.82414
+  [3/3] 7k6p_A... ✅ Loss: 131887.30729
+📊 Training: 152095.41827 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 150485.33496
+    [2/3] 4ekx_A... ✅ Loss: 130748.63924
+    [3/3] 7k6p_A... ✅ Loss: 121481.46094
+📈 New best validation loss: 134238.4784
+
+📈 Preliminary Epoch 7/40
+🎛️  LR: 5.00e-03
+  [1/3] 4n8p_A... ✅ Loss: 150368.98730
+  [2/3] 4ekx_A... ✅ Loss: 127839.50749
+  [3/3] 7k6p_A... ✅ Loss: 115686.81152
+📊 Training: 131298.43544 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 163326.67171
+    [2/3] 4ekx_A... ✅ Loss: 138779.70785
+    [3/3] 7k6p_A... ✅ Loss: 128585.32707
+
+📈 Preliminary Epoch 8/40
+🎛️  LR: 5.00e-03
+  [1/3] 4n8p_A... ✅ Loss: 147024.28727
+  [2/3] 4ekx_A... ✅ Loss: 136552.06665
+  [3/3] 7k6p_A... ✅ Loss: 106016.82975
+📊 Training: 129864.39456 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 144277.99772
+    [2/3] 4ekx_A... ✅ Loss: 125016.84538
+    [3/3] 7k6p_A... ✅ Loss: 117189.64933
+📈 New best validation loss: 128828.1641
+
+📈 Preliminary Epoch 9/40
+🎛️  LR: 5.00e-03
+  [1/3] 4n8p_A... ✅ Loss: 147027.27962
+  [2/3] 4ekx_A... ✅ Loss: 112492.41414
+  [3/3] 7k6p_A... ✅ Loss: 94044.35042
+📊 Training: 117854.68140 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 121890.46354
+    [2/3] 4ekx_A... ✅ Loss: 103176.35962
+    [3/3] 7k6p_A... ✅ Loss: 92600.56136
+📈 New best validation loss: 105889.1282
+
+📈 Preliminary Epoch 10/40
+🎛️  LR: 5.00e-03
+  [1/3] 4n8p_A... ✅ Loss: 118295.97428
+  [2/3] 4ekx_A... ✅ Loss: 110494.90828
+  [3/3] 7k6p_A... ✅ Loss: 98420.89844
+📊 Training: 109070.59367 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 127650.56429
+    [2/3] 4ekx_A... ✅ Loss: 108049.24797
+    [3/3] 7k6p_A... ✅ Loss: 91743.96167
+
+📈 Preliminary Epoch 11/40
+🎛️  LR: 5.00e-03
+  [1/3] 4n8p_A... ✅ Loss: 122454.07633
+  [2/3] 4ekx_A... ✅ Loss: 126198.88550
+  [3/3] 7k6p_A... ✅ Loss: 95340.89209
+📊 Training: 114664.61797 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 115000.34717
+    [2/3] 4ekx_A... ✅ Loss: 95935.65853
+    [3/3] 7k6p_A... ✅ Loss: 85965.18831
+📈 New best validation loss: 98967.0647
+
+📈 Preliminary Epoch 12/40
+🎛️  LR: 5.00e-03
+  [1/3] 4n8p_A... ✅ Loss: 148701.99072
+  [2/3] 4ekx_A... ✅ Loss: 102177.55697
+  [3/3] 7k6p_A... ✅ Loss: 258848.12598
+📊 Training: 169909.22456 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 148747.18262
+    [2/3] 4ekx_A... ✅ Loss: 127508.88924
+    [3/3] 7k6p_A... ✅ Loss: 121828.43172
+
+📈 Preliminary Epoch 13/40
+🎛️  LR: 5.00e-03
+  [1/3] 4n8p_A... ✅ Loss: 141438.83919
+  [2/3] 4ekx_A... ✅ Loss: 129159.59855
+  [3/3] 7k6p_A... ✅ Loss: 102856.04500
+📊 Training: 124484.82758 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 140547.66292
+    [2/3] 4ekx_A... ✅ Loss: 116133.47965
+    [3/3] 7k6p_A... ✅ Loss: 106766.83545
+
+📈 Preliminary Epoch 14/40
+🎛️  LR: 5.00e-03
+  [1/3] 4n8p_A... ✅ Loss: 163098.16520
+  [2/3] 4ekx_A... ✅ Loss: 136936.68953
+  [3/3] 7k6p_A... ✅ Loss: 132431.36279
+📊 Training: 144155.40584 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 173671.56844
+    [2/3] 4ekx_A... ✅ Loss: 153127.09131
+    [3/3] 7k6p_A... ✅ Loss: 126797.60799
+🔽 Learning rate reduced: 5.00e-03 → 2.50e-03
+
+📈 Preliminary Epoch 15/40
+🎛️  LR: 2.50e-03
+  [1/3] 4n8p_A... ✅ Loss: 161249.52905
+  [2/3] 4ekx_A... ✅ Loss: 107398.39681
+  [3/3] 7k6p_A... ✅ Loss: 83197.96549
+📊 Training: 117281.96379 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 102745.64518
+    [2/3] 4ekx_A... ✅ Loss: 86560.78182
+    [3/3] 7k6p_A... ✅ Loss: 79780.03198
+📈 New best validation loss: 89695.4863
+
+📈 Preliminary Epoch 16/40
+🎛️  LR: 2.50e-03
+  [1/3] 4n8p_A... ✅ Loss: 103379.84066
+  [2/3] 4ekx_A... ✅ Loss: 82632.76562
+  [3/3] 7k6p_A... ✅ Loss: 76961.93864
+📊 Training: 87658.18164 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 97624.44792
+    [2/3] 4ekx_A... ✅ Loss: 82235.61548
+    [3/3] 7k6p_A... ✅ Loss: 75442.73568
+📈 New best validation loss: 85100.9330
+
+📈 Preliminary Epoch 17/40
+🎛️  LR: 2.50e-03
+  [1/3] 4n8p_A... ✅ Loss: 98072.00049
+  [2/3] 4ekx_A... ✅ Loss: 79979.27173
+  [3/3] 7k6p_A... ✅ Loss: 76021.82389
+📊 Training: 84691.03204 (3/3)
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 4n8p_A... ✅ Loss: 97081.52808
+    [2/3] 4ekx_A... ✅ Loss: 81615.09424
+    [3/3] 7k6p_A... ✅ Loss: 74447.16398
+📈 New best validation loss: 84381.2621
+
+📈 Preliminary Epoch 18/40
+🎛️  LR: 2.50e-03
+  [1/3] 4n8p_A... ✅ Loss: 100030.33732
+  [2/3] 4ekx_A... ✅ Loss: 78867.26945
+  [3/3] 7k6p_A... ✅ Loss: nan
+⚠️  NaN/Inf training loss detected! (1/3)
+🔽 Emergency LR reduction: 1.25e-03
+
+📈 Preliminary Epoch 19/40
+🎛️  LR: 1.25e-03
+  [1/3] 4n8p_A... ✅ Loss: nan
+  [2/3] 4ekx_A... ✅ Loss: nan
+  [3/3] 7k6p_A... ✅ Loss: nan
+⚠️  NaN/Inf training loss detected! (2/3)
+🔽 Emergency LR reduction: 6.25e-04
+
+📈 Preliminary Epoch 20/40
+🎛️  LR: 6.25e-04
+  [1/3] 4n8p_A... ✅ Loss: nan
+  [2/3] 4ekx_A... ✅ Loss: nan
+  [3/3] 7k6p_A... ✅ Loss: nan
+⚠️  NaN/Inf training loss detected! (3/3)
+❌ Too many consecutive NaN epochs, stopping preliminary training
+Traceback (most recent call last):
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 1198, in <module>
+    main()
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 1089, in main
+    success = run_preliminary_training(config, model, optimizer, scaler, logger)
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 1004, in run_preliminary_training
+    print(f"🎛️  Restoring original LR for main training: {optimizer.param_groups[0]['lr']:.2e} → {original_lr:.2e}")
+NameError: name 'original_lr' is not defined

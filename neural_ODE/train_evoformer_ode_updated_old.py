@@ -1,0 +1,890 @@
+"""
+Restructured Neural ODE training for Evoformer - Shorter and cleaner version
+Uses adjoint method from torchdiffeq with memory optimizations
+"""
+
+import os
+import gc
+import torch
+import argparse
+import sys
+from torchdiffeq import odeint
+import torch.optim as optim
+from evoformer_ode import EvoformerODEFunc, EvoformerODEFuncFast
+from torch.cuda.amp import autocast, GradScaler
+import torch.nn.functional as F
+import time
+from typing import Dict, List, Tuple, Optional, Union
+from training_logger import TrainingLogger
+from dataclasses import dataclass
+
+
+@dataclass
+class TrainingConfig:
+    """Unified configuration object"""
+    data_dirs: List[str]
+    splits_dir: str
+    output_dir: str
+    experiment_name: str
+    device: str = 'cuda'
+    epochs: int = 20
+    learning_rate: float = 1e-3
+    lr_patience: int = 3
+    lr_factor: float = 0.5
+    min_lr: float = 1e-6
+    early_stopping_patience: int = 7
+    early_stopping_min_delta: float = 0.001
+    use_fast_ode: bool = False
+    reduced_cluster_size: int = 64
+    hidden_dim: int = 64
+    integrator: str = 'rk4'
+    use_amp: bool = False
+    max_residues: Optional[int] = None
+    max_time_hours: Optional[float] = None
+    aggressive_cleanup: bool = False
+
+    # Preliminary training
+    enable_preliminary_training: bool = False
+    prelim_data_dir: Optional[str] = None
+    prelim_block_stride: int = 4
+    prelim_max_epochs: int = 20
+    prelim_chunk_size: int = 4
+
+    @classmethod
+    def from_args(cls, args):
+        return cls(**{k: v for k, v in vars(args).items() if k in cls.__annotations__})
+
+    def validate(self):
+        """Validate configuration"""
+        if self.enable_preliminary_training:
+            required = ['prelim_data_dir', 'prelim_block_stride', 'prelim_max_epochs']
+            missing = [attr for attr in required if getattr(self, attr) is None]
+            if missing:
+                raise ValueError(f"Preliminary training requires: {missing}")
+            if not os.path.exists(self.prelim_data_dir):
+                raise ValueError(f"Preliminary data directory not found: {self.prelim_data_dir}")
+
+
+class MemoryManager:
+    """Context manager for memory cleanup"""
+    def __init__(self, aggressive: bool = True):
+        self.aggressive = aggressive
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        if self.aggressive:
+            self.cleanup()
+
+    @staticmethod
+    def cleanup():
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            for _ in range(3):
+                torch.cuda.empty_cache()
+
+
+class LearningRateScheduler:
+    """Smart learning rate scheduler"""
+    def __init__(self, optimizer, mode='min', factor=0.5, patience=3, min_lr=1e-6, verbose=True):
+        self.optimizer = optimizer
+        self.factor = factor
+        self.patience = patience
+        self.min_lr = min_lr
+        self.verbose = verbose
+        self.best_loss = float('inf')
+        self.patience_counter = 0
+        self.lr_reductions = 0
+
+    def step(self, val_loss, epoch):
+        current_lr = self.optimizer.param_groups[0]['lr']
+        if val_loss < self.best_loss:
+            self.best_loss = val_loss
+            self.patience_counter = 0
+            if self.verbose:
+                print(f"📈 New best validation loss: {val_loss:.4f}")
+        else:
+            self.patience_counter += 1
+
+        if self.patience_counter >= self.patience and current_lr > self.min_lr:
+            new_lr = max(current_lr * self.factor, self.min_lr)
+            for param_group in self.optimizer.param_groups:
+                param_group['lr'] = new_lr
+            self.lr_reductions += 1
+            self.patience_counter = 0
+            if self.verbose:
+                print(f"🔽 Learning rate reduced: {current_lr:.2e} → {new_lr:.2e}")
+            return True
+        return False
+
+    def get_last_lr(self):
+        return self.optimizer.param_groups[0]['lr']
+
+
+class EarlyStopping:
+    """Early stopping handler"""
+    def __init__(self, patience=7, min_delta=0.001, verbose=True):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.verbose = verbose
+        self.best_loss = float('inf')
+        self.best_epoch = 0
+        self.patience_counter = 0
+        self.best_model_state = None
+        self.should_stop = False
+
+    def __call__(self, val_loss, epoch, model=None):
+        if val_loss < self.best_loss - self.min_delta:
+            self.best_loss = val_loss
+            self.best_epoch = epoch
+            self.patience_counter = 0
+            if model is not None:
+                self.best_model_state = model.state_dict().copy()
+        else:
+            self.patience_counter += 1
+
+        if self.patience_counter >= self.patience:
+            self.should_stop = True
+            if self.verbose:
+                print(f"🛑 Early stopping triggered! Best: {self.best_loss:.4f} (epoch {self.best_epoch})")
+            if self.best_model_state is not None and model is not None:
+                model.load_state_dict(self.best_model_state)
+                if self.verbose:
+                    print(f"🔄 Restored best model weights from epoch {self.best_epoch}")
+        return self.should_stop
+
+
+class DataManager:
+    """Unified data loading and management"""
+
+    @staticmethod
+    def load_split_proteins(splits_dir: str, mode: str) -> List[str]:
+        split_files = {'training': 'training_chains.txt', 'validation': 'validation_chains.txt', 'testing': 'testing_chains.txt'}
+        split_file = os.path.join(splits_dir, split_files[mode])
+        with open(split_file, 'r') as f:
+            return [line.strip() for line in f if line.strip()]
+
+    @staticmethod
+    def get_available_proteins(data_dirs: List[str], splits_dir: str, mode: str, single_dir: bool = False) -> Union[List[Tuple[str, str]], List[str]]:
+        """Unified function for protein discovery"""
+        split_proteins = DataManager.load_split_proteins(splits_dir, mode)
+
+        if single_dir:
+            # For preliminary training (single directory)
+            data_dir = data_dirs[0] if isinstance(data_dirs, list) else data_dirs
+            available = []
+            for protein_id in split_proteins:
+                protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+                if os.path.isdir(protein_dir):
+                    available.append(protein_id)
+            return available
+        else:
+            # For main training (multi-directory)
+            available = []
+            for protein_id in split_proteins:
+                for data_dir in data_dirs:
+                    protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+                    if os.path.isdir(protein_dir):
+                        available.append((protein_id, data_dir))
+                        break
+            return available
+
+    @staticmethod
+    def filter_proteins_by_size(proteins: Union[List[str], List[Tuple[str, str]]],
+                               max_residues: int, data_dir: str = None) -> Union[List[str], List[Tuple[str, str]]]:
+        """Unified size filtering"""
+        if max_residues is None:
+            return proteins
+
+        valid_proteins = []
+        for protein in proteins:
+            try:
+                if isinstance(protein, tuple):
+                    protein_id, protein_data_dir = protein
+                else:
+                    protein_id, protein_data_dir = protein, data_dir
+
+                protein_dir = os.path.join(protein_data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+                m_path = os.path.join(protein_dir, "m_block_0.pt")
+
+                if os.path.exists(m_path):
+                    m_test = torch.load(m_path, map_location='cpu')
+                    num_residues = m_test.shape[-2]
+                    del m_test
+
+                    if num_residues <= max_residues:
+                        valid_proteins.append(protein)
+            except Exception:
+                continue
+        return valid_proteins
+
+    @staticmethod
+    def load_protein_blocks(protein_id: str, data_dir: str, device: str, max_cluster_size: int = None,
+                           blocks: List[int] = [0, 48], sequential: bool = False,
+                           target_block: int = None, strided: bool = False, **kwargs):
+        """Unified loading function for all cases"""
+        protein_dir = os.path.join(data_dir, f"{protein_id}_evoformer_blocks", "recycle_0")
+
+        if target_block is not None:
+            # Load single target block
+            m_path = os.path.join(protein_dir, f"m_block_{target_block}.pt")
+            z_path = os.path.join(protein_dir, f"z_block_{target_block}.pt")
+            m = torch.load(m_path, map_location='cpu')
+            z = torch.load(z_path, map_location='cpu')
+
+            if m.dim() == 4:
+                m = m.squeeze(0)
+            if z.dim() == 4:
+                z = z.squeeze(0)
+            if max_cluster_size and m.shape[0] > max_cluster_size:
+                m = m[:max_cluster_size]
+
+            return m.to(device), z.to(device)
+
+        elif strided:
+            # Load for strided training - return initial state and block indices
+            available_blocks = []
+            max_blocks = kwargs.get('max_blocks', 49)
+            for i in range(max_blocks):
+                m_path = os.path.join(protein_dir, f"m_block_{i}.pt")
+                z_path = os.path.join(protein_dir, f"z_block_{i}.pt")
+                if os.path.exists(m_path) and os.path.exists(z_path):
+                    available_blocks.append(i)
+                else:
+                    break
+
+            # Select blocks with stride
+            stride = kwargs.get('block_stride', 4)
+            selected_blocks = [available_blocks[0]]
+            for i in range(stride, len(available_blocks), stride):
+                selected_blocks.append(available_blocks[i])
+            if available_blocks[-1] not in selected_blocks:
+                selected_blocks.append(available_blocks[-1])
+
+            # Load initial block
+            m_init, z_init = DataManager.load_protein_blocks(
+                protein_id, data_dir, device, max_cluster_size, target_block=selected_blocks[0]
+            )
+            return m_init, z_init, selected_blocks
+
+        else:
+            # Load standard blocks (0 and 48, or custom blocks)
+            results = []
+            for block in blocks:
+                if sequential and len(results) > 0:
+                    MemoryManager.cleanup()
+
+                m_path = os.path.join(protein_dir, f"m_block_{block}.pt")
+                z_path = os.path.join(protein_dir, f"z_block_{block}.pt")
+
+                m = torch.load(m_path, map_location='cpu' if sequential else device)
+                z = torch.load(z_path, map_location='cpu' if sequential else device)
+
+                if m.dim() == 4:
+                    m = m.squeeze(0)
+                if z.dim() == 4:
+                    z = z.squeeze(0)
+                if max_cluster_size and m.shape[0] > max_cluster_size:
+                    m = m[:max_cluster_size]
+
+                if sequential:
+                    m = m.to(device)
+                    z = z.to(device)
+
+                results.extend([m, z])
+
+            return tuple(results)
+
+
+class TrainingPhase:
+    """Unified training phase handler"""
+
+    def __init__(self, config: TrainingConfig, is_preliminary: bool = False):
+        self.config = config
+        self.is_preliminary = is_preliminary
+        self.memory_manager = MemoryManager(config.aggressive_cleanup)
+
+    def compute_adaptive_loss(self, pred_m: torch.Tensor, target_m: torch.Tensor,
+                             pred_z: torch.Tensor, target_z: torch.Tensor) -> torch.Tensor:
+        """Compute loss with proper scaling"""
+        num_residues = target_m.shape[1] if target_m.dim() == 3 else target_m.shape[0]
+
+        msa_loss = F.mse_loss(pred_m, target_m)
+        pair_loss = F.mse_loss(pred_z, target_z)
+
+        msa_variance = target_m.var() + 1e-8
+        pair_variance = target_z.var() + 1e-8
+
+        msa_scaled = msa_loss / msa_variance
+        pair_scaled = pair_loss / pair_variance
+
+        base_loss = msa_scaled + pair_scaled
+        return base_loss * float(num_residues)
+
+    def process_single_protein(self, protein: Union[str, Tuple[str, str]], model: torch.nn.Module,
+                              optimizer: torch.optim.Optimizer = None, scaler: GradScaler = None,
+                              training: bool = True) -> Dict:
+        """Unified protein processing for training/validation, regular/strided"""
+
+        if isinstance(protein, tuple):
+            protein_id, data_dir = protein
+        else:
+            protein_id, data_dir = protein, self.config.prelim_data_dir
+
+        with self.memory_manager:
+            if self.is_preliminary:
+                return self._process_protein_strided(protein_id, data_dir, model, optimizer, scaler, training)
+            else:
+                return self._process_protein_regular(protein_id, data_dir, model, optimizer, scaler, training)
+
+    def _process_protein_regular(self, protein_id: str, data_dir: str, model: torch.nn.Module,
+                               optimizer: torch.optim.Optimizer, scaler: GradScaler, training: bool) -> Dict:
+        """Regular 0→48 processing"""
+        m0, z0, m48, z48 = DataManager.load_protein_blocks(
+            protein_id, data_dir, self.config.device, self.config.reduced_cluster_size,
+            blocks=[0, 48]  # Always use sequential loading (hardcoded in load_protein_blocks)
+        )
+
+        if training:
+            optimizer.zero_grad()
+
+        with autocast(enabled=self.config.use_amp):
+            trajectory = odeint(
+                model, (m0, z0), torch.tensor([0.0, 1.0]).to(self.config.device),
+                method=self.config.integrator, rtol=1e-4, atol=1e-5
+            )
+
+            m_pred, z_pred = trajectory[0][-1], trajectory[1][-1]
+            del trajectory
+
+            loss = self.compute_adaptive_loss(m_pred, m48, z_pred, z48)
+
+        if training:
+            if self.config.use_amp:
+                scaler.scale(loss).backward()
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                optimizer.step()
+
+        loss_value = loss.item()
+        del m0, z0, m48, z48, m_pred, z_pred, loss
+
+        return {'protein': protein_id, 'loss': loss_value}
+
+    def _process_protein_strided(self, protein_id: str, data_dir: str, model: torch.nn.Module,
+                                 optimizer: torch.optim.Optimizer, scaler: GradScaler, training: bool) -> Dict:
+        """Sequential strided processing with batch gradient updates and memory safety"""
+        m_init, z_init, selected_blocks = DataManager.load_protein_blocks(
+            protein_id, data_dir, self.config.device, self.config.reduced_cluster_size,
+            strided=True, block_stride=self.config.prelim_block_stride, max_blocks=49
+        )
+
+        if training:
+            optimizer.zero_grad()  # ← ONCE at start (like original)
+
+        chunk_size = self.config.prelim_chunk_size
+        accumulated_loss = None  # ← Accumulate actual loss tensors for gradients
+        total_loss_scalar = 0.0  # ← Separate scalar accumulator for reporting
+        total_chunks = 0
+
+        # Start with initial state
+        current_m, current_z = m_init, z_init
+        current_block = selected_blocks[0]
+
+        # Process sequential chunks (accumulate gradients, don't step)
+        for i in range(0, len(selected_blocks) - 1, chunk_size):
+            # Get target blocks for this chunk
+            target_start = i + 1
+            target_end = min(target_start + chunk_size, len(selected_blocks))
+            target_blocks = selected_blocks[target_start:target_end]
+
+            if not target_blocks:
+                break
+
+            # Create time points from current block to targets
+            time_points = [float(current_block) / 48.0]
+            for block in target_blocks:
+                time_points.append(float(block) / 48.0)
+
+            chunk_time_points = torch.tensor(time_points, device=self.config.device)
+
+            with autocast(enabled=self.config.use_amp):
+                trajectory = odeint(
+                    model, (current_m, current_z), chunk_time_points,
+                    method=self.config.integrator, rtol=1e-4, atol=1e-5
+                )
+
+                # Supervise each prediction
+                chunk_loss = 0
+                chunk_steps = 0
+
+                for j, target_block in enumerate(target_blocks):
+                    pred_m = trajectory[0][j + 1]  # +1 to skip starting state
+                    pred_z = trajectory[1][j + 1]
+
+                    # Load target
+                    m_target, z_target = DataManager.load_protein_blocks(
+                        protein_id, data_dir, self.config.device, self.config.reduced_cluster_size,
+                        target_block=target_block
+                    )
+
+                    step_loss = self.compute_adaptive_loss(pred_m, m_target, pred_z, z_target)
+                    chunk_loss += step_loss  # ← Keep as tensor for gradients
+                    chunk_steps += 1
+
+                    # Save last target as next starting state (detached to save memory)
+                    if j == len(target_blocks) - 1:  # Last target in this chunk
+                        current_m = m_target.detach().clone()
+                        current_z = z_target.detach().clone()
+                        current_block = target_block
+
+                    del m_target, z_target, step_loss  # ← Cleanup intermediate tensors
+
+                # Average chunk loss
+                if chunk_steps > 0:
+                    chunk_loss = chunk_loss / chunk_steps
+
+                    # Accumulate loss tensor for batch gradient (like original)
+                    if accumulated_loss is None:
+                        accumulated_loss = chunk_loss
+                    else:
+                        accumulated_loss = accumulated_loss + chunk_loss  # ← Tensor accumulation
+
+                    # Store scalar for reporting
+                    chunk_loss_scalar = chunk_loss.item()
+                    print(
+                        f"  📦 Chunk {total_chunks + 1} (from block {selected_blocks[i]} → predict {target_blocks}): loss = {chunk_loss_scalar:.6f}")
+
+                    total_loss_scalar += chunk_loss_scalar
+                    total_chunks += 1
+
+            # Memory cleanup: delete chunk tensors but keep accumulated_loss
+            del trajectory, chunk_time_points, chunk_loss
+            torch.cuda.empty_cache()
+
+        # Single batch backward pass at the end (like original)
+        if total_chunks > 0:
+            avg_loss = accumulated_loss / total_chunks  # ← Still a tensor with gradients
+
+            if training:
+                if self.config.use_amp:
+                    scaler.scale(avg_loss).backward()  # ← ONE backward pass
+                    scaler.unscale_(optimizer)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                    scaler.step(optimizer)  # ← ONE optimizer step
+                    scaler.update()
+                else:
+                    avg_loss.backward()  # ← ONE backward pass
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                    optimizer.step()  # ← ONE optimizer step
+
+                loss_value = avg_loss.item()
+            else:
+                loss_value = avg_loss.item()
+
+            del accumulated_loss, avg_loss
+        else:
+            loss_value = 0.0
+
+        # Final cleanup
+        del m_init, z_init, current_m, current_z
+
+        return {
+            'protein': protein_id, 'loss': loss_value, 'selected_blocks': selected_blocks,
+            'num_chunks': total_chunks, 'cluster_size': self.config.reduced_cluster_size,
+            'approach': 'batch_update_sequential_strided'
+        }
+
+    def run_epoch(self, proteins: List, model: torch.nn.Module, optimizer: torch.optim.Optimizer,
+                  scaler: GradScaler, logger, epoch: int, total_epochs: int) -> Tuple[List[float], int]:
+        """Run a single training epoch"""
+        logger.log_epoch_start(epoch, total_epochs, [p[0] if isinstance(p, tuple) else p for p in proteins], self.is_preliminary)
+
+        epoch_losses = []
+        successful_proteins = 0
+
+        for protein_idx, protein in enumerate(proteins):
+            protein_id = protein[0] if isinstance(protein, tuple) else protein
+            print(f"  [{protein_idx + 1}/{len(proteins)}] {protein_id}... ", end='', flush=True)
+
+            protein_start_time = time.time()
+            try:
+                result = self.process_single_protein(protein, model, optimizer, scaler, training=True)
+                epoch_losses.append(result['loss'])
+                successful_proteins += 1
+                print(f"✅ Loss: {result['loss']:.5f}")
+
+                protein_time = time.time() - protein_start_time
+                step_info = {'approach': result.get('approach', 'adjoint_0_to_48_unified'),
+                            'num_blocks': result.get('selected_blocks', [0, 48]),
+                            'cluster_size': self.config.reduced_cluster_size}
+
+                logger.log_protein_step(protein_id, protein_idx, result['loss'], step_info, time_taken=protein_time, is_preliminary=self.is_preliminary)
+
+            except Exception as e:
+                print(f"❌ Error: {str(e)[:50]}...")
+                continue
+
+        return epoch_losses, successful_proteins
+
+    def validate(self, proteins: List, model: torch.nn.Module) -> Dict:
+        """Run validation"""
+        model.eval()
+        val_losses = []
+        successful_validations = 0
+
+        with torch.no_grad():
+            for val_idx, protein in enumerate(proteins):
+                protein_id = protein[0] if isinstance(protein, tuple) else protein
+                print(f"    [{val_idx + 1}/{len(proteins)}] {protein_id}... ", end='', flush=True)
+
+                try:
+                    result = self.process_single_protein(protein, model, training=False)
+                    val_losses.append(result['loss'])
+                    successful_validations += 1
+                    print(f"✅ Loss: {result['loss']:.5f}")
+                except Exception as e:
+                    print(f"❌ Error: {str(e)[:50]}...")
+                    continue
+
+        model.train()
+
+        if val_losses:
+            return {
+                'avg_loss': sum(val_losses) / len(val_losses),
+                'min_loss': min(val_losses),
+                'max_loss': max(val_losses),
+                'num_proteins': len(val_losses),
+                'successful_validations': successful_validations,
+            }
+        return {'avg_loss': float('inf'), 'num_proteins': 0, 'successful_validations': 0}
+
+
+def setup_training_environment(config: TrainingConfig):
+    """Setup model, optimizer, datasets, etc."""
+    # Device setup
+    if config.device == 'cuda' and not torch.cuda.is_available():
+        config.device = 'cpu'
+        config.use_amp = False
+
+    # Initialize CUDA
+    if config.device == 'cuda':
+        torch.cuda.init()
+
+    # Model setup
+    c_m, c_z = 256, 128
+    if config.use_fast_ode:
+        model = EvoformerODEFuncFast(c_m, c_z, config.hidden_dim).to(config.device)
+    else:
+        model = EvoformerODEFunc(c_m, c_z, config.hidden_dim).to(config.device)
+
+    optimizer = optim.Adam(model.parameters(), lr=config.learning_rate)
+    scaler = GradScaler(enabled=config.use_amp)
+
+    # Load datasets
+    train_proteins = DataManager.get_available_proteins(config.data_dirs, config.splits_dir, 'training')
+    val_proteins = DataManager.get_available_proteins(config.data_dirs, config.splits_dir, 'validation')
+
+    # Filter by size
+    if config.max_residues:
+        train_proteins = DataManager.filter_proteins_by_size(train_proteins, config.max_residues)
+        val_proteins = DataManager.filter_proteins_by_size(val_proteins, config.max_residues)
+
+    return model, optimizer, scaler, train_proteins, val_proteins
+
+
+def setup_logging(config: TrainingConfig):
+    """Setup logger"""
+    if not config.experiment_name or not config.output_dir:
+        return None
+
+    try:
+        os.makedirs(config.output_dir, exist_ok=True)
+        logger = TrainingLogger(config.output_dir, config.experiment_name)
+
+        model_info = {
+            'total_params': 'TBD',  # Will be filled after model creation
+            'model_type': 'EvoformerODEFuncFast' if config.use_fast_ode else 'EvoformerODEFunc',
+            'preliminary_training': config.enable_preliminary_training,
+        }
+
+        optimizer_info = {'learning_rate': config.learning_rate}
+        logger.log_configuration(config, model_info, optimizer_info)
+        return logger
+    except Exception:
+        return None
+
+
+def setup_schedulers(optimizer, config: TrainingConfig, has_validation: bool):
+    """Setup LR scheduler and early stopping"""
+    if not has_validation:
+        return None, None
+
+    lr_scheduler = LearningRateScheduler(
+        optimizer, patience=config.lr_patience, factor=config.lr_factor, min_lr=config.min_lr
+    )
+
+    early_stopping = EarlyStopping(
+        patience=config.early_stopping_patience, min_delta=config.early_stopping_min_delta
+    )
+
+    return lr_scheduler, early_stopping
+
+
+def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, logger) -> bool:
+    """Run preliminary training phase"""
+    if not config.enable_preliminary_training:
+        return True
+
+    print(f"\n🚀 PRELIMINARY TRAINING PHASE")
+    print(f"=" * 60)
+
+    # Get preliminary proteins
+    prelim_train_proteins = DataManager.get_available_proteins([config.prelim_data_dir], config.splits_dir, 'training', single_dir=True)
+    prelim_val_proteins = DataManager.get_available_proteins([config.prelim_data_dir], config.splits_dir, 'validation', single_dir=True)
+
+    # Filter by size
+    if config.max_residues:
+        prelim_train_proteins = DataManager.filter_proteins_by_size(prelim_train_proteins, config.max_residues, config.prelim_data_dir)
+        prelim_val_proteins = DataManager.filter_proteins_by_size(prelim_val_proteins, config.max_residues, config.prelim_data_dir)
+
+    if not prelim_train_proteins:
+        print("❌ No preliminary training proteins found")
+        return False
+
+    # Setup preliminary phase
+    prelim_phase = TrainingPhase(config, is_preliminary=True)
+    prelim_early_stopping = EarlyStopping(patience=config.early_stopping_patience, min_delta=config.early_stopping_min_delta)  # Same as main training
+
+    # Training loop
+    for epoch in range(config.prelim_max_epochs):
+        print(f"\n📈 Preliminary Epoch {epoch + 1}/{config.prelim_max_epochs}")
+
+        epoch_losses, successful_proteins = prelim_phase.run_epoch(prelim_train_proteins, model, optimizer, scaler, logger, epoch + 1, config.prelim_max_epochs)
+
+        # Validation
+        val_results = None
+        if prelim_val_proteins:
+            print(f"\n🔍 Preliminary validation on {len(prelim_val_proteins)} proteins...")
+            val_results = prelim_phase.validate(prelim_val_proteins, model)
+
+        logger.log_epoch_end(val_results, is_preliminary=True)
+
+        # Early stopping check
+        if val_results and prelim_early_stopping(val_results['avg_loss'], epoch + 1, model):
+            break
+
+    print(f"\n✅ Preliminary training completed!")
+    return True
+
+
+def save_final_model(model, config: TrainingConfig, logger, training_stats: Dict):
+    """Save final model and complete logging"""
+    if not config.experiment_name or not config.output_dir:
+        return
+
+    model_path = os.path.join(config.output_dir, f"{config.experiment_name}_final_model.pt")
+
+    save_dict = {
+        'model_state_dict': model.state_dict(),
+        'config': vars(config),
+        'training_stats': training_stats
+    }
+
+    torch.save(save_dict, model_path)
+    logger.log_training_complete(model_path)
+    print(f"🤖 Model saved: {model_path}")
+
+
+def main():
+    # Parse arguments
+    parser = argparse.ArgumentParser(description='Neural ODE Training - Restructured')
+
+    # Core settings
+    parser.add_argument('--data_dirs', type=str, nargs='+', required=True)
+    parser.add_argument('--splits_dir', type=str, required=True)
+    parser.add_argument('--output_dir', type=str, required=True)
+    parser.add_argument('--experiment_name', type=str, required=True)
+    parser.add_argument('--device', type=str, default='cuda')
+    parser.add_argument('--epochs', type=int, default=20)
+    parser.add_argument('--learning_rate', type=float, default=1e-3)
+
+    # Model settings
+    parser.add_argument('--use_fast_ode', action='store_true')
+    parser.add_argument('--reduced_cluster_size', type=int, default=64)
+    parser.add_argument('--hidden_dim', type=int, default=64)
+    parser.add_argument('--integrator', choices=['dopri5', 'rk4', 'euler'], default='rk4')
+
+    # Optimization
+    parser.add_argument('--use_amp', action='store_true')
+    parser.add_argument('--max_residues', type=int, default=None)
+    parser.add_argument('--max_time_hours', type=float, default=None)
+
+    # LR scheduling and early stopping
+    parser.add_argument('--lr_patience', type=int, default=3)
+    parser.add_argument('--lr_factor', type=float, default=0.5)
+    parser.add_argument('--min_lr', type=float, default=1e-6)
+    parser.add_argument('--early_stopping_patience', type=int, default=7)
+    parser.add_argument('--early_stopping_min_delta', type=float, default=0.001)
+
+    # Memory optimization
+    parser.add_argument('--aggressive_cleanup', action='store_true')
+
+    # Preliminary training
+    parser.add_argument('--enable_preliminary_training', action='store_true')
+    parser.add_argument('--prelim_data_dir', type=str)
+    parser.add_argument('--prelim_block_stride', type=int, default=4)
+    parser.add_argument('--prelim_max_epochs', type=int, default=20)
+    parser.add_argument('--prelim_chunk_size', type=int, default=4)
+
+    args = parser.parse_args()
+
+    # Create and validate configuration
+    config = TrainingConfig.from_args(args)
+    config.validate()
+
+    print(f"🚀 Neural ODE Training - Restructured Version")
+    print(f"📁 Data directories: {config.data_dirs}")
+    print(f"💻 Device: {config.device}")
+    print(f"🔧 Model: {'Fast ODE' if config.use_fast_ode else 'Full ODE'}")
+    if config.enable_preliminary_training:
+        print(f"🔄 Preliminary training enabled")
+
+    # Setup training environment
+    model, optimizer, scaler, train_proteins, val_proteins = setup_training_environment(config)
+
+    # Setup logging
+    logger = setup_logging(config)
+    if logger:
+        # Update model info now that we have the model
+        logger.config['model_parameters'] = sum(p.numel() for p in model.parameters())
+        logger.config['train_proteins'] = len(train_proteins)
+        logger.config['val_proteins'] = len(val_proteins)
+
+    # Setup schedulers
+    lr_scheduler, early_stopping = setup_schedulers(optimizer, config, bool(val_proteins))
+
+    print(f"🤖 Model: {sum(p.numel() for p in model.parameters())} parameters")
+    print(f"🧬 Training proteins: {len(train_proteins)}")
+    print(f"🔍 Validation proteins: {len(val_proteins)}")
+
+    # Start training timing
+    training_start_time = time.time()
+    if logger:
+        logger.log_training_start()
+
+    # Run preliminary training
+    if config.enable_preliminary_training:
+        success = run_preliminary_training(config, model, optimizer, scaler, logger)
+        if success and logger:
+            logger.log_main_training_start()
+
+    # Main training phase
+    print(f"\n🚀 MAIN TRAINING PHASE (0→48 blocks)")
+    print(f"=" * 60)
+
+    main_phase = TrainingPhase(config, is_preliminary=False)
+    interrupted_by_timeout = False
+    final_epoch = 0
+    max_time_seconds = config.max_time_hours * 3600 if config.max_time_hours else None
+
+    for epoch in range(config.epochs):
+        final_epoch = epoch + 1
+
+        # Check time limit
+        if max_time_seconds:
+            elapsed_time = time.time() - training_start_time
+            if elapsed_time >= max_time_seconds:
+                interrupted_by_timeout = True
+                print(f"\n⏰ Time limit reached ({config.max_time_hours} hours). Stopping...")
+                break
+
+        print(f"\n📈 Main Epoch {epoch + 1}/{config.epochs}")
+        print(f"🎛️  LR: {optimizer.param_groups[0]['lr']:.2e}")
+
+        # Training epoch
+        epoch_losses, successful_proteins = main_phase.run_epoch(
+            train_proteins, model, optimizer, scaler, logger, epoch + 1, config.epochs
+        )
+
+        # Validation
+        val_results = None
+        if val_proteins:
+            print(f"\n🔍 Validation on {len(val_proteins)} proteins...")
+            val_results = main_phase.validate(val_proteins, model)
+
+            print(f"📊 Validation: {val_results['avg_loss']:.5f} "
+                  f"({val_results['successful_validations']}/{len(val_proteins)})")
+
+        if logger:
+            logger.log_epoch_end(val_results, is_preliminary=False)
+
+        # Epoch summary
+        if epoch_losses:
+            avg_train_loss = sum(epoch_losses) / len(epoch_losses)
+            print(f"📊 Training: {avg_train_loss:.5f} ({successful_proteins}/{len(train_proteins)})")
+
+            # LR scheduling
+            if lr_scheduler and val_results:
+                lr_scheduler.step(val_results['avg_loss'], epoch + 1)
+
+            # Early stopping
+            if early_stopping and val_results:
+                if early_stopping(val_results['avg_loss'], epoch + 1, model):
+                    print(f"\n🛑 Early stopping triggered!")
+                    break
+
+        # Show timing
+        elapsed_time = time.time() - training_start_time
+        print(f"⏱️  Time: {elapsed_time / 60:.1f} min")
+        if max_time_seconds:
+            remaining_time = max_time_seconds - elapsed_time
+            print(f"⏰ Remaining: {remaining_time / 60:.1f} min")
+
+    # Training completion
+    total_time = time.time() - training_start_time
+
+    if interrupted_by_timeout:
+        print(f"\n⏰ Training stopped due to time limit after {final_epoch} epochs!")
+    else:
+        print(f"\n🎯 Training completed!")
+
+    print(f"⏱️  Total time: {total_time / 60:.1f} minutes")
+
+    if early_stopping:
+        print(f"🏆 Best validation loss: {early_stopping.best_loss:.4f} (epoch {early_stopping.best_epoch})")
+
+    if lr_scheduler:
+        print(f"📉 LR reductions: {lr_scheduler.lr_reductions}")
+        print(f"🎛️  Final LR: {lr_scheduler.get_last_lr():.2e}")
+
+    # Save final model
+    training_stats = {
+        'total_epochs': final_epoch,
+        'total_time_minutes': total_time / 60,
+        'interrupted_by_timeout': interrupted_by_timeout,
+        'best_val_loss': early_stopping.best_loss if early_stopping else None,
+        'best_val_epoch': early_stopping.best_epoch if early_stopping else None,
+        'lr_reductions': lr_scheduler.lr_reductions if lr_scheduler else 0,
+        'final_lr': lr_scheduler.get_last_lr() if lr_scheduler else config.learning_rate,
+        'method': 'adjoint_0_to_48_unified',
+        'preliminary_training_enabled': config.enable_preliminary_training,
+    }
+
+    if logger:
+        if interrupted_by_timeout:
+            logger.interrupted_at_epoch = final_epoch
+        save_final_model(model, config, logger, training_stats)
+        print(f"📊 Full report: {config.output_dir}/{config.experiment_name}.txt")
+
+
+if __name__ == "__main__":
+    main()

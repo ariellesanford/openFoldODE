@@ -1,0 +1,92 @@
+EVOFORMER NEURAL ODE TRAINING REPORT
+==================================================
+
+Experiment: 20250625_172701_full_ode_with_prelim3
+Started: 2025-06-25 17:27:04
+Status: Training in progress...
+Current Runtime: 0.2 minutes
+Report generated: 2025-06-25 17:27:13
+
+Configuration Settings:
+------------------------------
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/1fv5
+  output_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models
+  experiment_name: 20250625_172701_full_ode_with_prelim3
+  device: cuda
+  epochs: 10000
+  learning_rate: 0.001
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  use_fast_ode: True
+  loss: N/A
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_amp: True
+  max_residues: None
+  max_time_hours: 0.005
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 4
+  prelim_max_epochs: 20
+  prelim_chunk_size: 2
+  model_parameters: 117378
+  model_type: EvoformerODEFuncFast
+  train_proteins: 1
+  val_proteins: 1
+
+System Information:
+------------------------------
+  cuda_available: True
+  device: cuda
+  pytorch_version: 2.1.2
+  gpu_name: Quadro P4000
+  cuda_version: 12.1
+  total_gpu_memory: 7.9 GB
+
+PRELIMINARY TRAINING PHASE
+==================================================
+
+Preliminary Started: 2025-06-25 17:27:04
+Preliminary Completed: 2025-06-25 17:27:13
+Preliminary Duration: 0.1 minutes
+
+Preliminary Training Progress:
+------------------------------
+Epoch    Train Loss     Train Success  Val Loss       Val Success    LR           Duration (s)
+----------------------------------------------------------------------------------------------------
+1        7.67336        1/1            7.67092        1/1            N/A          0.8         
+2        7.67092        1/1            7.66854        1/1            N/A          0.4         
+3        7.66854        1/1            7.66611        1/1            N/A          0.4         
+4        7.66611        1/1            7.66361        1/1            N/A          0.4         
+5        7.66361        1/1            7.66105        1/1            N/A          0.4         
+6        7.66105        1/1            7.65837        1/1            N/A          0.4         
+7        7.65837        1/1            7.65558        1/1            N/A          0.4         
+8        7.65558        1/1            7.65269        1/1            N/A          0.4         
+9        7.65269        1/1            7.64965        1/1            N/A          0.4         
+10       7.64965        1/1            7.64646        1/1            N/A          0.4         
+11       7.64646        1/1            7.64309        1/1            N/A          0.4         
+12       7.64309        1/1            7.63957        1/1            N/A          0.4         
+13       7.63957        1/1            7.63586        1/1            N/A          0.4         
+14       7.63586        1/1            7.63200        1/1            N/A          0.4         
+15       7.63200        1/1            7.62789        1/1            N/A          0.4         
+16       7.62789        1/1            7.62358        1/1            N/A          0.4         
+17       7.62358        1/1            7.61905        1/1            N/A          0.4         
+18       7.61905        1/1            7.61424        1/1            N/A          0.4         
+19       7.61424        1/1            7.60916        1/1            N/A          0.4         
+20       7.60916        1/1            7.60375        1/1            N/A          0.4         
+
+MAIN TRAINING PHASE
+==================================================
+
+Main Training Started: 2025-06-25 17:27:13
+
+Main Training Progress:
+------------------------------
+Epoch    Train Loss     Train Success  Val Loss       Val Success    LR           Duration (s)
+----------------------------------------------------------------------------------------------------

@@ -1,0 +1,752 @@
+Experiment: Loss Comparison: Weighted Row
+Actual experiment name: 20250620_185642_loss_comparison_weighted_row
+Started: 2025-06-20 18:56:42
+Ended: 2025-06-20 18:57:04
+Duration: 0.01 hours
+Return code: 0
+Command: /home/visitor/anaconda3/envs/openfold_env/bin/python train_evoformer_ode.py --data_dirs /media/visitor/Extreme SSD/data/complete_blocks /media/visitor/Extreme SSD/data/endpoint_blocks --splits_dir /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/1fv5 --device cuda --epochs 10000 --learning_rate 0.001 --reduced_cluster_size 64 --hidden_dim 64 --integrator rk4 --loss weighted_row --max_residues 450 --output_dir /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models --experiment_name 20250620_185642_loss_comparison_weighted_row --lr_patience 3 --lr_factor 0.5 --min_lr 1e-06 --early_stopping_patience 10 --early_stopping_min_delta 0.0001 --max_time_hours 0.005 --prelim_data_dir /media/visitor/Extreme SSD/data/complete_blocks --prelim_block_stride 4 --prelim_max_epochs 2 --prelim_chunk_size 2 --use_amp --aggressive_cleanup --enable_preliminary_training
+
+CONFIGURATION:
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/1fv5
+  device: cuda
+  epochs: 10000
+  learning_rate: 0.001
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_fast_ode: False
+  max_residues: 450
+  loss: weighted_row
+  use_amp: True
+  output_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  max_time_hours: 0.005
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 4
+  prelim_max_epochs: 2
+  prelim_chunk_size: 2
+  experiment_name: 20250620_185642_loss_comparison_weighted_row
+
+OUTPUT:
+[2025-06-20 18:56:44,769] [INFO] [real_accelerator.py:239:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+🚀 Neural ODE Training - Restructured Version
+📁 Data directories: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+💻 Device: cuda
+🔧 Model: Full ODE
+🔄 Preliminary training enabled
+🔍 Filtering 1 proteins by size (max: 450 residues)
+  ✅ 1fv5_A: 36 residues
+📊 Kept 1/1 proteins
+🔍 Filtering 1 proteins by size (max: 450 residues)
+  ✅ 1fv5_A: 36 residues
+📊 Kept 1/1 proteins
+🤖 Model: 854854 parameters
+🧬 Training proteins: 1
+🔍 Validation proteins: 1
+
+🚀 PRELIMINARY TRAINING PHASE
+============================================================
+🔍 Filtering 1 proteins by size (max: 450 residues)
+  ✅ 1fv5_A: 36 residues
+📊 Kept 1/1 proteins
+🔍 Filtering 1 proteins by size (max: 450 residues)
+  ✅ 1fv5_A: 36 residues
+📊 Kept 1/1 proteins
+
+📈 Preliminary Epoch 1/2
+🎛️  LR: 1.00e-03
+  [1/1] 1fv5_A... ✅ Loss: 110953.02258
+
+🔍 Preliminary validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 109883.40145
+📊 Training: 110953.02258 (1/1)
+📈 New best validation loss: 109883.4014
+
+📈 Preliminary Epoch 2/2
+🎛️  LR: 1.00e-03
+  [1/1] 1fv5_A... ✅ Loss: 108184.19914
+
+🔍 Preliminary validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 103043.23413
+📊 Training: 108184.19914 (1/1)
+📈 New best validation loss: 103043.2341
+
+✅ Preliminary training completed!
+
+🚀 MAIN TRAINING PHASE (0→48 blocks)
+============================================================
+🔄 Resetting optimizer and schedulers for main training...
+
+📈 Main Epoch 1/10000
+🎛️  LR: 1.00e-03
+  [1/1] 1fv5_A... ✅ Loss: 196254.87500
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 196254.87500
+📊 Validation: 196254.87500 (1/1)
+📊 Training: 196254.87500 (1/1)
+📈 New best validation loss: 196254.8750
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 2/10000
+🎛️  LR: 1.00e-03
+  [1/1] 1fv5_A... ✅ Loss: 196254.87500
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 196254.87500
+📊 Validation: 196254.87500 (1/1)
+📊 Training: 196254.87500 (1/1)
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 3/10000
+🎛️  LR: 1.00e-03
+  [1/1] 1fv5_A... ✅ Loss: 196254.87500
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 196254.87500
+📊 Validation: 196254.87500 (1/1)
+📊 Training: 196254.87500 (1/1)
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 4/10000
+🎛️  LR: 1.00e-03
+  [1/1] 1fv5_A... ✅ Loss: 196254.87500
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 196254.87500
+📊 Validation: 196254.87500 (1/1)
+📊 Training: 196254.87500 (1/1)
+🔽 Learning rate reduced: 1.00e-03 → 5.00e-04
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 5/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 196254.87500
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 193926.54688
+📊 Validation: 193926.54688 (1/1)
+📊 Training: 196254.87500 (1/1)
+📈 New best validation loss: 193926.5469
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 6/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 193926.54688
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 191508.85938
+📊 Validation: 191508.85938 (1/1)
+📊 Training: 193926.54688 (1/1)
+📈 New best validation loss: 191508.8594
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 7/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 191508.85938
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 188978.09375
+📊 Validation: 188978.09375 (1/1)
+📊 Training: 191508.85938 (1/1)
+📈 New best validation loss: 188978.0938
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 8/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 188978.09375
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 186362.10938
+📊 Validation: 186362.10938 (1/1)
+📊 Training: 188978.09375 (1/1)
+📈 New best validation loss: 186362.1094
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 9/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 186362.10938
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 183646.29688
+📊 Validation: 183646.29688 (1/1)
+📊 Training: 186362.10938 (1/1)
+📈 New best validation loss: 183646.2969
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 10/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 183646.29688
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 183646.29688
+📊 Validation: 183646.29688 (1/1)
+📊 Training: 183646.29688 (1/1)
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 11/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 183646.29688
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 180843.73438
+📊 Validation: 180843.73438 (1/1)
+📊 Training: 183646.29688 (1/1)
+📈 New best validation loss: 180843.7344
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 12/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 180843.73438
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 177973.34375
+📊 Validation: 177973.34375 (1/1)
+📊 Training: 180843.73438 (1/1)
+📈 New best validation loss: 177973.3438
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 13/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 177973.34375
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 175016.81250
+📊 Validation: 175016.81250 (1/1)
+📊 Training: 177973.34375 (1/1)
+📈 New best validation loss: 175016.8125
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 14/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 175016.81250
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 171987.40625
+📊 Validation: 171987.40625 (1/1)
+📊 Training: 175016.81250 (1/1)
+📈 New best validation loss: 171987.4062
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 15/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 171987.40625
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 168921.04688
+📊 Validation: 168921.04688 (1/1)
+📊 Training: 171987.40625 (1/1)
+📈 New best validation loss: 168921.0469
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 16/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 168921.04688
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 165774.40625
+📊 Validation: 165774.40625 (1/1)
+📊 Training: 168921.04688 (1/1)
+📈 New best validation loss: 165774.4062
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 17/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 165774.40625
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 162584.10938
+📊 Validation: 162584.10938 (1/1)
+📊 Training: 165774.40625 (1/1)
+📈 New best validation loss: 162584.1094
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 18/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 162584.10938
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 159368.93750
+📊 Validation: 159368.93750 (1/1)
+📊 Training: 162584.10938 (1/1)
+📈 New best validation loss: 159368.9375
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 19/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 159368.93750
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 156107.48438
+📊 Validation: 156107.48438 (1/1)
+📊 Training: 159368.93750 (1/1)
+📈 New best validation loss: 156107.4844
+⏱️  Time: 0.1 min
+⏰ Remaining: 0.2 min
+
+📈 Main Epoch 20/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 156107.48438
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 152824.35938
+📊 Validation: 152824.35938 (1/1)
+📊 Training: 156107.48438 (1/1)
+📈 New best validation loss: 152824.3594
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 21/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 152824.35938
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 149543.12500
+📊 Validation: 149543.12500 (1/1)
+📊 Training: 152824.35938 (1/1)
+📈 New best validation loss: 149543.1250
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 22/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 149543.12500
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 146247.65625
+📊 Validation: 146247.65625 (1/1)
+📊 Training: 149543.12500 (1/1)
+📈 New best validation loss: 146247.6562
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 23/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 146247.65625
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 142954.82812
+📊 Validation: 142954.82812 (1/1)
+📊 Training: 146247.65625 (1/1)
+📈 New best validation loss: 142954.8281
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 24/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 142954.82812
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 139701.35938
+📊 Validation: 139701.35938 (1/1)
+📊 Training: 142954.82812 (1/1)
+📈 New best validation loss: 139701.3594
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 25/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 139701.35938
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 136437.59375
+📊 Validation: 136437.59375 (1/1)
+📊 Training: 139701.35938 (1/1)
+📈 New best validation loss: 136437.5938
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 26/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 136437.59375
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 133210.17188
+📊 Validation: 133210.17188 (1/1)
+📊 Training: 136437.59375 (1/1)
+📈 New best validation loss: 133210.1719
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 27/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 133210.17188
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 130002.82031
+📊 Validation: 130002.82031 (1/1)
+📊 Training: 133210.17188 (1/1)
+📈 New best validation loss: 130002.8203
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 28/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 130002.82031
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 126832.95312
+📊 Validation: 126832.95312 (1/1)
+📊 Training: 130002.82031 (1/1)
+📈 New best validation loss: 126832.9531
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 29/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 126832.95312
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 123715.33594
+📊 Validation: 123715.33594 (1/1)
+📊 Training: 126832.95312 (1/1)
+📈 New best validation loss: 123715.3359
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 30/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 123715.33594
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 120635.68750
+📊 Validation: 120635.68750 (1/1)
+📊 Training: 123715.33594 (1/1)
+📈 New best validation loss: 120635.6875
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 31/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 120635.68750
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 117596.09375
+📊 Validation: 117596.09375 (1/1)
+📊 Training: 120635.68750 (1/1)
+📈 New best validation loss: 117596.0938
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 32/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 117596.09375
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 114650.59375
+📊 Validation: 114650.59375 (1/1)
+📊 Training: 117596.09375 (1/1)
+📈 New best validation loss: 114650.5938
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 33/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 114650.59375
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 111734.92188
+📊 Validation: 111734.92188 (1/1)
+📊 Training: 114650.59375 (1/1)
+📈 New best validation loss: 111734.9219
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 34/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 111734.92188
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 108892.65625
+📊 Validation: 108892.65625 (1/1)
+📊 Training: 111734.92188 (1/1)
+📈 New best validation loss: 108892.6562
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 35/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 108892.65625
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 106096.37500
+📊 Validation: 106096.37500 (1/1)
+📊 Training: 108892.65625 (1/1)
+📈 New best validation loss: 106096.3750
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 36/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 106096.37500
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 103367.15625
+📊 Validation: 103367.15625 (1/1)
+📊 Training: 106096.37500 (1/1)
+📈 New best validation loss: 103367.1562
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 37/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 103367.15625
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 100721.86719
+📊 Validation: 100721.86719 (1/1)
+📊 Training: 103367.15625 (1/1)
+📈 New best validation loss: 100721.8672
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 38/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 100721.86719
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 98138.70312
+📊 Validation: 98138.70312 (1/1)
+📊 Training: 100721.86719 (1/1)
+📈 New best validation loss: 98138.7031
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 39/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 98138.70312
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 95631.26562
+📊 Validation: 95631.26562 (1/1)
+📊 Training: 98138.70312 (1/1)
+📈 New best validation loss: 95631.2656
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 40/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 95631.26562
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 93179.69531
+📊 Validation: 93179.69531 (1/1)
+📊 Training: 95631.26562 (1/1)
+📈 New best validation loss: 93179.6953
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 41/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 93179.69531
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 90808.92969
+📊 Validation: 90808.92969 (1/1)
+📊 Training: 93179.69531 (1/1)
+📈 New best validation loss: 90808.9297
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 42/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 90808.92969
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 88496.35156
+📊 Validation: 88496.35156 (1/1)
+📊 Training: 90808.92969 (1/1)
+📈 New best validation loss: 88496.3516
+⏱️  Time: 0.2 min
+⏰ Remaining: 0.1 min
+
+📈 Main Epoch 43/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 88496.35156
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 86272.17188
+📊 Validation: 86272.17188 (1/1)
+📊 Training: 88496.35156 (1/1)
+📈 New best validation loss: 86272.1719
+⏱️  Time: 0.3 min
+⏰ Remaining: 0.0 min
+
+📈 Main Epoch 44/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 86272.17188
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 84101.46875
+📊 Validation: 84101.46875 (1/1)
+📊 Training: 86272.17188 (1/1)
+📈 New best validation loss: 84101.4688
+⏱️  Time: 0.3 min
+⏰ Remaining: 0.0 min
+
+📈 Main Epoch 45/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 84101.46875
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 82010.44531
+📊 Validation: 82010.44531 (1/1)
+📊 Training: 84101.46875 (1/1)
+📈 New best validation loss: 82010.4453
+⏱️  Time: 0.3 min
+⏰ Remaining: 0.0 min
+
+📈 Main Epoch 46/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 82010.44531
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 79992.05469
+📊 Validation: 79992.05469 (1/1)
+📊 Training: 82010.44531 (1/1)
+📈 New best validation loss: 79992.0547
+⏱️  Time: 0.3 min
+⏰ Remaining: 0.0 min
+
+📈 Main Epoch 47/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 79992.05469
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 78032.19531
+📊 Validation: 78032.19531 (1/1)
+📊 Training: 79992.05469 (1/1)
+📈 New best validation loss: 78032.1953
+⏱️  Time: 0.3 min
+⏰ Remaining: 0.0 min
+
+📈 Main Epoch 48/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 78032.19531
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 76151.35938
+📊 Validation: 76151.35938 (1/1)
+📊 Training: 78032.19531 (1/1)
+📈 New best validation loss: 76151.3594
+⏱️  Time: 0.3 min
+⏰ Remaining: 0.0 min
+
+📈 Main Epoch 49/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 76151.35938
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 74332.57812
+📊 Validation: 74332.57812 (1/1)
+📊 Training: 76151.35938 (1/1)
+📈 New best validation loss: 74332.5781
+⏱️  Time: 0.3 min
+⏰ Remaining: 0.0 min
+
+📈 Main Epoch 50/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 74332.57812
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 72588.00000
+📊 Validation: 72588.00000 (1/1)
+📊 Training: 74332.57812 (1/1)
+📈 New best validation loss: 72588.0000
+⏱️  Time: 0.3 min
+⏰ Remaining: 0.0 min
+
+📈 Main Epoch 51/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 72588.00000
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 70908.70312
+📊 Validation: 70908.70312 (1/1)
+📊 Training: 72588.00000 (1/1)
+📈 New best validation loss: 70908.7031
+⏱️  Time: 0.3 min
+⏰ Remaining: 0.0 min
+
+📈 Main Epoch 52/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 70908.70312
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 69297.02344
+📊 Validation: 69297.02344 (1/1)
+📊 Training: 70908.70312 (1/1)
+📈 New best validation loss: 69297.0234
+⏱️  Time: 0.3 min
+⏰ Remaining: 0.0 min
+
+📈 Main Epoch 53/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 69297.02344
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 67754.73438
+📊 Validation: 67754.73438 (1/1)
+📊 Training: 69297.02344 (1/1)
+📈 New best validation loss: 67754.7344
+⏱️  Time: 0.3 min
+⏰ Remaining: 0.0 min
+
+📈 Main Epoch 54/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 67754.73438
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 66285.86719
+📊 Validation: 66285.86719 (1/1)
+📊 Training: 67754.73438 (1/1)
+📈 New best validation loss: 66285.8672
+⏱️  Time: 0.3 min
+⏰ Remaining: 0.0 min
+
+📈 Main Epoch 55/10000
+🎛️  LR: 5.00e-04
+  [1/1] 1fv5_A... ✅ Loss: 66285.86719
+
+🔍 Validation on 1 proteins...
+    [1/1] 1fv5_A... ✅ Loss: 64875.47266
+📊 Validation: 64875.47266 (1/1)
+📊 Training: 66285.86719 (1/1)
+📈 New best validation loss: 64875.4727
+⏱️  Time: 0.3 min
+⏰ Remaining: -0.0 min
+
+⏰ Time limit reached (0.005 hours). Stopping...
+
+⏰ Training stopped due to time limit after 56 epochs!
+⏱️  Total time: 0.3 minutes
+🏆 Best validation loss: 64875.4727 (epoch 55)
+📉 LR reductions: 1
+🎛️  Final LR: 5.00e-04
+🤖 Model saved: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models/20250620_185642_loss_comparison_weighted_row_final_model.pt
+📊 Full report: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models/20250620_185642_loss_comparison_weighted_row.txt

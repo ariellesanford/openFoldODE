@@ -1,0 +1,103 @@
+EVOFORMER NEURAL ODE TRAINING REPORT
+==================================================
+
+⏰ INTERRUPTED AT 1 EPOCHS (TIME LIMIT REACHED)
+==================================================
+
+Experiment: 20250625_172620_full_ode_with_prelim3
+Started: 2025-06-25 17:26:23
+Completed: 2025-06-25 17:26:32
+Total Training Time: 0.1 minutes (0.0 hours)
+Report generated: 2025-06-25 17:26:32
+
+Configuration Settings:
+------------------------------
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/1fv5
+  output_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models
+  experiment_name: 20250625_172620_full_ode_with_prelim3
+  device: cuda
+  epochs: 10000
+  learning_rate: 0.001
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  use_fast_ode: True
+  loss: N/A
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_amp: True
+  max_residues: None
+  max_time_hours: 0.0019
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 4
+  prelim_max_epochs: 20
+  prelim_chunk_size: 2
+  model_parameters: 117378
+  model_type: EvoformerODEFuncFast
+  train_proteins: 1
+  val_proteins: 1
+
+System Information:
+------------------------------
+  cuda_available: True
+  device: cuda
+  pytorch_version: 2.1.2
+  gpu_name: Quadro P4000
+  cuda_version: 12.1
+  total_gpu_memory: 7.9 GB
+
+PRELIMINARY TRAINING PHASE
+==================================================
+
+Preliminary Started: 2025-06-25 17:26:23
+Preliminary Completed: 2025-06-25 17:26:32
+Preliminary Duration: 0.1 minutes
+
+Preliminary Training Progress:
+------------------------------
+Epoch    Train Loss     Train Success  Val Loss       Val Success    LR           Duration (s)
+----------------------------------------------------------------------------------------------------
+1        7.66775        1/1            7.66579        1/1            N/A          0.7         
+2        7.66579        1/1            7.66381        1/1            N/A          0.5         
+3        7.66382        1/1            7.66191        1/1            N/A          0.5         
+4        7.66191        1/1            7.65992        1/1            N/A          0.4         
+5        7.65992        1/1            7.65782        1/1            N/A          0.4         
+6        7.65782        1/1            7.65567        1/1            N/A          0.4         
+7        7.65567        1/1            7.65338        1/1            N/A          0.4         
+8        7.65338        1/1            7.65102        1/1            N/A          0.4         
+9        7.65102        1/1            7.64849        1/1            N/A          0.4         
+10       7.64849        1/1            7.64585        1/1            N/A          0.4         
+11       7.64585        1/1            7.64311        1/1            N/A          0.4         
+12       7.64311        1/1            7.64022        1/1            N/A          0.4         
+13       7.64022        1/1            7.63720        1/1            N/A          0.4         
+14       7.63720        1/1            7.63402        1/1            N/A          0.4         
+15       7.63402        1/1            7.63068        1/1            N/A          0.4         
+16       7.63068        1/1            7.62718        1/1            N/A          0.4         
+17       7.62718        1/1            7.62352        1/1            N/A          0.4         
+18       7.62352        1/1            7.61968        1/1            N/A          0.4         
+19       7.61968        1/1            7.61567        1/1            N/A          0.4         
+20       7.61567        1/1            7.61144        1/1            N/A          0.4         
+
+OVERALL PERFORMANCE ANALYSIS
+------------------------------
+Best Overall Epoch: Preliminary Epoch 20 (Loss: 7.61567)
+Worst Overall Epoch: Preliminary Epoch 1 (Loss: 7.66775)
+Overall Training Improvement: 1.0x better from worst to best
+Final Training Success Rate: 100.0%
+Final Validation Success Rate: 100.0%
+
+FINAL MODEL
+------------------------------
+Model saved to: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models/20250625_172620_full_ode_with_prelim3_final_model.pt
+Total parameters: 117378
+Model type: EvoformerODEFuncFast
+⏰ Training was interrupted at epoch 1 due to time limit
+Model represents the best state found before timeout
+
+==================================================

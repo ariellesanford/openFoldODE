@@ -68,7 +68,7 @@ def main():
         'reduced_cluster_size': 64,
         'hidden_dim': 64,
         'integrator': 'rk4',
-        'use_fast_ode': True,
+        'use_fast_ode': False,
         'use_amp': torch.cuda.is_available(),
         'output_dir': str(output_dir),
         'experiment_name': experiment_name,
@@ -78,15 +78,15 @@ def main():
         'min_lr': 1e-6,
         'early_stopping_patience': 10,
         'early_stopping_min_delta': 0.0001,
-        'max_time_hours': 19,
+        'max_time_hours': 18,
         # Memory optimizations (aggressive_cleanup is the only configurable one now)
         'aggressive_cleanup': True,
         # NEW: Preliminary training settings
         'enable_preliminary_training': True,  # Set to True to enable
         'prelim_data_dir': str(prelim_data_dir),
-        'prelim_block_stride': 2,
+        'prelim_block_stride': 24,
         'prelim_max_epochs': 20,
-        'prelim_chunk_size': 4,  # Good balance of memory and stability
+        'prelim_chunk_size': 2,  # Good balance of memory and stability
     }
 
     # Parse command line arguments

@@ -86,9 +86,9 @@ def main():
         # NEW: Preliminary training settings
         'enable_preliminary_training': True,  # Set to True to enable
         'prelim_data_dir': str(prelim_data_dir),
-        'prelim_block_stride': 4,
+        'prelim_block_stride': 8,
         'prelim_max_epochs': 20,
-        'prelim_chunk_size': 2,  # Good balance of memory and stability
+        'prelim_chunk_size': 3,  # Good balance of memory and stability
     }
 
     # Parse command line arguments

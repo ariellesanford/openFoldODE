@@ -1,0 +1,78 @@
+Experiment: Loss Comparison: Default
+Actual experiment name: 20250623_125645_loss_comparison_default
+Started: 2025-06-23 12:56:45
+Ended: 2025-06-23 12:56:50
+Duration: 0.00 hours
+Return code: 1
+Command: /home/visitor/anaconda3/envs/openfold_env/bin/python train_evoformer_ode.py --data_dirs /media/visitor/Extreme SSD/data/complete_blocks /media/visitor/Extreme SSD/data/endpoint_blocks --splits_dir /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/4n8p --device cuda --epochs 10000 --learning_rate 0.001 --reduced_cluster_size 64 --hidden_dim 64 --integrator rk4 --loss default --max_residues 450 --output_dir /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models --experiment_name 20250623_125645_loss_comparison_default --lr_patience 3 --lr_factor 0.5 --min_lr 1e-06 --early_stopping_patience 10 --early_stopping_min_delta 0.0001 --max_time_hours 0.5 --prelim_data_dir /media/visitor/Extreme SSD/data/complete_blocks --prelim_block_stride 4 --prelim_max_epochs 20 --prelim_chunk_size 2 --use_amp --aggressive_cleanup --enable_preliminary_training
+
+CONFIGURATION:
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/4n8p
+  device: cuda
+  epochs: 10000
+  learning_rate: 0.001
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_fast_ode: False
+  max_residues: 450
+  loss: default
+  use_amp: True
+  output_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  max_time_hours: 0.5
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 4
+  prelim_max_epochs: 20
+  prelim_chunk_size: 2
+  experiment_name: 20250623_125645_loss_comparison_default
+
+OUTPUT:
+[2025-06-23 12:56:48,814] [INFO] [real_accelerator.py:239:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+🚀 Neural ODE Training - Restructured Version
+📁 Data directories: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+💻 Device: cuda
+🔧 Model: Full ODE
+🔄 Preliminary training enabled
+🔍 Filtering 0 proteins by size (max: 450 residues)
+📊 Kept 0/0 proteins
+🔍 Filtering 0 proteins by size (max: 450 residues)
+📊 Kept 0/0 proteins
+🤖 Model: 854854 parameters
+🧬 Training proteins: 0
+🔍 Validation proteins: 0
+
+🚀 PRELIMINARY TRAINING PHASE
+============================================================
+🎛️  Using reduced LR for preliminary: 1.00e-03 → 1.00e-04
+🔍 Filtering 0 proteins by size (max: 450 residues)
+📊 Kept 0/0 proteins
+🔍 Filtering 0 proteins by size (max: 450 residues)
+📊 Kept 0/0 proteins
+❌ No preliminary training proteins found
+
+🚀 MAIN TRAINING PHASE (0→48 blocks)
+============================================================
+🔄 Resetting optimizer and schedulers for main training...
+
+📈 Main Epoch 1/10000
+🎛️  LR: 1.00e-03
+Traceback (most recent call last):
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 1199, in <module>
+    main()
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 1143, in main
+    logger.log_epoch_end(val_results, is_preliminary=False, optimizer=optimizer)
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/training_logger.py", line 249, in log_epoch_end
+    self._update_log_file()
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/training_logger.py", line 272, in _update_log_file
+    self._write_complete_report(f)
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/training_logger.py", line 399, in _write_complete_report
+    val_loss = epoch_data.get('validation', {}).get('avg_loss', 'N/A')
+AttributeError: 'NoneType' object has no attribute 'get'

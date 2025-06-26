@@ -1,0 +1,1257 @@
+Experiment: Loss Comparison: Default
+Actual experiment name: 20250623_113936_loss_comparison_default
+Started: 2025-06-23 11:39:36
+Ended: 2025-06-23 11:49:00
+Duration: 0.16 hours
+Return code: 0
+Command: /home/visitor/anaconda3/envs/openfold_env/bin/python train_evoformer_ode.py --data_dirs /media/visitor/Extreme SSD/data/complete_blocks /media/visitor/Extreme SSD/data/endpoint_blocks --splits_dir /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/full --device cuda --epochs 10000 --learning_rate 0.001 --reduced_cluster_size 64 --hidden_dim 64 --integrator rk4 --loss default --max_residues 100 --output_dir /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models --experiment_name 20250623_113936_loss_comparison_default --lr_patience 3 --lr_factor 0.5 --min_lr 1e-06 --early_stopping_patience 10 --early_stopping_min_delta 0.0001 --max_time_hours 0.5 --prelim_data_dir /media/visitor/Extreme SSD/data/complete_blocks --prelim_block_stride 4 --prelim_max_epochs 20 --prelim_chunk_size 2 --use_amp --aggressive_cleanup --enable_preliminary_training
+
+CONFIGURATION:
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/full
+  device: cuda
+  epochs: 10000
+  learning_rate: 0.001
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_fast_ode: False
+  max_residues: 100
+  loss: default
+  use_amp: True
+  output_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  max_time_hours: 0.5
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 4
+  prelim_max_epochs: 20
+  prelim_chunk_size: 2
+  experiment_name: 20250623_113936_loss_comparison_default
+
+OUTPUT:
+[2025-06-23 11:39:39,566] [INFO] [real_accelerator.py:239:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+🚀 Neural ODE Training - Restructured Version
+📁 Data directories: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+💻 Device: cuda
+🔧 Model: Full ODE
+🔄 Preliminary training enabled
+🔍 Filtering 80 proteins by size (max: 100 residues)
+  ❌ 7d60_A: 288 residues (too large)
+  ❌ 1kqy_A: 273 residues (too large)
+  ❌ 3eba_A: 127 residues (too large)
+  ❌ 3foa_A: 510 residues (too large)
+  ❌ 3eps_A: 578 residues (too large)
+  ❌ 4j7z_A: 113 residues (too large)
+  ✅ 2cbp_A: 96 residues
+  ❌ 2wvq_A: 225 residues (too large)
+  ❌ 5wrf_A: 145 residues (too large)
+  ❌ 3ob6_A: 445 residues (too large)
+  ❌ 1mzw_A: 177 residues (too large)
+  ❌ 7bln_A: 182 residues (too large)
+  ❌ 3st1_A: 214 residues (too large)
+  ❌ 1z84_A: 351 residues (too large)
+  ❌ 5jir_A: 421 residues (too large)
+  ❌ 5wup_A: 482 residues (too large)
+  ✅ 1tpg_A: 91 residues
+  ❌ 6dzg_A: 300 residues (too large)
+  ❌ 1b08_A: 158 residues (too large)
+  ✅ 7k6p_A: 98 residues
+  ❌ 6h05_A: 426 residues (too large)
+  ❌ 1pzx_A: 289 residues (too large)
+  ✅ 6fl1_A: 14 residues
+  ❌ 2wwn_A: 169 residues (too large)
+  ❌ 3zxf_A: 138 residues (too large)
+  ❌ 4n8p_A: 135 residues (too large)
+  ❌ 3e62_A: 293 residues (too large)
+  ❌ 5veo_A: 416 residues (too large)
+  ❌ 4i05_A: 285 residues (too large)
+  ❌ 4b7i_A: 218 residues (too large)
+  ✅ 1rij_A: 23 residues
+  ❌ 2pwj_A: 171 residues (too large)
+  ❌ 4z7x_A: 238 residues (too large)
+  ✅ 2f2x_A: 62 residues
+  ✅ 6vjo_A: 38 residues
+  ❌ 3q54_A: 368 residues (too large)
+  ❌ 2cb3_A: 175 residues (too large)
+  ❌ 3gai_A: 194 residues (too large)
+  ❌ 3dm8_A: 143 residues (too large)
+  ❌ 4x51_A: 162 residues (too large)
+  ❌ 1wlt_A: 196 residues (too large)
+  ❌ 4edp_A: 351 residues (too large)
+  ❌ 4yk0_A: 114 residues (too large)
+  ❌ 6neg_A: 375 residues (too large)
+  ❌ 5uag_A: 320 residues (too large)
+  ❌ 2gp6_A: 434 residues (too large)
+  ✅ 1t1h_A: 78 residues
+  ✅ 1pt4_A: 29 residues
+  ❌ 1su1_A: 208 residues (too large)
+  ❌ 1fdy_A: 297 residues (too large)
+  ❌ 7lca_A: 398 residues (too large)
+  ❌ 6fcm_A: 282 residues (too large)
+  ❌ 2cwx_A: 430 residues (too large)
+  ❌ 1i5z_A: 209 residues (too large)
+  ❌ 6abq_A: 114 residues (too large)
+  ❌ 1esi_A: 262 residues (too large)
+  ❌ 4ekx_A: 116 residues (too large)
+  ❌ 5khg_A: 204 residues (too large)
+  ✅ 1ehj_A: 68 residues
+  ❌ 6v42_A: 467 residues (too large)
+  ❌ 5uqi_A: 198 residues (too large)
+  ❌ 3tkp_A: 246 residues (too large)
+  ❌ 3gbw_A: 164 residues (too large)
+  ❌ 2qht_A: 210 residues (too large)
+  ❌ 2r9p_A: 224 residues (too large)
+  ❌ 3ga0_A: 358 residues (too large)
+  ❌ 2g19_A: 244 residues (too large)
+  ❌ 4nwb_A: 278 residues (too large)
+  ❌ 2zc1_A: 333 residues (too large)
+  ❌ 3dp6_A: 279 residues (too large)
+  ❌ 2uy9_A: 385 residues (too large)
+  ❌ 3o4r_A: 261 residues (too large)
+  ✅ 2pku_A: 87 residues
+  ❌ 6yjn_A: 256 residues (too large)
+  ❌ 1sgv_A: 316 residues (too large)
+  ❌ 1uv7_A: 110 residues (too large)
+  ❌ 6jko_A: 380 residues (too large)
+  ✅ 6sw8_A: 77 residues
+  ❌ 2ztm_A: 260 residues (too large)
+  ❌ 4cew_A: 297 residues (too large)
+📊 Kept 12/80 proteins
+🔍 Filtering 25 proteins by size (max: 100 residues)
+  ❌ 2p9r_A: 102 residues (too large)
+  ❌ 4w82_A: 339 residues (too large)
+  ❌ 1npy_A: 271 residues (too large)
+  ❌ 2w5f_A: 540 residues (too large)
+  ❌ 3d94_A: 301 residues (too large)
+  ❌ 2vxs_A: 137 residues (too large)
+  ❌ 2gu4_A: 263 residues (too large)
+  ❌ 6tqr_A: 213 residues (too large)
+  ❌ 7jtv_A: 885 residues (too large)
+  ❌ 1fsu_A: 492 residues (too large)
+  ❌ 6jzh_A: 447 residues (too large)
+  ❌ 4eoi_A: 299 residues (too large)
+  ❌ 4air_A: 354 residues (too large)
+  ❌ 2ifc_A: 385 residues (too large)
+  ✅ 2n4t_A: 37 residues
+  ❌ 4p48_A: 277 residues (too large)
+  ❌ 6aci_A: 306 residues (too large)
+  ❌ 3uap_A: 227 residues (too large)
+  ✅ 2c0s_A: 64 residues
+  ❌ 3jui_A: 182 residues (too large)
+  ❌ 6pt6_A: 497 residues (too large)
+  ❌ 6wyi_A: 284 residues (too large)
+  ❌ 6bn3_A: 267 residues (too large)
+  ✅ 6rsg_A: 25 residues
+  ❌ 1usz_A: 149 residues (too large)
+📊 Kept 3/25 proteins
+🤖 Model: 854854 parameters
+🧬 Training proteins: 12
+🔍 Validation proteins: 3
+
+🚀 PRELIMINARY TRAINING PHASE
+============================================================
+🔍 Filtering 80 proteins by size (max: 100 residues)
+  ❌ 7d60_A: 288 residues (too large)
+  ❌ 1kqy_A: 273 residues (too large)
+  ❌ 3eba_A: 127 residues (too large)
+  ❌ 3foa_A: 510 residues (too large)
+  ❌ 3eps_A: 578 residues (too large)
+  ❌ 4j7z_A: 113 residues (too large)
+  ✅ 2cbp_A: 96 residues
+  ❌ 2wvq_A: 225 residues (too large)
+  ❌ 5wrf_A: 145 residues (too large)
+  ❌ 3ob6_A: 445 residues (too large)
+  ❌ 1mzw_A: 177 residues (too large)
+  ❌ 7bln_A: 182 residues (too large)
+  ❌ 3st1_A: 214 residues (too large)
+  ❌ 1z84_A: 351 residues (too large)
+  ❌ 5jir_A: 421 residues (too large)
+  ❌ 5wup_A: 482 residues (too large)
+  ✅ 1tpg_A: 91 residues
+  ❌ 6dzg_A: 300 residues (too large)
+  ❌ 1b08_A: 158 residues (too large)
+  ✅ 7k6p_A: 98 residues
+  ❌ 6h05_A: 426 residues (too large)
+  ❌ 1pzx_A: 289 residues (too large)
+  ✅ 6fl1_A: 14 residues
+  ❌ 2wwn_A: 169 residues (too large)
+  ❌ 3zxf_A: 138 residues (too large)
+  ❌ 4n8p_A: 135 residues (too large)
+  ❌ 3e62_A: 293 residues (too large)
+  ❌ 5veo_A: 416 residues (too large)
+  ❌ 4i05_A: 285 residues (too large)
+  ❌ 4b7i_A: 218 residues (too large)
+  ✅ 1rij_A: 23 residues
+  ❌ 2pwj_A: 171 residues (too large)
+  ❌ 4z7x_A: 238 residues (too large)
+  ✅ 2f2x_A: 62 residues
+  ✅ 6vjo_A: 38 residues
+  ❌ 3q54_A: 368 residues (too large)
+  ❌ 2cb3_A: 175 residues (too large)
+  ❌ 3gai_A: 194 residues (too large)
+  ❌ 3dm8_A: 143 residues (too large)
+  ❌ 4x51_A: 162 residues (too large)
+  ❌ 1wlt_A: 196 residues (too large)
+  ❌ 4edp_A: 351 residues (too large)
+  ❌ 4yk0_A: 114 residues (too large)
+  ❌ 6neg_A: 375 residues (too large)
+  ❌ 5uag_A: 320 residues (too large)
+  ❌ 2gp6_A: 434 residues (too large)
+  ✅ 1t1h_A: 78 residues
+  ✅ 1pt4_A: 29 residues
+  ❌ 1su1_A: 208 residues (too large)
+  ❌ 1fdy_A: 297 residues (too large)
+  ❌ 7lca_A: 398 residues (too large)
+  ❌ 6fcm_A: 282 residues (too large)
+  ❌ 2cwx_A: 430 residues (too large)
+  ❌ 1i5z_A: 209 residues (too large)
+  ❌ 6abq_A: 114 residues (too large)
+  ❌ 1esi_A: 262 residues (too large)
+  ❌ 4ekx_A: 116 residues (too large)
+  ❌ 5khg_A: 204 residues (too large)
+  ✅ 1ehj_A: 68 residues
+  ❌ 6v42_A: 467 residues (too large)
+  ❌ 5uqi_A: 198 residues (too large)
+  ❌ 3tkp_A: 246 residues (too large)
+  ❌ 3gbw_A: 164 residues (too large)
+  ❌ 2qht_A: 210 residues (too large)
+  ❌ 2r9p_A: 224 residues (too large)
+  ❌ 3ga0_A: 358 residues (too large)
+  ❌ 2g19_A: 244 residues (too large)
+  ❌ 4nwb_A: 278 residues (too large)
+  ❌ 2zc1_A: 333 residues (too large)
+  ❌ 3dp6_A: 279 residues (too large)
+  ❌ 2uy9_A: 385 residues (too large)
+  ❌ 3o4r_A: 261 residues (too large)
+  ✅ 2pku_A: 87 residues
+  ❌ 6yjn_A: 256 residues (too large)
+  ❌ 1sgv_A: 316 residues (too large)
+  ❌ 1uv7_A: 110 residues (too large)
+  ❌ 6jko_A: 380 residues (too large)
+  ✅ 6sw8_A: 77 residues
+  ❌ 2ztm_A: 260 residues (too large)
+  ❌ 4cew_A: 297 residues (too large)
+📊 Kept 12/80 proteins
+🔍 Filtering 25 proteins by size (max: 100 residues)
+  ❌ 2p9r_A: 102 residues (too large)
+  ❌ 4w82_A: 339 residues (too large)
+  ❌ 1npy_A: 271 residues (too large)
+  ❌ 2w5f_A: 540 residues (too large)
+  ❌ 3d94_A: 301 residues (too large)
+  ❌ 2vxs_A: 137 residues (too large)
+  ❌ 2gu4_A: 263 residues (too large)
+  ❌ 6tqr_A: 213 residues (too large)
+  ❌ 7jtv_A: 885 residues (too large)
+  ❌ 1fsu_A: 492 residues (too large)
+  ❌ 6jzh_A: 447 residues (too large)
+  ❌ 4eoi_A: 299 residues (too large)
+  ❌ 4air_A: 354 residues (too large)
+  ❌ 2ifc_A: 385 residues (too large)
+  ✅ 2n4t_A: 37 residues
+  ❌ 4p48_A: 277 residues (too large)
+  ❌ 6aci_A: 306 residues (too large)
+  ❌ 3uap_A: 227 residues (too large)
+  ✅ 2c0s_A: 64 residues
+  ❌ 3jui_A: 182 residues (too large)
+  ❌ 6pt6_A: 497 residues (too large)
+  ❌ 6wyi_A: 284 residues (too large)
+  ❌ 6bn3_A: 267 residues (too large)
+  ✅ 6rsg_A: 25 residues
+  ❌ 1usz_A: 149 residues (too large)
+📊 Kept 3/25 proteins
+
+📈 Preliminary Epoch 1/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 263578.52686
+  [2/12] 1tpg_A... ✅ Loss: 235337.20337
+  [3/12] 7k6p_A... ✅ Loss: 223499.20768
+  [4/12] 6fl1_A... ✅ Loss: 46275.95253
+  [5/12] 1rij_A... ✅ Loss: 60531.13464
+  [6/12] 2f2x_A... ✅ Loss: 102085.23169
+  [7/12] 6vjo_A... ✅ Loss: 81089.16732
+  [8/12] 1t1h_A... ✅ Loss: 101754.36719
+  [9/12] 1pt4_A... ✅ Loss: 58779.34465
+  [10/12] 1ehj_A... ✅ Loss: 89603.12964
+  [11/12] 2pku_A... ✅ Loss: 101051.40601
+  [12/12] 6sw8_A... ✅ Loss: 99354.12614
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 58315.87187
+    [2/3] 2c0s_A... ✅ Loss: 89769.81803
+    [3/3] 6rsg_A... ✅ Loss: 47713.80143
+📊 Training: 121911.56648 (12/12)
+📈 New best validation loss: 65266.4971
+
+📈 Preliminary Epoch 2/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 127550.04565
+  [2/12] 1tpg_A... ✅ Loss: 120877.12939
+  [3/12] 7k6p_A... ✅ Loss: 179736.00098
+  [4/12] 6fl1_A... ✅ Loss: 40763.25452
+  [5/12] 1rij_A... ✅ Loss: 63504.72050
+  [6/12] 2f2x_A... ✅ Loss: 115101.77327
+  [7/12] 6vjo_A... ✅ Loss: 74506.88798
+  [8/12] 1t1h_A... ✅ Loss: 97616.03979
+  [9/12] 1pt4_A... ✅ Loss: 48995.90894
+  [10/12] 1ehj_A... ✅ Loss: 83863.55802
+  [11/12] 2pku_A... ✅ Loss: 80594.03442
+  [12/12] 6sw8_A... ✅ Loss: 71968.44523
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 42041.53113
+    [2/3] 2c0s_A... ✅ Loss: 71414.16016
+    [3/3] 6rsg_A... ✅ Loss: 33395.21395
+📊 Training: 92089.81656 (12/12)
+📈 New best validation loss: 48950.3017
+
+📈 Preliminary Epoch 3/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 85593.94499
+  [2/12] 1tpg_A... ✅ Loss: 70094.31144
+  [3/12] 7k6p_A... ✅ Loss: 84400.16130
+  [4/12] 6fl1_A... ✅ Loss: 126909.23863
+  [5/12] 1rij_A... ✅ Loss: 35799.75126
+  [6/12] 2f2x_A... ✅ Loss: 68214.11890
+  [7/12] 6vjo_A... ✅ Loss: 54032.17806
+  [8/12] 1t1h_A... ✅ Loss: 71580.70410
+  [9/12] 1pt4_A... ✅ Loss: 36035.34530
+  [10/12] 1ehj_A... ✅ Loss: 62618.90015
+  [11/12] 2pku_A... ✅ Loss: 69768.08643
+  [12/12] 6sw8_A... ✅ Loss: 64650.65251
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 54444.00846
+    [2/3] 2c0s_A... ✅ Loss: 93184.88477
+    [3/3] 6rsg_A... ✅ Loss: 41922.87821
+📊 Training: 69141.44942 (12/12)
+
+📈 Preliminary Epoch 4/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 126708.15259
+  [2/12] 1tpg_A... ✅ Loss: 79089.84692
+  [3/12] 7k6p_A... ✅ Loss: 122678.60433
+  [4/12] 6fl1_A... ✅ Loss: 24520.50810
+  [5/12] 1rij_A... ✅ Loss: 37512.44840
+  [6/12] 2f2x_A... ✅ Loss: 54041.16935
+  [7/12] 6vjo_A... ✅ Loss: 48101.86230
+  [8/12] 1t1h_A... ✅ Loss: 62978.30330
+  [9/12] 1pt4_A... ✅ Loss: 31688.47201
+  [10/12] 1ehj_A... ✅ Loss: 56736.10164
+  [11/12] 2pku_A... ✅ Loss: 63906.99544
+  [12/12] 6sw8_A... ✅ Loss: 56552.58870
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 44000.69958
+    [2/3] 2c0s_A... ✅ Loss: 88382.22453
+    [3/3] 6rsg_A... ✅ Loss: 33714.40186
+📊 Training: 63709.58776 (12/12)
+
+📈 Preliminary Epoch 5/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 82411.81738
+  [2/12] 1tpg_A... ✅ Loss: 73357.41423
+  [3/12] 7k6p_A... ✅ Loss: 78273.72355
+  [4/12] 6fl1_A... ✅ Loss: 19419.53019
+  [5/12] 1rij_A... ✅ Loss: 27149.13424
+  [6/12] 2f2x_A... ✅ Loss: 52183.52726
+  [7/12] 6vjo_A... ✅ Loss: 44480.97384
+  [8/12] 1t1h_A... ✅ Loss: 54824.19381
+  [9/12] 1pt4_A... ✅ Loss: 29618.17946
+  [10/12] 1ehj_A... ✅ Loss: 52201.16870
+  [11/12] 2pku_A... ✅ Loss: 63019.76400
+  [12/12] 6sw8_A... ✅ Loss: 74970.18164
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 32218.26196
+    [2/3] 2c0s_A... ✅ Loss: 61099.48942
+    [3/3] 6rsg_A... ✅ Loss: 25802.88947
+📊 Training: 54325.80069 (12/12)
+📈 New best validation loss: 39706.8803
+
+📈 Preliminary Epoch 6/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 68954.94157
+  [2/12] 1tpg_A... ✅ Loss: 59391.13704
+  [3/12] 7k6p_A... ✅ Loss: 71492.65283
+  [4/12] 6fl1_A... ✅ Loss: 20148.73451
+  [5/12] 1rij_A... ✅ Loss: 25907.17859
+  [6/12] 2f2x_A... ✅ Loss: 47515.18388
+  [7/12] 6vjo_A... ✅ Loss: 41938.38037
+  [8/12] 1t1h_A... ✅ Loss: 51317.65507
+  [9/12] 1pt4_A... ✅ Loss: 28277.65814
+  [10/12] 1ehj_A... ✅ Loss: 48163.94283
+  [11/12] 2pku_A... ✅ Loss: 52386.05745
+  [12/12] 6sw8_A... ✅ Loss: 56100.87056
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 30914.23077
+    [2/3] 2c0s_A... ✅ Loss: 60205.41838
+    [3/3] 6rsg_A... ✅ Loss: 24641.98271
+📊 Training: 47632.86607 (12/12)
+📈 New best validation loss: 38587.2106
+
+📈 Preliminary Epoch 7/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 59221.70150
+  [2/12] 1tpg_A... ✅ Loss: 61118.38330
+  [3/12] 7k6p_A... ✅ Loss: 90645.25627
+  [4/12] 6fl1_A... ✅ Loss: 20623.18108
+  [5/12] 1rij_A... ✅ Loss: 31265.12286
+  [6/12] 2f2x_A... ✅ Loss: 55444.20390
+  [7/12] 6vjo_A... ✅ Loss: 41211.16541
+  [8/12] 1t1h_A... ✅ Loss: 48559.60303
+  [9/12] 1pt4_A... ✅ Loss: 30431.41473
+  [10/12] 1ehj_A... ✅ Loss: 50221.50114
+  [11/12] 2pku_A... ✅ Loss: 49862.68872
+  [12/12] 6sw8_A... ✅ Loss: 52558.27633
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 30615.94486
+    [2/3] 2c0s_A... ✅ Loss: 57457.79728
+    [3/3] 6rsg_A... ✅ Loss: 24368.88265
+📊 Training: 49263.54152 (12/12)
+📈 New best validation loss: 37480.8749
+
+📈 Preliminary Epoch 8/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 58484.92065
+  [2/12] 1tpg_A... ✅ Loss: 50954.75863
+  [3/12] 7k6p_A... ✅ Loss: 66277.92794
+  [4/12] 6fl1_A... ✅ Loss: 20159.17884
+  [5/12] 1rij_A... ✅ Loss: 27424.56313
+  [6/12] 2f2x_A... ✅ Loss: 46117.55461
+  [7/12] 6vjo_A... ✅ Loss: 38366.18754
+  [8/12] 1t1h_A... ✅ Loss: 46964.29041
+  [9/12] 1pt4_A... ✅ Loss: 34883.82233
+  [10/12] 1ehj_A... ✅ Loss: 43089.95182
+  [11/12] 2pku_A... ✅ Loss: 51991.02755
+  [12/12] 6sw8_A... ✅ Loss: 58244.73861
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 29912.98466
+    [2/3] 2c0s_A... ✅ Loss: 59183.47396
+    [3/3] 6rsg_A... ✅ Loss: 23870.11194
+📊 Training: 45246.57684 (12/12)
+
+📈 Preliminary Epoch 9/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 61304.21106
+  [2/12] 1tpg_A... ✅ Loss: 62345.65096
+  [3/12] 7k6p_A... ✅ Loss: 57091.91443
+  [4/12] 6fl1_A... ✅ Loss: 19040.81032
+  [5/12] 1rij_A... ✅ Loss: 24119.27250
+  [6/12] 2f2x_A... ✅ Loss: 40151.16069
+  [7/12] 6vjo_A... ✅ Loss: 41262.90312
+  [8/12] 1t1h_A... ✅ Loss: 40379.18286
+  [9/12] 1pt4_A... ✅ Loss: 26119.69505
+  [10/12] 1ehj_A... ✅ Loss: 40248.16781
+  [11/12] 2pku_A... ✅ Loss: 45581.30078
+  [12/12] 6sw8_A... ✅ Loss: 50577.88940
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 27463.25570
+    [2/3] 2c0s_A... ✅ Loss: 51428.18632
+    [3/3] 6rsg_A... ✅ Loss: 22046.35710
+📊 Training: 42351.84658 (12/12)
+📈 New best validation loss: 33645.9330
+
+📈 Preliminary Epoch 10/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 60916.98844
+  [2/12] 1tpg_A... ✅ Loss: 56069.73039
+  [3/12] 7k6p_A... ✅ Loss: 57615.65422
+  [4/12] 6fl1_A... ✅ Loss: 16563.45074
+  [5/12] 1rij_A... ✅ Loss: 23054.53426
+  [6/12] 2f2x_A... ✅ Loss: 38436.20079
+  [7/12] 6vjo_A... ✅ Loss: 40140.33659
+  [8/12] 1t1h_A... ✅ Loss: 39142.70817
+  [9/12] 1pt4_A... ✅ Loss: 26930.30632
+  [10/12] 1ehj_A... ✅ Loss: 40894.78369
+  [11/12] 2pku_A... ✅ Loss: 44313.10465
+  [12/12] 6sw8_A... ✅ Loss: 44719.50269
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 25350.63940
+    [2/3] 2c0s_A... ✅ Loss: 47039.60923
+    [3/3] 6rsg_A... ✅ Loss: 20362.99251
+📊 Training: 40733.10841 (12/12)
+📈 New best validation loss: 30917.7470
+
+📈 Preliminary Epoch 11/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 48724.17139
+  [2/12] 1tpg_A... ✅ Loss: 48517.73808
+  [3/12] 7k6p_A... ✅ Loss: 51360.69580
+  [4/12] 6fl1_A... ✅ Loss: 17556.63005
+  [5/12] 1rij_A... ✅ Loss: 23985.16562
+  [6/12] 2f2x_A... ✅ Loss: 37364.41581
+  [7/12] 6vjo_A... ✅ Loss: 38906.32373
+  [8/12] 1t1h_A... ✅ Loss: 36691.96244
+  [9/12] 1pt4_A... ✅ Loss: 25995.36788
+  [10/12] 1ehj_A... ✅ Loss: 37608.71277
+  [11/12] 2pku_A... ✅ Loss: 48882.27991
+  [12/12] 6sw8_A... ✅ Loss: 55443.42684
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 25602.05918
+    [2/3] 2c0s_A... ✅ Loss: 45988.58940
+    [3/3] 6rsg_A... ✅ Loss: 19930.32260
+📊 Training: 39253.07419 (12/12)
+📈 New best validation loss: 30506.9904
+
+📈 Preliminary Epoch 12/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 57270.48185
+  [2/12] 1tpg_A... ✅ Loss: 42034.15454
+  [3/12] 7k6p_A... ✅ Loss: 53408.67322
+  [4/12] 6fl1_A... ✅ Loss: 17300.55258
+  [5/12] 1rij_A... ✅ Loss: 23451.73026
+  [6/12] 2f2x_A... ✅ Loss: 35879.17747
+  [7/12] 6vjo_A... ✅ Loss: 36669.56163
+  [8/12] 1t1h_A... ✅ Loss: 36112.80745
+  [9/12] 1pt4_A... ✅ Loss: 25777.08429
+  [10/12] 1ehj_A... ✅ Loss: 38097.08156
+  [11/12] 2pku_A... ✅ Loss: 41457.71810
+  [12/12] 6sw8_A... ✅ Loss: 42201.69692
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 23773.26038
+    [2/3] 2c0s_A... ✅ Loss: 45485.41467
+    [3/3] 6rsg_A... ✅ Loss: 18922.16979
+📊 Training: 37471.72666 (12/12)
+📈 New best validation loss: 29393.6149
+
+📈 Preliminary Epoch 13/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 45671.85946
+  [2/12] 1tpg_A... ✅ Loss: 48072.13086
+  [3/12] 7k6p_A... ✅ Loss: 60556.76550
+  [4/12] 6fl1_A... ✅ Loss: 17954.93411
+  [5/12] 1rij_A... ✅ Loss: 25659.30851
+  [6/12] 2f2x_A... ✅ Loss: 39737.12036
+  [7/12] 6vjo_A... ✅ Loss: 35969.39134
+  [8/12] 1t1h_A... ✅ Loss: 37525.79895
+  [9/12] 1pt4_A... ✅ Loss: 25895.07669
+  [10/12] 1ehj_A... ✅ Loss: 40343.07361
+  [11/12] 2pku_A... ✅ Loss: 38431.89091
+  [12/12] 6sw8_A... ✅ Loss: 37694.56492
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 23358.10266
+    [2/3] 2c0s_A... ✅ Loss: 45976.93689
+    [3/3] 6rsg_A... ✅ Loss: 18904.23435
+📊 Training: 37792.65960 (12/12)
+
+📈 Preliminary Epoch 14/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 42589.41740
+  [2/12] 1tpg_A... ✅ Loss: 38010.04228
+  [3/12] 7k6p_A... ✅ Loss: 50999.38489
+  [4/12] 6fl1_A... ✅ Loss: 21804.44081
+  [5/12] 1rij_A... ✅ Loss: 25993.82023
+  [6/12] 2f2x_A... ✅ Loss: 42959.84623
+  [7/12] 6vjo_A... ✅ Loss: 38269.26280
+  [8/12] 1t1h_A... ✅ Loss: 37467.82060
+  [9/12] 1pt4_A... ✅ Loss: 23331.94689
+  [10/12] 1ehj_A... ✅ Loss: 35529.06927
+  [11/12] 2pku_A... ✅ Loss: 36325.92133
+  [12/12] 6sw8_A... ✅ Loss: 33597.11816
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 23884.92310
+    [2/3] 2c0s_A... ✅ Loss: 46414.21938
+    [3/3] 6rsg_A... ✅ Loss: 18807.83019
+📊 Training: 35573.17424 (12/12)
+
+📈 Preliminary Epoch 15/20
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 43443.12933
+  [2/12] 1tpg_A... ✅ Loss: 54452.15446
+  [3/12] 7k6p_A... ✅ Loss: 58013.02755
+  [4/12] 6fl1_A... ✅ Loss: 16239.23466
+  [5/12] 1rij_A... ✅ Loss: 19973.76745
+  [6/12] 2f2x_A... ✅ Loss: 33232.03296
+  [7/12] 6vjo_A... ✅ Loss: 35462.48920
+  [8/12] 1t1h_A... ✅ Loss: 33741.45414
+  [9/12] 1pt4_A... ✅ Loss: 22791.13186
+  [10/12] 1ehj_A... ✅ Loss: 34513.20337
+  [11/12] 2pku_A... ✅ Loss: 35995.21588
+  [12/12] 6sw8_A... ✅ Loss: 34812.14976
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 23624.32453
+    [2/3] 2c0s_A... ✅ Loss: 48246.69556
+    [3/3] 6rsg_A... ✅ Loss: 19112.79423
+📊 Training: 35222.41588 (12/12)
+🔽 Learning rate reduced: 1.00e-03 → 5.00e-04
+
+📈 Preliminary Epoch 16/20
+🎛️  LR: 5.00e-04
+  [1/12] 2cbp_A... ✅ Loss: 45755.40686
+  [2/12] 1tpg_A... ✅ Loss: 33390.49733
+  [3/12] 7k6p_A... ✅ Loss: 44674.04429
+  [4/12] 6fl1_A... ✅ Loss: 13601.31167
+  [5/12] 1rij_A... ✅ Loss: 17540.26517
+  [6/12] 2f2x_A... ✅ Loss: 29192.54230
+  [7/12] 6vjo_A... ✅ Loss: 33137.22178
+  [8/12] 1t1h_A... ✅ Loss: 31007.00824
+  [9/12] 1pt4_A... ✅ Loss: 21495.49171
+  [10/12] 1ehj_A... ✅ Loss: 31818.98222
+  [11/12] 2pku_A... ✅ Loss: 32375.35160
+  [12/12] 6sw8_A... ✅ Loss: 30304.47872
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 20141.74633
+    [2/3] 2c0s_A... ✅ Loss: 41238.36666
+    [3/3] 6rsg_A... ✅ Loss: 15928.56145
+📊 Training: 30357.71682 (12/12)
+📈 New best validation loss: 25769.5581
+
+📈 Preliminary Epoch 17/20
+🎛️  LR: 5.00e-04
+  [1/12] 2cbp_A... ✅ Loss: 37622.00041
+  [2/12] 1tpg_A... ✅ Loss: 32408.49310
+  [3/12] 7k6p_A... ✅ Loss: 44842.57489
+  [4/12] 6fl1_A... ✅ Loss: 12837.58160
+  [5/12] 1rij_A... ✅ Loss: 16664.52006
+  [6/12] 2f2x_A... ✅ Loss: 28827.62020
+  [7/12] 6vjo_A... ✅ Loss: 32678.66663
+  [8/12] 1t1h_A... ✅ Loss: 30393.18030
+  [9/12] 1pt4_A... ✅ Loss: 21178.64958
+  [10/12] 1ehj_A... ✅ Loss: 30969.26312
+  [11/12] 2pku_A... ✅ Loss: 31858.98926
+  [12/12] 6sw8_A... ✅ Loss: 29865.37445
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 19871.47923
+    [2/3] 2c0s_A... ✅ Loss: 41071.71232
+    [3/3] 6rsg_A... ✅ Loss: 15811.52514
+📊 Training: 29178.90947 (12/12)
+📈 New best validation loss: 25584.9056
+
+📈 Preliminary Epoch 18/20
+🎛️  LR: 5.00e-04
+  [1/12] 2cbp_A... ✅ Loss: 37231.10681
+  [2/12] 1tpg_A... ✅ Loss: 31899.84853
+  [3/12] 7k6p_A... ✅ Loss: 46301.93652
+  [4/12] 6fl1_A... ✅ Loss: 12644.16978
+  [5/12] 1rij_A... ✅ Loss: 17176.30283
+  [6/12] 2f2x_A... ✅ Loss: 29406.74184
+  [7/12] 6vjo_A... ✅ Loss: 32835.95667
+  [8/12] 1t1h_A... ✅ Loss: 30358.30855
+  [9/12] 1pt4_A... ✅ Loss: 20848.28585
+  [10/12] 1ehj_A... ✅ Loss: 30154.13458
+  [11/12] 2pku_A... ✅ Loss: 32168.85384
+  [12/12] 6sw8_A... ✅ Loss: 29654.02102
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 19595.26915
+    [2/3] 2c0s_A... ✅ Loss: 40566.83582
+    [3/3] 6rsg_A... ✅ Loss: 15567.82877
+📊 Training: 29223.30557 (12/12)
+📈 New best validation loss: 25243.3112
+
+📈 Preliminary Epoch 19/20
+🎛️  LR: 5.00e-04
+  [1/12] 2cbp_A... ✅ Loss: 36854.03121
+  [2/12] 1tpg_A... ✅ Loss: 31965.13094
+  [3/12] 7k6p_A... ✅ Loss: 46874.66490
+  [4/12] 6fl1_A... ✅ Loss: 12838.15240
+  [5/12] 1rij_A... ✅ Loss: 17997.19275
+  [6/12] 2f2x_A... ✅ Loss: 29936.05902
+  [7/12] 6vjo_A... ✅ Loss: 32977.36493
+  [8/12] 1t1h_A... ✅ Loss: 30176.58695
+  [9/12] 1pt4_A... ✅ Loss: 20575.15738
+  [10/12] 1ehj_A... ✅ Loss: 29674.58761
+  [11/12] 2pku_A... ✅ Loss: 32086.76117
+  [12/12] 6sw8_A... ✅ Loss: 29436.62651
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 19217.72206
+    [2/3] 2c0s_A... ✅ Loss: 40245.34157
+    [3/3] 6rsg_A... ✅ Loss: 15262.27647
+📊 Training: 29282.69298 (12/12)
+📈 New best validation loss: 24908.4467
+
+📈 Preliminary Epoch 20/20
+🎛️  LR: 5.00e-04
+  [1/12] 2cbp_A... ✅ Loss: 36154.01229
+  [2/12] 1tpg_A... ✅ Loss: 31682.13247
+  [3/12] 7k6p_A... ✅ Loss: 45157.17141
+  [4/12] 6fl1_A... ✅ Loss: 12544.21207
+  [5/12] 1rij_A... ✅ Loss: 17264.35414
+  [6/12] 2f2x_A... ✅ Loss: 28768.93919
+  [7/12] 6vjo_A... ✅ Loss: 32368.67172
+  [8/12] 1t1h_A... ✅ Loss: 29258.57098
+  [9/12] 1pt4_A... ✅ Loss: 20202.17688
+  [10/12] 1ehj_A... ✅ Loss: 29130.19069
+  [11/12] 2pku_A... ✅ Loss: 30788.22839
+  [12/12] 6sw8_A... ✅ Loss: 29066.08390
+
+🔍 Preliminary validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 18945.72930
+    [2/3] 2c0s_A... ✅ Loss: 40346.31085
+    [3/3] 6rsg_A... ✅ Loss: 15103.07705
+📊 Training: 28532.06201 (12/12)
+📈 New best validation loss: 24798.3724
+
+✅ Preliminary training completed!
+
+🚀 MAIN TRAINING PHASE (0→48 blocks)
+============================================================
+🔄 Resetting optimizer and schedulers for main training...
+
+📈 Main Epoch 1/10000
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 192422.06250
+  [2/12] 1tpg_A... ✅ Loss: 159589.10938
+  [3/12] 7k6p_A... ✅ Loss: 189098.62500
+  [4/12] 6fl1_A... ✅ Loss: 44822.22266
+  [5/12] 1rij_A... ✅ Loss: 56010.04297
+  [6/12] 2f2x_A... ✅ Loss: 100500.05469
+  [7/12] 6vjo_A... ✅ Loss: 103116.20312
+  [8/12] 1t1h_A... ✅ Loss: 72648.82031
+  [9/12] 1pt4_A... ✅ Loss: 51046.57812
+  [10/12] 1ehj_A... ✅ Loss: 77833.12500
+  [11/12] 2pku_A... ✅ Loss: 75532.39062
+  [12/12] 6sw8_A... ✅ Loss: 63258.07031
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 48005.01172
+    [2/3] 2c0s_A... ✅ Loss: 96025.65625
+    [3/3] 6rsg_A... ✅ Loss: 35330.18359
+📊 Validation: 59786.95052 (3/3)
+📊 Training: 98823.10872 (12/12)
+📈 New best validation loss: 59786.9505
+⏱️  Time: 7.8 min
+⏰ Remaining: 22.2 min
+
+📈 Main Epoch 2/10000
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 77095.26562
+  [2/12] 1tpg_A... ✅ Loss: 54760.63672
+  [3/12] 7k6p_A... ✅ Loss: 87829.36719
+  [4/12] 6fl1_A... ✅ Loss: 24179.05664
+  [5/12] 1rij_A... ✅ Loss: 28255.71289
+  [6/12] 2f2x_A... ✅ Loss: 40229.78906
+  [7/12] 6vjo_A... ✅ Loss: 79842.85156
+  [8/12] 1t1h_A... ✅ Loss: 40192.08203
+  [9/12] 1pt4_A... ✅ Loss: 34996.28516
+  [10/12] 1ehj_A... ✅ Loss: 42852.57812
+  [11/12] 2pku_A... ✅ Loss: 39015.21875
+  [12/12] 6sw8_A... ✅ Loss: 37779.56641
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 35256.19531
+    [2/3] 2c0s_A... ✅ Loss: 79716.26562
+    [3/3] 6rsg_A... ✅ Loss: 26446.22266
+📊 Validation: 47139.56120 (3/3)
+📊 Training: 48919.03418 (12/12)
+📈 New best validation loss: 47139.5612
+⏱️  Time: 7.8 min
+⏰ Remaining: 22.2 min
+
+📈 Main Epoch 3/10000
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 49689.11719
+  [2/12] 1tpg_A... ✅ Loss: 35249.47656
+  [3/12] 7k6p_A... ✅ Loss: 66388.19531
+  [4/12] 6fl1_A... ✅ Loss: 21241.49609
+  [5/12] 1rij_A... ✅ Loss: 23746.02344
+  [6/12] 2f2x_A... ✅ Loss: 35904.16797
+  [7/12] 6vjo_A... ✅ Loss: 77974.99219
+  [8/12] 1t1h_A... ✅ Loss: 37710.76953
+  [9/12] 1pt4_A... ✅ Loss: 32696.44922
+  [10/12] 1ehj_A... ✅ Loss: 40225.16016
+  [11/12] 2pku_A... ✅ Loss: 35611.87500
+  [12/12] 6sw8_A... ✅ Loss: 36757.23828
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 34544.95703
+    [2/3] 2c0s_A... ✅ Loss: 81341.89844
+    [3/3] 6rsg_A... ✅ Loss: 24673.95117
+📊 Validation: 46853.60221 (3/3)
+📊 Training: 41099.58008 (12/12)
+📈 New best validation loss: 46853.6022
+⏱️  Time: 7.9 min
+⏰ Remaining: 22.1 min
+
+📈 Main Epoch 4/10000
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 44680.53125
+  [2/12] 1tpg_A... ✅ Loss: 33879.82812
+  [3/12] 7k6p_A... ✅ Loss: 68456.80469
+  [4/12] 6fl1_A... ✅ Loss: 21899.67773
+  [5/12] 1rij_A... ✅ Loss: 24573.88477
+  [6/12] 2f2x_A... ✅ Loss: 33440.16016
+  [7/12] 6vjo_A... ✅ Loss: 78210.39844
+  [8/12] 1t1h_A... ✅ Loss: 37116.69531
+  [9/12] 1pt4_A... ✅ Loss: 33860.57422
+  [10/12] 1ehj_A... ✅ Loss: 42798.03906
+  [11/12] 2pku_A... ✅ Loss: 36773.85547
+  [12/12] 6sw8_A... ✅ Loss: 34905.07812
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 33889.47656
+    [2/3] 2c0s_A... ✅ Loss: 74565.35938
+    [3/3] 6rsg_A... ✅ Loss: 23028.43359
+📊 Validation: 43827.75651 (3/3)
+📊 Training: 40882.96061 (12/12)
+📈 New best validation loss: 43827.7565
+⏱️  Time: 7.9 min
+⏰ Remaining: 22.1 min
+
+📈 Main Epoch 5/10000
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 43572.50000
+  [2/12] 1tpg_A... ✅ Loss: 30858.14258
+  [3/12] 7k6p_A... ✅ Loss: 62633.17969
+  [4/12] 6fl1_A... ✅ Loss: 22845.88477
+  [5/12] 1rij_A... ✅ Loss: 26104.05469
+  [6/12] 2f2x_A... ✅ Loss: 32865.49219
+  [7/12] 6vjo_A... ✅ Loss: 76223.68750
+  [8/12] 1t1h_A... ✅ Loss: 32477.95703
+  [9/12] 1pt4_A... ✅ Loss: 33797.88281
+  [10/12] 1ehj_A... ✅ Loss: 40896.79688
+  [11/12] 2pku_A... ✅ Loss: 36274.55469
+  [12/12] 6sw8_A... ✅ Loss: 35378.58984
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 33661.00391
+    [2/3] 2c0s_A... ✅ Loss: 74922.37500
+    [3/3] 6rsg_A... ✅ Loss: 22996.06641
+📊 Validation: 43859.81510 (3/3)
+📊 Training: 39494.06022 (12/12)
+⏱️  Time: 8.0 min
+⏰ Remaining: 22.0 min
+
+📈 Main Epoch 6/10000
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 45795.99609
+  [2/12] 1tpg_A... ✅ Loss: 31267.57227
+  [3/12] 7k6p_A... ✅ Loss: 60993.13281
+  [4/12] 6fl1_A... ✅ Loss: 20382.98047
+  [5/12] 1rij_A... ✅ Loss: 24178.70703
+  [6/12] 2f2x_A... ✅ Loss: 35243.57422
+  [7/12] 6vjo_A... ✅ Loss: 74058.69531
+  [8/12] 1t1h_A... ✅ Loss: 35815.66016
+  [9/12] 1pt4_A... ✅ Loss: 33368.15625
+  [10/12] 1ehj_A... ✅ Loss: 41473.36328
+  [11/12] 2pku_A... ✅ Loss: 34839.40234
+  [12/12] 6sw8_A... ✅ Loss: 32307.86328
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 34031.22266
+    [2/3] 2c0s_A... ✅ Loss: 71856.65625
+    [3/3] 6rsg_A... ✅ Loss: 23271.57227
+📊 Validation: 43053.15039 (3/3)
+📊 Training: 39143.75863 (12/12)
+📈 New best validation loss: 43053.1504
+⏱️  Time: 8.0 min
+⏰ Remaining: 22.0 min
+
+📈 Main Epoch 7/10000
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 47859.87891
+  [2/12] 1tpg_A... ✅ Loss: 32680.05273
+  [3/12] 7k6p_A... ✅ Loss: 59349.07422
+  [4/12] 6fl1_A... ✅ Loss: 19559.33008
+  [5/12] 1rij_A... ✅ Loss: 22909.43750
+  [6/12] 2f2x_A... ✅ Loss: 33946.98828
+  [7/12] 6vjo_A... ✅ Loss: 71127.66406
+  [8/12] 1t1h_A... ✅ Loss: 35754.57031
+  [9/12] 1pt4_A... ✅ Loss: 31501.77344
+  [10/12] 1ehj_A... ✅ Loss: 41684.37500
+  [11/12] 2pku_A... ✅ Loss: 35227.70703
+  [12/12] 6sw8_A... ✅ Loss: 33096.80859
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 33279.98828
+    [2/3] 2c0s_A... ✅ Loss: 70664.02344
+    [3/3] 6rsg_A... ✅ Loss: 22948.41992
+📊 Validation: 42297.47721 (3/3)
+📊 Training: 38724.80501 (12/12)
+📈 New best validation loss: 42297.4772
+⏱️  Time: 8.1 min
+⏰ Remaining: 21.9 min
+
+📈 Main Epoch 8/10000
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 46074.41016
+  [2/12] 1tpg_A... ✅ Loss: 31847.43945
+  [3/12] 7k6p_A... ✅ Loss: 60842.51562
+  [4/12] 6fl1_A... ✅ Loss: 20920.77539
+  [5/12] 1rij_A... ✅ Loss: 25312.81445
+  [6/12] 2f2x_A... ✅ Loss: 34188.49219
+  [7/12] 6vjo_A... ✅ Loss: 72803.98438
+  [8/12] 1t1h_A... ✅ Loss: 31147.42773
+  [9/12] 1pt4_A... ✅ Loss: 32668.39062
+  [10/12] 1ehj_A... ✅ Loss: 40213.16797
+  [11/12] 2pku_A... ✅ Loss: 34569.98828
+  [12/12] 6sw8_A... ✅ Loss: 32807.46484
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 31751.47461
+    [2/3] 2c0s_A... ✅ Loss: 74152.19531
+    [3/3] 6rsg_A... ✅ Loss: 22261.66992
+📊 Validation: 42721.77995 (3/3)
+📊 Training: 38616.40592 (12/12)
+⏱️  Time: 8.1 min
+⏰ Remaining: 21.9 min
+
+📈 Main Epoch 9/10000
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 42824.74219
+  [2/12] 1tpg_A... ✅ Loss: 28565.38867
+  [3/12] 7k6p_A... ✅ Loss: 63587.98047
+  [4/12] 6fl1_A... ✅ Loss: 22551.98438
+  [5/12] 1rij_A... ✅ Loss: 24919.20312
+  [6/12] 2f2x_A... ✅ Loss: 30844.66016
+  [7/12] 6vjo_A... ✅ Loss: 79729.96875
+  [8/12] 1t1h_A... ✅ Loss: 28389.34766
+  [9/12] 1pt4_A... ✅ Loss: 32320.50781
+  [10/12] 1ehj_A... ✅ Loss: 35314.52734
+  [11/12] 2pku_A... ✅ Loss: 32091.24414
+  [12/12] 6sw8_A... ✅ Loss: 33337.85156
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 33350.82422
+    [2/3] 2c0s_A... ✅ Loss: 79532.57812
+    [3/3] 6rsg_A... ✅ Loss: 22214.27930
+📊 Validation: 45032.56055 (3/3)
+📊 Training: 37873.11719 (12/12)
+⏱️  Time: 8.2 min
+⏰ Remaining: 21.8 min
+
+📈 Main Epoch 10/10000
+🎛️  LR: 1.00e-03
+  [1/12] 2cbp_A... ✅ Loss: 40411.14062
+  [2/12] 1tpg_A... ✅ Loss: 27973.93555
+  [3/12] 7k6p_A... ✅ Loss: 65234.96484
+  [4/12] 6fl1_A... ✅ Loss: 23691.17188
+  [5/12] 1rij_A... ✅ Loss: 24104.34766
+  [6/12] 2f2x_A... ✅ Loss: 28502.56641
+  [7/12] 6vjo_A... ✅ Loss: 80709.27344
+  [8/12] 1t1h_A... ✅ Loss: 27413.65039
+  [9/12] 1pt4_A... ✅ Loss: 32013.93555
+  [10/12] 1ehj_A... ✅ Loss: 34344.51562
+  [11/12] 2pku_A... ✅ Loss: 30167.28711
+  [12/12] 6sw8_A... ✅ Loss: 32271.34375
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 30427.51562
+    [2/3] 2c0s_A... ✅ Loss: 79429.02344
+    [3/3] 6rsg_A... ✅ Loss: 22322.00195
+📊 Validation: 44059.51367 (3/3)
+📊 Training: 37236.51107 (12/12)
+🔽 Learning rate reduced: 1.00e-03 → 5.00e-04
+⏱️  Time: 8.2 min
+⏰ Remaining: 21.8 min
+
+📈 Main Epoch 11/10000
+🎛️  LR: 5.00e-04
+  [1/12] 2cbp_A... ✅ Loss: 39141.48438
+  [2/12] 1tpg_A... ✅ Loss: 28425.69141
+  [3/12] 7k6p_A... ✅ Loss: 63224.00781
+  [4/12] 6fl1_A... ✅ Loss: 21736.59375
+  [5/12] 1rij_A... ✅ Loss: 21879.99805
+  [6/12] 2f2x_A... ✅ Loss: 25934.94531
+  [7/12] 6vjo_A... ✅ Loss: 76992.30469
+  [8/12] 1t1h_A... ✅ Loss: 26759.09180
+  [9/12] 1pt4_A... ✅ Loss: 30501.48242
+  [10/12] 1ehj_A... ✅ Loss: 37039.35156
+  [11/12] 2pku_A... ✅ Loss: 31849.58203
+  [12/12] 6sw8_A... ✅ Loss: 32463.76172
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 29737.06445
+    [2/3] 2c0s_A... ✅ Loss: 75913.01562
+    [3/3] 6rsg_A... ✅ Loss: 21828.18555
+📊 Validation: 42492.75521 (3/3)
+📊 Training: 36329.02458 (12/12)
+⏱️  Time: 8.3 min
+⏰ Remaining: 21.7 min
+
+📈 Main Epoch 12/10000
+🎛️  LR: 5.00e-04
+  [1/12] 2cbp_A... ✅ Loss: 39463.12500
+  [2/12] 1tpg_A... ✅ Loss: 26938.44922
+  [3/12] 7k6p_A... ✅ Loss: 60043.19531
+  [4/12] 6fl1_A... ✅ Loss: 22257.63281
+  [5/12] 1rij_A... ✅ Loss: 21245.52344
+  [6/12] 2f2x_A... ✅ Loss: 27394.17578
+  [7/12] 6vjo_A... ✅ Loss: 77345.36719
+  [8/12] 1t1h_A... ✅ Loss: 27932.39648
+  [9/12] 1pt4_A... ✅ Loss: 31565.65430
+  [10/12] 1ehj_A... ✅ Loss: 35413.53906
+  [11/12] 2pku_A... ✅ Loss: 29921.50391
+  [12/12] 6sw8_A... ✅ Loss: 30139.93164
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 30779.54688
+    [2/3] 2c0s_A... ✅ Loss: 72163.11719
+    [3/3] 6rsg_A... ✅ Loss: 21450.15039
+📊 Validation: 41464.27148 (3/3)
+📊 Training: 35805.04118 (12/12)
+📈 New best validation loss: 41464.2715
+⏱️  Time: 8.3 min
+⏰ Remaining: 21.7 min
+
+📈 Main Epoch 13/10000
+🎛️  LR: 5.00e-04
+  [1/12] 2cbp_A... ✅ Loss: 40310.02734
+  [2/12] 1tpg_A... ✅ Loss: 26495.64062
+  [3/12] 7k6p_A... ✅ Loss: 55982.61328
+  [4/12] 6fl1_A... ✅ Loss: 24889.27148
+  [5/12] 1rij_A... ✅ Loss: 21081.91797
+  [6/12] 2f2x_A... ✅ Loss: 27353.95703
+  [7/12] 6vjo_A... ✅ Loss: 74915.79688
+  [8/12] 1t1h_A... ✅ Loss: 27044.94336
+  [9/12] 1pt4_A... ✅ Loss: 32358.68555
+  [10/12] 1ehj_A... ✅ Loss: 34190.86328
+  [11/12] 2pku_A... ✅ Loss: 29513.62500
+  [12/12] 6sw8_A... ✅ Loss: 29595.59766
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 30027.55078
+    [2/3] 2c0s_A... ✅ Loss: 73697.93750
+    [3/3] 6rsg_A... ✅ Loss: 21441.05078
+📊 Validation: 41722.17969 (3/3)
+📊 Training: 35311.07829 (12/12)
+⏱️  Time: 8.4 min
+⏰ Remaining: 21.6 min
+
+📈 Main Epoch 14/10000
+🎛️  LR: 5.00e-04
+  [1/12] 2cbp_A... ✅ Loss: 38671.67578
+  [2/12] 1tpg_A... ✅ Loss: 25872.05078
+  [3/12] 7k6p_A... ✅ Loss: 58429.39453
+  [4/12] 6fl1_A... ✅ Loss: 20214.44922
+  [5/12] 1rij_A... ✅ Loss: 21017.40234
+  [6/12] 2f2x_A... ✅ Loss: 26649.74023
+  [7/12] 6vjo_A... ✅ Loss: 76365.95312
+  [8/12] 1t1h_A... ✅ Loss: 25532.68945
+  [9/12] 1pt4_A... ✅ Loss: 30908.02148
+  [10/12] 1ehj_A... ✅ Loss: 32314.83008
+  [11/12] 2pku_A... ✅ Loss: 29235.27148
+  [12/12] 6sw8_A... ✅ Loss: 29758.84766
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 29422.75781
+    [2/3] 2c0s_A... ✅ Loss: 74387.75000
+    [3/3] 6rsg_A... ✅ Loss: 21473.93359
+📊 Validation: 41761.48047 (3/3)
+📊 Training: 34580.86051 (12/12)
+⏱️  Time: 8.4 min
+⏰ Remaining: 21.6 min
+
+📈 Main Epoch 15/10000
+🎛️  LR: 5.00e-04
+  [1/12] 2cbp_A... ✅ Loss: 37803.02344
+  [2/12] 1tpg_A... ✅ Loss: 25594.06055
+  [3/12] 7k6p_A... ✅ Loss: 59542.01172
+  [4/12] 6fl1_A... ✅ Loss: 20783.14453
+  [5/12] 1rij_A... ✅ Loss: 21081.34375
+  [6/12] 2f2x_A... ✅ Loss: 26224.39844
+  [7/12] 6vjo_A... ✅ Loss: 76387.47656
+  [8/12] 1t1h_A... ✅ Loss: 25396.38867
+  [9/12] 1pt4_A... ✅ Loss: 31063.03906
+  [10/12] 1ehj_A... ✅ Loss: 32114.78906
+  [11/12] 2pku_A... ✅ Loss: 28291.58008
+  [12/12] 6sw8_A... ✅ Loss: 29998.37500
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 29271.87109
+    [2/3] 2c0s_A... ✅ Loss: 75368.71875
+    [3/3] 6rsg_A... ✅ Loss: 21384.46289
+📊 Validation: 42008.35091 (3/3)
+📊 Training: 34523.30257 (12/12)
+🔽 Learning rate reduced: 5.00e-04 → 2.50e-04
+⏱️  Time: 8.5 min
+⏰ Remaining: 21.5 min
+
+📈 Main Epoch 16/10000
+🎛️  LR: 2.50e-04
+  [1/12] 2cbp_A... ✅ Loss: 36348.86328
+  [2/12] 1tpg_A... ✅ Loss: 24934.64453
+  [3/12] 7k6p_A... ✅ Loss: 59860.23438
+  [4/12] 6fl1_A... ✅ Loss: 19305.61914
+  [5/12] 1rij_A... ✅ Loss: 21008.13672
+  [6/12] 2f2x_A... ✅ Loss: 25780.53906
+  [7/12] 6vjo_A... ✅ Loss: 76408.55469
+  [8/12] 1t1h_A... ✅ Loss: 24628.87109
+  [9/12] 1pt4_A... ✅ Loss: 30637.34180
+  [10/12] 1ehj_A... ✅ Loss: 31527.33984
+  [11/12] 2pku_A... ✅ Loss: 27545.18555
+  [12/12] 6sw8_A... ✅ Loss: 29884.55664
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 29192.63281
+    [2/3] 2c0s_A... ✅ Loss: 75541.98438
+    [3/3] 6rsg_A... ✅ Loss: 21444.25391
+📊 Validation: 42059.62370 (3/3)
+📊 Training: 33989.15723 (12/12)
+⏱️  Time: 8.5 min
+⏰ Remaining: 21.5 min
+
+📈 Main Epoch 17/10000
+🎛️  LR: 2.50e-04
+  [1/12] 2cbp_A... ✅ Loss: 35697.03125
+  [2/12] 1tpg_A... ✅ Loss: 24855.26367
+  [3/12] 7k6p_A... ✅ Loss: 59941.33594
+  [4/12] 6fl1_A... ✅ Loss: 18884.75195
+  [5/12] 1rij_A... ✅ Loss: 21134.50391
+  [6/12] 2f2x_A... ✅ Loss: 25869.62695
+  [7/12] 6vjo_A... ✅ Loss: 76056.21875
+  [8/12] 1t1h_A... ✅ Loss: 24472.69922
+  [9/12] 1pt4_A... ✅ Loss: 30369.03906
+  [10/12] 1ehj_A... ✅ Loss: 31446.81836
+  [11/12] 2pku_A... ✅ Loss: 27026.09375
+  [12/12] 6sw8_A... ✅ Loss: 29816.26172
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 29205.46484
+    [2/3] 2c0s_A... ✅ Loss: 75918.16406
+    [3/3] 6rsg_A... ✅ Loss: 21508.25586
+📊 Validation: 42210.62826 (3/3)
+📊 Training: 33797.47038 (12/12)
+⏱️  Time: 8.6 min
+⏰ Remaining: 21.4 min
+
+📈 Main Epoch 18/10000
+🎛️  LR: 2.50e-04
+  [1/12] 2cbp_A... ✅ Loss: 35281.90625
+  [2/12] 1tpg_A... ✅ Loss: 24775.13867
+  [3/12] 7k6p_A... ✅ Loss: 60153.51562
+  [4/12] 6fl1_A... ✅ Loss: 18739.42188
+  [5/12] 1rij_A... ✅ Loss: 21343.46875
+  [6/12] 2f2x_A... ✅ Loss: 25635.51562
+  [7/12] 6vjo_A... ✅ Loss: 76375.01562
+  [8/12] 1t1h_A... ✅ Loss: 24330.89648
+  [9/12] 1pt4_A... ✅ Loss: 30587.96289
+  [10/12] 1ehj_A... ✅ Loss: 31426.13867
+  [11/12] 2pku_A... ✅ Loss: 26743.64844
+  [12/12] 6sw8_A... ✅ Loss: 29704.33398
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 29194.70703
+    [2/3] 2c0s_A... ✅ Loss: 75702.53906
+    [3/3] 6rsg_A... ✅ Loss: 21529.34570
+📊 Validation: 42142.19727 (3/3)
+📊 Training: 33758.08024 (12/12)
+🔽 Learning rate reduced: 2.50e-04 → 1.25e-04
+⏱️  Time: 8.6 min
+⏰ Remaining: 21.4 min
+
+📈 Main Epoch 19/10000
+🎛️  LR: 1.25e-04
+  [1/12] 2cbp_A... ✅ Loss: 35263.18750
+  [2/12] 1tpg_A... ✅ Loss: 24706.91602
+  [3/12] 7k6p_A... ✅ Loss: 59967.65625
+  [4/12] 6fl1_A... ✅ Loss: 18352.10547
+  [5/12] 1rij_A... ✅ Loss: 21166.35547
+  [6/12] 2f2x_A... ✅ Loss: 25245.54883
+  [7/12] 6vjo_A... ✅ Loss: 76094.21875
+  [8/12] 1t1h_A... ✅ Loss: 24033.51953
+  [9/12] 1pt4_A... ✅ Loss: 30444.89844
+  [10/12] 1ehj_A... ✅ Loss: 31110.41211
+  [11/12] 2pku_A... ✅ Loss: 26545.21484
+  [12/12] 6sw8_A... ✅ Loss: 29670.35547
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 29175.60352
+    [2/3] 2c0s_A... ✅ Loss: 75976.78906
+    [3/3] 6rsg_A... ✅ Loss: 21599.44336
+📊 Validation: 42250.61198 (3/3)
+📊 Training: 33550.03239 (12/12)
+⏱️  Time: 8.7 min
+⏰ Remaining: 21.3 min
+
+📈 Main Epoch 20/10000
+🎛️  LR: 1.25e-04
+  [1/12] 2cbp_A... ✅ Loss: 35021.97656
+  [2/12] 1tpg_A... ✅ Loss: 24620.49805
+  [3/12] 7k6p_A... ✅ Loss: 60179.34375
+  [4/12] 6fl1_A... ✅ Loss: 18380.01172
+  [5/12] 1rij_A... ✅ Loss: 21139.96289
+  [6/12] 2f2x_A... ✅ Loss: 25012.24023
+  [7/12] 6vjo_A... ✅ Loss: 76506.43750
+  [8/12] 1t1h_A... ✅ Loss: 23791.59961
+  [9/12] 1pt4_A... ✅ Loss: 30502.44531
+  [10/12] 1ehj_A... ✅ Loss: 30991.78906
+  [11/12] 2pku_A... ✅ Loss: 26450.49805
+  [12/12] 6sw8_A... ✅ Loss: 29823.25586
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 29104.04492
+    [2/3] 2c0s_A... ✅ Loss: 76406.03906
+    [3/3] 6rsg_A... ✅ Loss: 21604.23047
+📊 Validation: 42371.43815 (3/3)
+📊 Training: 33535.00488 (12/12)
+⏱️  Time: 8.7 min
+⏰ Remaining: 21.3 min
+
+📈 Main Epoch 21/10000
+🎛️  LR: 1.25e-04
+  [1/12] 2cbp_A... ✅ Loss: 34778.91797
+  [2/12] 1tpg_A... ✅ Loss: 24585.56836
+  [3/12] 7k6p_A... ✅ Loss: 60380.90234
+  [4/12] 6fl1_A... ✅ Loss: 18345.29492
+  [5/12] 1rij_A... ✅ Loss: 21126.75000
+  [6/12] 2f2x_A... ✅ Loss: 24933.59766
+  [7/12] 6vjo_A... ✅ Loss: 76576.17188
+  [8/12] 1t1h_A... ✅ Loss: 23744.72461
+  [9/12] 1pt4_A... ✅ Loss: 30342.26953
+  [10/12] 1ehj_A... ✅ Loss: 30952.49414
+  [11/12] 2pku_A... ✅ Loss: 26293.26758
+  [12/12] 6sw8_A... ✅ Loss: 29950.37109
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 29001.66797
+    [2/3] 2c0s_A... ✅ Loss: 76664.62500
+    [3/3] 6rsg_A... ✅ Loss: 21595.61719
+📊 Validation: 42420.63672 (3/3)
+📊 Training: 33500.86084 (12/12)
+🔽 Learning rate reduced: 1.25e-04 → 6.25e-05
+⏱️  Time: 8.8 min
+⏰ Remaining: 21.2 min
+
+📈 Main Epoch 22/10000
+🎛️  LR: 6.25e-05
+  [1/12] 2cbp_A... ✅ Loss: 34595.93750
+  [2/12] 1tpg_A... ✅ Loss: 24642.49805
+  [3/12] 7k6p_A... ✅ Loss: 60647.14844
+  [4/12] 6fl1_A... ✅ Loss: 18193.09766
+  [5/12] 1rij_A... ✅ Loss: 21058.87891
+  [6/12] 2f2x_A... ✅ Loss: 24650.58594
+  [7/12] 6vjo_A... ✅ Loss: 76756.35156
+  [8/12] 1t1h_A... ✅ Loss: 23555.58203
+  [9/12] 1pt4_A... ✅ Loss: 30338.91406
+  [10/12] 1ehj_A... ✅ Loss: 30747.74609
+  [11/12] 2pku_A... ✅ Loss: 26197.89453
+  [12/12] 6sw8_A... ✅ Loss: 30011.52539
+
+🔍 Validation on 3 proteins...
+    [1/3] 2n4t_A... ✅ Loss: 28977.05664
+    [2/3] 2c0s_A... ✅ Loss: 76898.10156
+    [3/3] 6rsg_A... ✅ Loss: 21615.71289
+📊 Validation: 42496.95703 (3/3)
+📊 Training: 33449.68001 (12/12)
+🛑 Early stopping triggered! Best: 41464.2715 (epoch 12)
+🔄 Restored best model weights from epoch 12
+
+🛑 Early stopping triggered!
+
+🎯 Training completed!
+⏱️  Total time: 8.8 minutes
+🏆 Best validation loss: 41464.2715 (epoch 12)
+📉 LR reductions: 4
+🎛️  Final LR: 6.25e-05
+🤖 Model saved: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models/20250623_113936_loss_comparison_default_final_model.pt
+📊 Full report: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models/20250623_113936_loss_comparison_default.txt

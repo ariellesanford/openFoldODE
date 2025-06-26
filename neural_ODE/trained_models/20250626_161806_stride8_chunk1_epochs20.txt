@@ -1,0 +1,91 @@
+EVOFORMER NEURAL ODE TRAINING REPORT
+==================================================
+
+Experiment: 20250626_161806_stride8_chunk1_epochs20
+Started: 2025-06-26 16:20:55
+Status: Training in progress...
+Current Runtime: 71.0 minutes
+Report generated: 2025-06-26 17:31:53
+
+Configuration Settings:
+------------------------------
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/jumbo
+  output_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models
+  experiment_name: 20250626_161806_stride8_chunk1_epochs20
+  device: cuda
+  epochs: 10000
+  learning_rate: 0.001
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  use_fast_ode: False
+  loss: default
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_amp: True
+  max_residues: 450
+  max_time_hours: 24.0
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 8
+  prelim_max_epochs: 20
+  prelim_chunk_size: 1
+  model_parameters: 854854
+  model_type: EvoformerODEFunc
+  train_proteins: 434
+  val_proteins: 45
+
+System Information:
+------------------------------
+  cuda_available: True
+  device: cuda
+  pytorch_version: 2.1.2
+  gpu_name: Quadro P4000
+  cuda_version: 12.1
+  total_gpu_memory: 7.9 GB
+
+PRELIMINARY TRAINING PHASE
+==================================================
+
+Preliminary Started: 2025-06-26 16:21:23
+
+Preliminary Training Progress:
+------------------------------
+Epoch    Train Loss     Train Success  Val Loss       Val Success    LR           Duration (s)
+----------------------------------------------------------------------------------------------------
+1        7.12918        18/76          22.91800       21/21          1.00e-03     204.4       
+2        6.45316        18/76          20.12495       21/21          1.00e-03     212.4       
+3        5.54101        18/76          16.44916       21/21          1.00e-03     211.7       
+4        4.53382        18/76          13.13044       21/21          1.00e-03     211.6       
+5        3.70819        18/76          10.68703       21/21          1.00e-03     213.4       
+6        3.07508        18/76          9.37821        21/21          1.00e-03     210.8       
+7        2.72428        18/76          8.62523        21/21          1.00e-03     210.9       
+8        2.52595        18/76          7.94180        21/21          1.00e-03     217.3       
+9        2.37752        18/76          7.41626        21/21          1.00e-03     213.2       
+10       2.24937        18/76          7.01656        21/21          1.00e-03     213.5       
+11       2.12941        18/76          6.66023        21/21          1.00e-03     215.3       
+12       2.01841        18/76          6.35552        21/21          1.00e-03     216.8       
+13       1.94884        18/76          6.17876        21/21          1.00e-03     212.3       
+14       1.90469        18/76          6.07007        21/21          1.00e-03     210.3       
+15       1.86867        18/76          5.92675        21/21          1.00e-03     209.7       
+16       1.81162        18/76          5.81587        21/21          1.00e-03     208.3       
+17       1.77091        18/76          5.71444        21/21          1.00e-03     209.9       
+18       1.72754        18/76          5.60609        21/21          1.00e-03     209.2       
+19       1.68246        18/76          5.49322        21/21          1.00e-03     210.2       
+20       1.63401        18/76          5.39570        21/21          1.00e-03     208.8       
+
+OVERALL PERFORMANCE ANALYSIS
+------------------------------
+Best Overall Epoch: Preliminary Epoch 20 (Loss: 1.63401)
+Worst Overall Epoch: Preliminary Epoch 1 (Loss: 7.12918)
+Overall Training Improvement: 4.4x better from worst to best
+Final Training Success Rate: 23.7%
+Final Validation Success Rate: 100.0%
+Final Learning Rate: 1.00e-03
+
+==================================================

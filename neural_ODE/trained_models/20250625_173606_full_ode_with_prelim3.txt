@@ -1,0 +1,166 @@
+EVOFORMER NEURAL ODE TRAINING REPORT
+==================================================
+
+⏰ INTERRUPTED AT 52 EPOCHS (TIME LIMIT REACHED)
+==================================================
+
+Experiment: 20250625_173606_full_ode_with_prelim3
+Started: 2025-06-25 17:36:10
+Completed: 2025-06-25 17:36:28
+Total Training Time: 0.3 minutes (0.0 hours)
+Report generated: 2025-06-25 17:36:28
+
+Configuration Settings:
+------------------------------
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/1fv5
+  output_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models
+  experiment_name: 20250625_173606_full_ode_with_prelim3
+  device: cuda
+  epochs: 10000
+  learning_rate: 0.001
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  use_fast_ode: True
+  loss: N/A
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_amp: True
+  max_residues: None
+  max_time_hours: 0.005
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 4
+  prelim_max_epochs: 20
+  prelim_chunk_size: 2
+  model_parameters: 117378
+  model_type: EvoformerODEFuncFast
+  train_proteins: 1
+  val_proteins: 1
+
+System Information:
+------------------------------
+  cuda_available: True
+  device: cuda
+  pytorch_version: 2.1.2
+  gpu_name: Quadro P4000
+  cuda_version: 12.1
+  total_gpu_memory: 7.9 GB
+
+PRELIMINARY TRAINING PHASE
+==================================================
+
+Preliminary Started: 2025-06-25 17:36:10
+Preliminary Completed: 2025-06-25 17:36:18
+Preliminary Duration: 0.1 minutes
+
+Preliminary Training Progress:
+------------------------------
+Epoch    Train Loss     Train Success  Val Loss       Val Success    LR           Duration (s)
+----------------------------------------------------------------------------------------------------
+1        7.67375        1/1            7.67154        1/1            N/A          0.7         
+2        7.67154        1/1            7.66937        1/1            N/A          0.4         
+3        7.66937        1/1            7.66725        1/1            N/A          0.5         
+4        7.66725        1/1            7.66514        1/1            N/A          0.4         
+5        7.66514        1/1            7.66299        1/1            N/A          0.4         
+6        7.66299        1/1            7.66078        1/1            N/A          0.4         
+7        7.66078        1/1            7.65847        1/1            N/A          0.4         
+8        7.65847        1/1            7.65611        1/1            N/A          0.4         
+9        7.65611        1/1            7.65367        1/1            N/A          0.4         
+10       7.65367        1/1            7.65111        1/1            N/A          0.4         
+11       7.65111        1/1            7.64846        1/1            N/A          0.4         
+12       7.64846        1/1            7.64572        1/1            N/A          0.4         
+13       7.64572        1/1            7.64285        1/1            N/A          0.4         
+14       7.64285        1/1            7.63987        1/1            N/A          0.4         
+15       7.63987        1/1            7.63674        1/1            N/A          0.4         
+16       7.63674        1/1            7.63349        1/1            N/A          0.4         
+17       7.63349        1/1            7.63009        1/1            N/A          0.4         
+18       7.63009        1/1            7.62654        1/1            N/A          0.4         
+19       7.62654        1/1            7.62281        1/1            N/A          0.4         
+20       7.62281        1/1            7.61889        1/1            N/A          0.4         
+
+MAIN TRAINING PHASE
+==================================================
+
+Main Training Started: 2025-06-25 17:36:18
+Main Training Completed: 2025-06-25 17:36:28
+Main Training Duration: 0.2 minutes
+
+Main Training Progress:
+------------------------------
+Epoch    Train Loss     Train Success  Val Loss       Val Success    LR           Duration (s)
+----------------------------------------------------------------------------------------------------
+1        78.03564       1/1            78.03564       1/1            N/A          0.2         
+2        78.03564       1/1            78.03564       1/1            N/A          0.2         
+3        78.03564       1/1            78.03564       1/1            N/A          0.2         
+4        78.03564       1/1            77.94441       1/1            N/A          0.2         
+5        77.94441       1/1            77.83105       1/1            N/A          0.2         
+6        77.83105       1/1            77.70525       1/1            N/A          0.2         
+7        77.70525       1/1            77.56033       1/1            N/A          0.2         
+8        77.56033       1/1            77.40237       1/1            N/A          0.2         
+9        77.40237       1/1            77.23425       1/1            N/A          0.2         
+10       77.23425       1/1            77.05611       1/1            N/A          0.2         
+11       77.05611       1/1            76.86950       1/1            N/A          0.2         
+12       76.86950       1/1            76.67059       1/1            N/A          0.2         
+13       76.67059       1/1            76.46664       1/1            N/A          0.2         
+14       76.46664       1/1            76.25182       1/1            N/A          0.2         
+15       76.25182       1/1            76.02888       1/1            N/A          0.2         
+16       76.02888       1/1            75.79262       1/1            N/A          0.2         
+17       75.79262       1/1            75.54865       1/1            N/A          0.2         
+18       75.54865       1/1            75.29537       1/1            N/A          0.2         
+19       75.29537       1/1            75.02715       1/1            N/A          0.2         
+20       75.02715       1/1            74.74526       1/1            N/A          0.2         
+21       74.74526       1/1            74.44852       1/1            N/A          0.2         
+22       74.44852       1/1            74.13559       1/1            N/A          0.2         
+23       74.13559       1/1            73.81013       1/1            N/A          0.2         
+24       73.81013       1/1            73.46166       1/1            N/A          0.2         
+25       73.46166       1/1            73.09824       1/1            N/A          0.2         
+26       73.09824       1/1            72.71460       1/1            N/A          0.2         
+27       72.71460       1/1            72.30807       1/1            N/A          0.2         
+28       72.30807       1/1            71.88524       1/1            N/A          0.2         
+29       71.88524       1/1            71.43523       1/1            N/A          0.2         
+30       71.43523       1/1            70.96616       1/1            N/A          0.2         
+31       70.96616       1/1            70.47326       1/1            N/A          0.2         
+32       70.47326       1/1            69.95605       1/1            N/A          0.2         
+33       69.95605       1/1            69.41843       1/1            N/A          0.2         
+34       69.41843       1/1            68.85598       1/1            N/A          0.2         
+35       68.85598       1/1            68.27185       1/1            N/A          0.2         
+36       68.27185       1/1            67.66364       1/1            N/A          0.2         
+37       67.66364       1/1            67.03430       1/1            N/A          0.2         
+38       67.03430       1/1            66.38342       1/1            N/A          0.2         
+39       66.38342       1/1            65.71428       1/1            N/A          0.2         
+40       65.71428       1/1            65.02873       1/1            N/A          0.2         
+41       65.02873       1/1            64.32067       1/1            N/A          0.2         
+42       64.32067       1/1            63.60337       1/1            N/A          0.2         
+43       63.60337       1/1            62.86784       1/1            N/A          0.2         
+44       62.86784       1/1            62.12030       1/1            N/A          0.2         
+45       62.12030       1/1            61.36112       1/1            N/A          0.2         
+46       61.36112       1/1            60.59488       1/1            N/A          0.2         
+47       60.59488       1/1            59.82190       1/1            N/A          0.2         
+48       59.82190       1/1            59.03955       1/1            N/A          0.2         
+49       59.03955       1/1            58.25618       1/1            N/A          0.2         
+50       58.25618       1/1            57.47195       1/1            N/A          0.2         
+51       57.47195       1/1            56.68530       1/1            N/A          0.2         
+
+OVERALL PERFORMANCE ANALYSIS
+------------------------------
+Best Overall Epoch: Preliminary Epoch 20 (Loss: 7.62281)
+Worst Overall Epoch: Main Epoch 1 (Loss: 78.03564)
+Overall Training Improvement: 10.2x better from worst to best
+Final Training Success Rate: 100.0%
+Final Validation Success Rate: 100.0%
+
+FINAL MODEL
+------------------------------
+Model saved to: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models/20250625_173606_full_ode_with_prelim3_final_model.pt
+Total parameters: 117378
+Model type: EvoformerODEFuncFast
+⏰ Training was interrupted at epoch 52 due to time limit
+Model represents the best state found before timeout
+
+==================================================

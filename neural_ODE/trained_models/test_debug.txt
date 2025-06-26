@@ -1,0 +1,68 @@
+EVOFORMER NEURAL ODE TRAINING REPORT
+==================================================
+
+Experiment: test_debug
+Started: 2025-06-26 14:32:20
+Status: Training in progress...
+Current Runtime: 0.0 minutes
+Report generated: 2025-06-26 14:32:20
+
+Configuration Settings:
+------------------------------
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: data_splits/1fv5
+  output_dir: trained_models
+  experiment_name: test_debug
+  device: cuda
+  epochs: 1
+  learning_rate: 0.001
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  use_fast_ode: False
+  loss: N/A
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_amp: False
+  max_residues: 150
+  max_time_hours: 19.0
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 2
+  prelim_max_epochs: 1
+  prelim_chunk_size: 4
+  model_parameters: 854854
+  model_type: EvoformerODEFunc
+  train_proteins: 1
+  val_proteins: 1
+
+System Information:
+------------------------------
+  cuda_available: True
+  device: cuda
+  pytorch_version: 2.1.2
+  gpu_name: Quadro P4000
+  cuda_version: 12.1
+  total_gpu_memory: 7.9 GB
+
+PRELIMINARY TRAINING PHASE
+==================================================
+
+Preliminary Started: 2025-06-26 14:32:20
+
+Preliminary Training Progress:
+------------------------------
+Epoch    Train Loss     Train Success  Val Loss       Val Success    LR           Duration (s)
+----------------------------------------------------------------------------------------------------
+1        inf            0/1            inf            0/0            N/A          0.2         
+
+OVERALL PERFORMANCE ANALYSIS
+------------------------------
+Best Overall Epoch: Preliminary Epoch 1 (Loss: inf)
+Worst Overall Epoch: Preliminary Epoch 1 (Loss: inf)
+Overall Training Improvement: nanx better from worst to best
+Final Training Success Rate: 0.0%

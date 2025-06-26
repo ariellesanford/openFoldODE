@@ -1,0 +1,112 @@
+EVOFORMER NEURAL ODE TRAINING REPORT
+==================================================
+
+Experiment: 20250623_155036_loss_comparison_weighted_row
+Started: 2025-06-23 15:53:44
+Completed: 2025-06-23 21:23:34
+Total Training Time: 329.8 minutes (5.5 hours)
+Report generated: 2025-06-23 21:23:34
+
+Configuration Settings:
+------------------------------
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/jumbo
+  output_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models
+  experiment_name: 20250623_155036_loss_comparison_weighted_row
+  device: cuda
+  epochs: 10000
+  learning_rate: 0.001
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  use_fast_ode: False
+  loss: weighted_row
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_amp: True
+  max_residues: 450
+  max_time_hours: 16.0
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 4
+  prelim_max_epochs: 20
+  prelim_chunk_size: 2
+  model_parameters: 854854
+  model_type: EvoformerODEFunc
+  train_proteins: 434
+  val_proteins: 45
+
+System Information:
+------------------------------
+  cuda_available: True
+  device: cuda
+  pytorch_version: 2.1.2
+  gpu_name: Quadro P4000
+  cuda_version: 12.1
+  total_gpu_memory: 7.9 GB
+
+PRELIMINARY TRAINING PHASE
+==================================================
+
+Preliminary Started: 2025-06-23 15:54:29
+
+Preliminary Training Progress:
+------------------------------
+Epoch    Train Loss     Train Success  Val Loss       Val Success    LR           Duration (s)
+----------------------------------------------------------------------------------------------------
+1        18.68659       61/76          16.65354       21/21          1.00e-03     900.1       
+2        12.88807       62/76          27.17264       21/21          1.00e-03     891.9       
+3        10.80071       62/76          12.27152       21/21          1.00e-03     896.4       
+4        9.60191        62/76          11.26668       21/21          1.00e-03     890.3       
+5        9.51081        62/76          13.22534       21/21          1.00e-03     879.6       
+6        8.53146        62/76          10.76861       21/21          1.00e-03     901.4       
+7        8.68312        64/76          10.27379       21/21          1.00e-03     935.2       
+8        9.22142        63/76          9.51444        21/21          1.00e-03     886.8       
+9        7.81574        62/76          11.47924       21/21          1.00e-03     863.6       
+10       7.85262        62/76          9.20020        21/21          1.00e-03     864.5       
+11       8.20281        62/76          9.66762        21/21          1.00e-03     864.6       
+12       7.71989        64/76          8.68768        21/21          1.00e-03     905.2       
+13       7.35941        64/76          19.43969       21/21          1.00e-03     907.2       
+
+MAIN TRAINING PHASE
+==================================================
+
+Main Training Started: 2025-06-23 19:44:11
+Main Training Completed: 2025-06-23 21:23:34
+Main Training Duration: 99.4 minutes
+
+Main Training Progress:
+------------------------------
+Epoch    Train Loss     Train Success  Val Loss       Val Success    LR           Duration (s)
+----------------------------------------------------------------------------------------------------
+1        nan            368/434        nan            45/45          1.00e-03     598.4       
+2        nan            368/434        nan            45/45          1.00e-03     597.0       
+3        nan            368/434        nan            45/45          1.00e-03     596.2       
+4        nan            368/434        nan            45/45          5.00e-04     596.0       
+5        nan            368/434        nan            45/45          5.00e-04     596.2       
+6        nan            368/434        nan            45/45          5.00e-04     596.0       
+7        nan            368/434        nan            45/45          2.50e-04     596.1       
+8        nan            368/434        nan            45/45          2.50e-04     595.9       
+9        nan            368/434        nan            45/45          2.50e-04     595.7       
+10       nan            368/434        nan            45/45          1.25e-04     595.9       
+
+OVERALL PERFORMANCE ANALYSIS
+------------------------------
+Best Overall Epoch: Preliminary Epoch 13 (Loss: 7.35941)
+Worst Overall Epoch: Preliminary Epoch 1 (Loss: 18.68659)
+Overall Training Improvement: 2.5x better from worst to best
+Final Training Success Rate: 84.8%
+Final Validation Success Rate: 100.0%
+Final Learning Rate: 1.25e-04
+
+FINAL MODEL
+------------------------------
+Model saved to: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models/20250623_155036_loss_comparison_weighted_row_final_model.pt
+Total parameters: 854854
+Model type: EvoformerODEFunc
+
+==================================================

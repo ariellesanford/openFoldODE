@@ -1,0 +1,29 @@
+Experiment: Default Loss (Full MSA)
+Started: 2025-06-19 15:52:11
+Ended: 2025-06-19 15:52:14
+Duration: 0.00 hours
+Return code: 1
+Command: /home/visitor/anaconda3/envs/openfold_env/bin/python train_evoformer_ode.py --data_dirs /media/visitor/Extreme SSD/data/complete_blocks /media/visitor/Extreme SSD/data/endpoint_blocks --splits_dir /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits --device cuda --epochs 10000 --learning_rate 0.001 --reduced_cluster_size 64 --hidden_dim 64 --integrator rk4 --loss default --output_dir /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models --experiment_name 20250619_155200_loss_comparison_default_full_msa --lr_patience 3 --lr_factor 0.5 --min_lr 1e-06 --early_stopping_patience 10 --early_stopping_min_delta 0.0001 --max_time_hours 17 --prelim_data_dir /media/visitor/Extreme SSD/data/complete_blocks --prelim_block_stride 4 --prelim_max_epochs 10 --prelim_chunk_size 3 --use_amp --aggressive_cleanup --enable_preliminary_training
+
+STDOUT:
+[2025-06-19 15:52:13,223] [INFO] [real_accelerator.py:239:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+🚀 Neural ODE Training - Restructured Version
+📁 Data directories: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+💻 Device: cuda
+🔧 Model: Full ODE
+🔄 Preliminary training enabled
+
+
+STDERR:
+Traceback (most recent call last):
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 923, in <module>
+    main()
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 810, in main
+    model, optimizer, scaler, train_proteins, val_proteins = setup_training_environment(config)
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 654, in setup_training_environment
+    train_proteins = DataManager.get_available_proteins(config.data_dirs, config.splits_dir, 'training')
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 174, in get_available_proteins
+    split_proteins = DataManager.load_split_proteins(splits_dir, mode)
+  File "/home/visitor/PycharmProjects/openFold/neural_ODE/train_evoformer_ode.py", line 168, in load_split_proteins
+    with open(split_file, 'r') as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/training_chains.txt'

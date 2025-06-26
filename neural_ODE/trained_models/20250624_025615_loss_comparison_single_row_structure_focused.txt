@@ -1,0 +1,126 @@
+EVOFORMER NEURAL ODE TRAINING REPORT
+==================================================
+
+Experiment: 20250624_025615_loss_comparison_single_row_structure_focused
+Started: 2025-06-24 02:59:05
+Status: Training in progress...
+Current Runtime: 517.3 minutes
+Report generated: 2025-06-24 11:36:22
+
+Configuration Settings:
+------------------------------
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/jumbo
+  output_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models
+  experiment_name: 20250624_025615_loss_comparison_single_row_structure_focused
+  device: cuda
+  epochs: 10000
+  learning_rate: 0.001
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  use_fast_ode: False
+  loss: single_row
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_amp: True
+  max_residues: 450
+  max_time_hours: 16.0
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 4
+  prelim_max_epochs: 20
+  prelim_chunk_size: 2
+  model_parameters: 854854
+  model_type: EvoformerODEFunc
+  train_proteins: 434
+  val_proteins: 45
+
+System Information:
+------------------------------
+  cuda_available: True
+  device: cuda
+  pytorch_version: 2.1.2
+  gpu_name: Quadro P4000
+  cuda_version: 12.1
+  total_gpu_memory: 7.9 GB
+
+PRELIMINARY TRAINING PHASE
+==================================================
+
+Preliminary Started: 2025-06-24 02:59:38
+Preliminary Completed: 2025-06-24 07:49:50
+Preliminary Duration: 290.2 minutes
+
+Preliminary Training Progress:
+------------------------------
+Epoch    Train Loss     Train Success  Val Loss       Val Success    LR           Duration (s)
+----------------------------------------------------------------------------------------------------
+1        9.85299        64/76          5.85196        21/21          1.00e-03     881.0       
+2        4.46354        64/76          5.48883        21/21          1.00e-03     887.3       
+3        3.67012        64/76          4.01179        21/21          1.00e-03     888.1       
+4        3.50449        64/76          7.32792        21/21          1.00e-03     886.5       
+5        4.39151        64/76          3.62524        21/21          1.00e-03     891.5       
+6        3.09309        64/76          4.01846        21/21          1.00e-03     885.4       
+7        3.45666        64/76          6.52668        21/21          1.00e-03     886.5       
+8        3.33954        64/76          3.48702        21/21          1.00e-03     885.6       
+9        2.67249        64/76          2.86223        21/21          1.00e-03     883.9       
+10       2.58128        64/76          3.19357        21/21          1.00e-03     886.4       
+11       3.03968        64/76          3.63203        21/21          1.00e-03     884.6       
+12       2.41412        64/76          2.63435        21/21          1.00e-03     883.4       
+13       2.52433        64/76          2.78476        21/21          1.00e-03     885.9       
+14       2.48783        62/76          2.70484        21/21          1.00e-03     843.0       
+15       2.18481        62/76          2.57052        21/21          1.00e-03     840.7       
+16       2.17973        62/76          2.59305        21/21          1.00e-03     843.6       
+17       2.25490        62/76          2.60583        21/21          1.00e-03     842.4       
+18       2.26849        62/76          5.47311        21/21          1.00e-03     841.1       
+19       2.10074        62/76          2.37048        21/21          5.00e-04     843.3       
+20       2.04822        62/76          2.33673        21/21          5.00e-04     842.2       
+
+MAIN TRAINING PHASE
+==================================================
+
+Main Training Started: 2025-06-24 07:49:50
+
+Main Training Progress:
+------------------------------
+Epoch    Train Loss     Train Success  Val Loss       Val Success    LR           Duration (s)
+----------------------------------------------------------------------------------------------------
+1        7.78845        368/434        1.71477        45/45          1.00e-03     590.1       
+2        1.40361        368/434        1.44089        45/45          1.00e-03     588.8       
+3        1.19282        368/434        1.22952        45/45          1.00e-03     588.6       
+4        1.04239        368/434        1.10699        45/45          1.00e-03     588.2       
+5        0.96977        368/434        1.06938        45/45          1.00e-03     588.4       
+6        0.93659        368/434        1.03482        45/45          1.00e-03     588.4       
+7        0.91244        368/434        1.01096        45/45          1.00e-03     588.1       
+8        0.89685        368/434        0.99322        45/45          1.00e-03     588.6       
+9        0.88511        368/434        0.98474        45/45          1.00e-03     588.3       
+10       0.87743        368/434        0.97523        45/45          1.00e-03     588.7       
+11       0.87114        368/434        0.97260        45/45          1.00e-03     588.7       
+12       0.86670        368/434        0.96850        45/45          1.00e-03     588.7       
+13       0.86392        368/434        0.96007        45/45          1.00e-03     588.9       
+14       0.85862        368/434        0.95573        45/45          1.00e-03     589.1       
+15       0.85468        368/434        0.95657        45/45          1.00e-03     589.2       
+16       0.85110        368/434        0.95381        45/45          1.00e-03     589.1       
+17       0.84816        368/434        0.94845        45/45          1.00e-03     589.1       
+18       0.84453        368/434        0.94422        45/45          1.00e-03     589.6       
+19       0.84178        367/434        0.94215        45/45          1.00e-03     588.5       
+20       0.83912        368/434        0.93871        45/45          1.00e-03     591.3       
+21       0.83632        368/434        0.93552        45/45          1.00e-03     601.8       
+22       0.83366        368/434        0.93330        45/45          1.00e-03     604.5       
+23       0.83083        366/434        0.93195        45/45          1.00e-03     606.9       
+
+OVERALL PERFORMANCE ANALYSIS
+------------------------------
+Best Overall Epoch: Main Epoch 23 (Loss: 0.83083)
+Worst Overall Epoch: Preliminary Epoch 1 (Loss: 9.85299)
+Overall Training Improvement: 11.9x better from worst to best
+Final Training Success Rate: 84.3%
+Final Validation Success Rate: 100.0%
+Final Learning Rate: 1.00e-03
+
+==================================================

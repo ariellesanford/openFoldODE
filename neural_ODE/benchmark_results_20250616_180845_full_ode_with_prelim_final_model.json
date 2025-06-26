@@ -1,0 +1,306 @@
+{
+  "model": "20250616_180845_full_ode_with_prelim_final_model.pt",
+  "total_proteins": 50,
+  "proteins": {
+    "7vsw_A": {
+      "success": true,
+      "openfold time": 4.593143701553345,
+      "neural ODE time": 31.78650450706482,
+      "num_residues": 214
+    },
+    "4alo_A": {
+      "success": true,
+      "openfold time": 4.298801422119141,
+      "neural ODE time": 26.094913721084595,
+      "num_residues": 181
+    },
+    "3wwl_A": {
+      "success": true,
+      "openfold time": 3.92797589302063,
+      "neural ODE time": 13.504721879959106,
+      "num_residues": 54
+    },
+    "1fv5_A": {
+      "success": true,
+      "openfold time": 3.881997585296631,
+      "neural ODE time": 12.175457954406738,
+      "num_residues": 36
+    },
+    "1ujs_A": {
+      "success": true,
+      "openfold time": 4.076647996902466,
+      "neural ODE time": 17.08212971687317,
+      "num_residues": 88
+    },
+    "4nqr_A": {
+      "success": true,
+      "openfold time": 5.255048036575317,
+      "neural ODE time": 84.67293453216553,
+      "num_residues": 395
+    },
+    "1o70_A": {
+      "success": true,
+      "openfold time": 4.936708450317383,
+      "neural ODE time": 72.34038925170898,
+      "num_residues": 324
+    },
+    "4yfi_A": {
+      "success": true,
+      "openfold time": 4.926116704940796,
+      "neural ODE time": 74.77740788459778,
+      "num_residues": 330
+    },
+    "6rk1_A": {
+      "success": true,
+      "openfold time": 4.481770038604736,
+      "neural ODE time": 14.169613599777222,
+      "num_residues": 58
+    },
+    "2m1b_A": {
+      "success": true,
+      "openfold time": 4.126796722412109,
+      "neural ODE time": 20.20941185951233,
+      "num_residues": 122
+    },
+    "4epq_A": {
+      "success": true,
+      "openfold time": 5.75128960609436,
+      "neural ODE time": 127.72757077217102,
+      "num_residues": 477
+    },
+    "2rbf_A": {
+      "success": true,
+      "openfold time": 3.9006288051605225,
+      "neural ODE time": 11.716832876205444,
+      "num_residues": 21
+    },
+    "2rgq_A": {
+      "success": true,
+      "openfold time": 4.211392164230347,
+      "neural ODE time": 22.37264657020569,
+      "num_residues": 144
+    },
+    "1ioj_A": {
+      "success": true,
+      "openfold time": 3.962141513824463,
+      "neural ODE time": 13.820902824401855,
+      "num_residues": 57
+    },
+    "4it1_A": {
+      "success": true,
+      "openfold time": 5.487423896789551,
+      "neural ODE time": 107.57415461540222,
+      "num_residues": 446
+    },
+    "5yaa_A": {
+      "success": true,
+      "openfold time": 4.254654407501221,
+      "neural ODE time": 24.422109603881836,
+      "num_residues": 163
+    },
+    "5i5h_A": {
+      "success": true,
+      "openfold time": 6.185194492340088,
+      "neural ODE time": 215.6583650112152,
+      "num_residues": 586
+    },
+    "5h07_A": {
+      "success": true,
+      "openfold time": 4.6093480587005615,
+      "neural ODE time": 37.21558165550232,
+      "num_residues": 228
+    },
+    "6gpk_A": {
+      "success": true,
+      "openfold time": 5.313300132751465,
+      "neural ODE time": 88.24089765548706,
+      "num_residues": 373
+    },
+    "6sqx_A": {
+      "success": true,
+      "openfold time": 6.142889499664307,
+      "neural ODE time": 156.56848669052124,
+      "num_residues": 499
+    },
+    "3ihx_A": {
+      "success": true,
+      "openfold time": 4.470097780227661,
+      "neural ODE time": 24.149705171585083,
+      "num_residues": 152
+    },
+    "2r4p_A": {
+      "success": true,
+      "openfold time": 6.022677659988403,
+      "neural ODE time": 114.30380201339722,
+      "num_residues": 427
+    },
+    "2zco_A": {
+      "success": true,
+      "openfold time": 4.934551000595093,
+      "neural ODE time": 58.94834637641907,
+      "num_residues": 293
+    },
+    "5zby_A": {
+      "success": true,
+      "openfold time": 4.315434217453003,
+      "neural ODE time": 24.100935459136963,
+      "num_residues": 158
+    },
+    "6l8f_A": {
+      "success": true,
+      "openfold time": 4.112087249755859,
+      "neural ODE time": 17.747146368026733,
+      "num_residues": 88
+    },
+    "3oes_A": {
+      "success": true,
+      "openfold time": 4.386912107467651,
+      "neural ODE time": 29.638721227645874,
+      "num_residues": 201
+    },
+    "3dbx_A": {
+      "success": true,
+      "openfold time": 4.88335108757019,
+      "neural ODE time": 52.814523696899414,
+      "num_residues": 289
+    },
+    "2ath_A": {
+      "success": true,
+      "openfold time": 4.845560789108276,
+      "neural ODE time": 51.07233953475952,
+      "num_residues": 271
+    },
+    "1pu2_A": {
+      "success": true,
+      "openfold time": 5.226309299468994,
+      "neural ODE time": 88.5087080001831,
+      "num_residues": 371
+    },
+    "2gr7_A": {
+      "success": true,
+      "openfold time": 4.218546628952026,
+      "neural ODE time": 21.951560497283936,
+      "num_residues": 129
+    },
+    "1szq_A": {
+      "success": true,
+      "openfold time": 5.918951511383057,
+      "neural ODE time": 138.36784982681274,
+      "num_residues": 483
+    },
+    "1no5_A": {
+      "success": true,
+      "openfold time": 4.216700315475464,
+      "neural ODE time": 19.52734088897705,
+      "num_residues": 114
+    },
+    "2z0r_A": {
+      "success": true,
+      "openfold time": 4.191861152648926,
+      "neural ODE time": 19.345224380493164,
+      "num_residues": 103
+    },
+    "1o4y_A": {
+      "success": true,
+      "openfold time": 4.877439260482788,
+      "neural ODE time": 50.20604157447815,
+      "num_residues": 288
+    },
+    "2dw7_A": {
+      "success": true,
+      "openfold time": 6.179802894592285,
+      "neural ODE time": 95.37432265281677,
+      "num_residues": 389
+    },
+    "5ziy_A": {
+      "success": true,
+      "openfold time": 5.618489980697632,
+      "neural ODE time": 33.56885886192322,
+      "num_residues": 213
+    },
+    "6aw2_A": {
+      "success": true,
+      "openfold time": 4.09252667427063,
+      "neural ODE time": 19.69160294532776,
+      "num_residues": 109
+    },
+    "1neu_A": {
+      "success": true,
+      "openfold time": 4.165066480636597,
+      "neural ODE time": 19.852118968963623,
+      "num_residues": 124
+    },
+    "1x6c_A": {
+      "success": true,
+      "openfold time": 4.1000285148620605,
+      "neural ODE time": 19.580332279205322,
+      "num_residues": 118
+    },
+    "6vby_A": {
+      "success": true,
+      "openfold time": 5.8509533405303955,
+      "neural ODE time": 137.66966676712036,
+      "num_residues": 507
+    },
+    "1q2v_A": {
+      "success": true,
+      "openfold time": 6.152294874191284,
+      "neural ODE time": 189.69321656227112,
+      "num_residues": 548
+    },
+    "4iup_A": {
+      "success": true,
+      "openfold time": 4.17856240272522,
+      "neural ODE time": 21.2292218208313,
+      "num_residues": 135
+    },
+    "4o8z_A": {
+      "success": true,
+      "openfold time": 4.80943751335144,
+      "neural ODE time": 63.048938512802124,
+      "num_residues": 303
+    },
+    "5yjc_A": {
+      "success": true,
+      "openfold time": 4.7651708126068115,
+      "neural ODE time": 57.287837982177734,
+      "num_residues": 284
+    },
+    "3d6f_A": {
+      "success": true,
+      "openfold time": 4.3738625049591064,
+      "neural ODE time": 27.025176525115967,
+      "num_residues": 179
+    },
+    "2yp6_A": {
+      "success": true,
+      "openfold time": 4.5690553188323975,
+      "neural ODE time": 27.61771845817566,
+      "num_residues": 185
+    },
+    "1xd4_A": {
+      "success": true,
+      "openfold time": 8.020788431167603,
+      "neural ODE time": 439.728066444397,
+      "num_residues": 852
+    },
+    "7ck6_A": {
+      "success": true,
+      "openfold time": 5.0692620277404785,
+      "neural ODE time": 83.2251489162445,
+      "num_residues": 361
+    },
+    "2fk7_A": {
+      "success": true,
+      "openfold time": 4.892816066741943,
+      "neural ODE time": 73.0960636138916,
+      "num_residues": 318
+    },
+    "4dia_A": {
+      "success": true,
+      "openfold time": 4.735186338424683,
+      "neural ODE time": 62.520878076553345,
+      "num_residues": 303
+    }
+  }
+}

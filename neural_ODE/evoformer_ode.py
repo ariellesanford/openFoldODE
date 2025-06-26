@@ -90,8 +90,12 @@ class EvoformerODEFunc(nn.Module):
         # Add pair bias
         z_norm = self.pair_bias_norm(z)
         pair_bias = self.pair_bias_proj(z_norm)  # [n_res, n_res, num_heads]
-        pair_bias = pair_bias.permute(2, 0, 1).unsqueeze(0)  # [1, num_heads, n_res, n_res]
-        attn_scores = attn_scores + pair_bias
+        # pair_bias = pair_bias.permute(2, 0, 1).unsqueeze(0)  # [1, num_heads, n_res, n_res]
+        # attn_scores = attn_scores + pair_bias
+        #
+        pair_bias_expanded = pair_bias.unsqueeze(-0).expand(n_seq, -1, -1, -1)  # [n_seq, n_res, n_res, num_heads]
+        pair_bias_expanded = pair_bias_expanded.permute(0, 1, 3, 2)  # [n_seq, n_res, num_heads, n_res]
+        attn_scores = attn_scores + pair_bias_expanded
 
         # Apply softmax and compute output
         attn_weights = F.softmax(attn_scores, dim=-1)

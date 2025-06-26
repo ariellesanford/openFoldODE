@@ -1,0 +1,82 @@
+EVOFORMER NEURAL ODE TRAINING REPORT
+==================================================
+
+Experiment: 20250625_083043_loss_comparison_weighted_row
+Started: 2025-06-25 08:33:32
+Status: Training in progress...
+Current Runtime: 161.8 minutes
+Report generated: 2025-06-25 11:15:18
+
+Configuration Settings:
+------------------------------
+  data_dirs: ['/media/visitor/Extreme SSD/data/complete_blocks', '/media/visitor/Extreme SSD/data/endpoint_blocks']
+  splits_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/data_splits/jumbo
+  output_dir: /home/visitor/PycharmProjects/openFold/neural_ODE/trained_models
+  experiment_name: 20250625_083043_loss_comparison_weighted_row
+  device: cuda
+  epochs: 10000
+  learning_rate: 0.001
+  lr_patience: 3
+  lr_factor: 0.5
+  min_lr: 1e-06
+  early_stopping_patience: 10
+  early_stopping_min_delta: 0.0001
+  use_fast_ode: False
+  loss: weighted_row
+  reduced_cluster_size: 64
+  hidden_dim: 64
+  integrator: rk4
+  use_amp: True
+  max_residues: 450
+  max_time_hours: 16.0
+  aggressive_cleanup: True
+  enable_preliminary_training: True
+  prelim_data_dir: /media/visitor/Extreme SSD/data/complete_blocks
+  prelim_block_stride: 4
+  prelim_max_epochs: 15
+  prelim_chunk_size: 2
+  model_parameters: 854854
+  model_type: EvoformerODEFunc
+  train_proteins: 434
+  val_proteins: 45
+
+System Information:
+------------------------------
+  cuda_available: True
+  device: cuda
+  pytorch_version: 2.1.2
+  gpu_name: Quadro P4000
+  cuda_version: 12.1
+  total_gpu_memory: 7.9 GB
+
+PRELIMINARY TRAINING PHASE
+==================================================
+
+Preliminary Started: 2025-06-25 08:34:03
+
+Preliminary Training Progress:
+------------------------------
+Epoch    Train Loss     Train Success  Val Loss       Val Success    LR           Duration (s)
+----------------------------------------------------------------------------------------------------
+1        20.66520       64/76          17.12628       21/21          1.00e-03     908.2       
+2        13.47595       64/76          14.47888       21/21          1.00e-03     913.5       
+3        11.02376       64/76          12.55937       21/21          1.00e-03     912.3       
+4        9.95883        64/76          11.53266       21/21          1.00e-03     913.7       
+5        10.41843       64/76          15.54454       21/21          1.00e-03     913.2       
+6        9.10756        64/76          11.00380       21/21          1.00e-03     912.5       
+7        8.60352        64/76          11.44227       21/21          1.00e-03     913.1       
+8        8.58649        64/76          12.00707       21/21          1.00e-03     913.8       
+9        8.42701        64/76          15.78922       21/21          1.00e-03     913.3       
+10       7.80272        64/76          8.84089        21/21          5.00e-04     916.7       
+11       5.78616        30/76          7.01245        21/21          5.00e-04     544.3       
+
+OVERALL PERFORMANCE ANALYSIS
+------------------------------
+Best Overall Epoch: Preliminary Epoch 11 (Loss: 5.78616)
+Worst Overall Epoch: Preliminary Epoch 1 (Loss: 20.66520)
+Overall Training Improvement: 3.6x better from worst to best
+Final Training Success Rate: 39.5%
+Final Validation Success Rate: 100.0%
+Final Learning Rate: 5.00e-04
+
+==================================================
