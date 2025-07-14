@@ -42,7 +42,7 @@ def create_experiment_configs():
     script_dir = Path(__file__).parent
     valid_data_dirs = get_valid_data_dirs()
     prelim_data_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
-    splits_dir = script_dir / "data_splits" / "1fv5"
+    splits_dir = script_dir / "data_splits" / "jumbo"
     output_dir = script_dir / "trained_models"
 
     # Base configuration as specified

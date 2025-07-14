@@ -414,7 +414,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='Multi-method structure prediction')
-    parser.add_argument('--pdb_id', type=str, default="1fv5_A",
+    parser.add_argument('--pdb_id', type=str, default="1ujs_A",
                         help='Protein ID to process')
     parser.add_argument('--use_cpu', action='store_true',
                         help='Force CPU usage')

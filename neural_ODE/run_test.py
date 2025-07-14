@@ -80,7 +80,7 @@ def main():
         return 1
 
     # Find the specific model
-    target_model_name = ("20250626_175541_stride8_chunk1_epochs20_final_model.pt")
+    target_model_name = ("20250702_041628_stride24_chunk1_epochs20_final_model.pt")
     print(f"🔍 Looking for specific model: {target_model_name}")
 
     model_path = find_specific_model(outputs_dir, target_model_name)
