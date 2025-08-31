@@ -72,27 +72,27 @@ class EvoformerODEFunc(nn.Module):
 
     def msa_row_attention(self, m, z):
         """MSA row attention with pair bias"""
+        #mixing info across residues for the same sequence
         n_seq, n_res, _ = m.shape
-        m_norm = self.msa_row_norm(m)
+        m_norm = self.msa_row_norm(m) #normalize over channel dimention (c_m). not row dependent
 
         # QKV projection
-        qkv = self.msa_row_qkv(m_norm)
-        q, k, v = qkv.chunk(3, dim=-1)
+        qkv = self.msa_row_qkv(m_norm) #project m_norm to concatenated Q, K, and V vectors, each of size hidden_dim.
+        q, k, v = qkv.chunk(3, dim=-1) #split Q, K, V
 
-        # Reshape for multi-head attention
+        # Reshape for multi-head attention - using multiple heads like alphafold does
         q = q.view(n_seq, n_res, self.num_heads, self.head_dim)
         k = k.view(n_seq, n_res, self.num_heads, self.head_dim)
         v = v.view(n_seq, n_res, self.num_heads, self.head_dim)
 
         # Attention scores
+        # multiply q[s, r, h, d] * k[s, k, h, d] element‑wise for matching s, h, d and sum along d
+        # s: sequence, r: query res position, k: key res position, h:head, d: embedding dimention
         attn_scores = torch.einsum('srhd,skhd->srhk', q, k) / math.sqrt(self.head_dim)
 
-        # Add pair bias
-        z_norm = self.pair_bias_norm(z)
+        # Add pair bias (reshape to fit the attn_scores shape)
+        z_norm = self.pair_bias_norm(z) #[n_res, n_res, c_z]. normalized pairwise rep over channel dim
         pair_bias = self.pair_bias_proj(z_norm)  # [n_res, n_res, num_heads]
-        # pair_bias = pair_bias.permute(2, 0, 1).unsqueeze(0)  # [1, num_heads, n_res, n_res]
-        # attn_scores = attn_scores + pair_bias
-        #
         pair_bias_expanded = pair_bias.unsqueeze(-0).expand(n_seq, -1, -1, -1)  # [n_seq, n_res, n_res, num_heads]
         pair_bias_expanded = pair_bias_expanded.permute(0, 1, 3, 2)  # [n_seq, n_res, num_heads, n_res]
         attn_scores = attn_scores + pair_bias_expanded
@@ -100,7 +100,7 @@ class EvoformerODEFunc(nn.Module):
         # Apply softmax and compute output
         attn_weights = F.softmax(attn_scores, dim=-1)
         attn_out = torch.einsum('srhk,skhd->srhd', attn_weights, v)
-        attn_out = attn_out.contiguous().view(n_seq, n_res, -1)
+        attn_out = attn_out.contiguous().view(n_seq, n_res, -1) #concatinate the heads
 
         # Apply gating
         gate = torch.sigmoid(self.msa_row_gate(m_norm))
@@ -109,6 +109,8 @@ class EvoformerODEFunc(nn.Module):
         return self.msa_row_out(out)
 
     def column_attention(self, m):
+        #only mixing info across sequences for a fixed residue position
+        #weighted average of sequences rather than complex pattern matching
         """MSA column attention"""
         m_norm = self.msa_col_norm(m)
 
@@ -139,18 +141,21 @@ class EvoformerODEFunc(nn.Module):
 
     def triangle_update(self, z):
         """Triangle multiplication that maintains geometric reasoning"""
+        #informing of relationships between next nearest neighbors
         z_norm = self.tri_norm(z)
 
+        #a and b are like messages passing along two edges of a triangle
         a = torch.sigmoid(self.tri_proj_a(z_norm))  # [n_res, n_res, hidden_dim]
         b = torch.sigmoid(self.tri_proj_b(z_norm))  # [n_res, n_res, hidden_dim]
-        gate = torch.sigmoid(self.tri_gate(z_norm))
+        gate = torch.sigmoid(self.tri_gate(z_norm)) # control how much update is applied
 
-        # Triangle operation: for each edge (i,j), aggregate from triangles
-        # This is a version of the full triangle multiplication
+        # Modified triangle multiplication
+        # i: 1st residue idx, j: 2nd residue idx, k: shared 3rd residue → summed over, d: feature dimension.
+        # "If i interacts with k and k interacts with j, then i and j should interact more strongly."
         triangle_update = torch.einsum('ikd,kjd->ijd', a, b)  # Sum over k
-        triangle_update = F.layer_norm(triangle_update, [triangle_update.size(-1)])
+        triangle_update = F.layer_norm(triangle_update, [triangle_update.size(-1)]) #renormalize
 
-        out = gate * self.tri_out(triangle_update)
+        out = gate * self.tri_out(triangle_update) #back to pair rep dimentions
         return out
 
     def forward(self, t, state):

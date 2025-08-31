@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="openfold_env" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="openfold_env" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.10.17 WSL (Ubuntu): (/home/ariel/miniconda3/envs/openfold_env/bin/python3.10)" project-jdk-type="Python SDK" />
 </project>

@@ -5,7 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/checkpointing" />
       <excludeFolder url="file://$MODULE_DIR$/openfold" />
     </content>
-    <orderEntry type="jdk" jdkName="openfold_env" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.10.17 WSL (Ubuntu): (/home/ariel/miniconda3/envs/openfold_env/bin/python3.10)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

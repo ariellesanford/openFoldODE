@@ -39,33 +39,64 @@ def load_benchmark_data(json_file: str):
     }
 
 
-def create_plot(data, output_file=None):
+def fit_and_print_equations(data):
+    """Fit functions to the data and print equations"""
+    equations = {}
+
+    # Fit linear for Neural ODE
+    x1 = np.array(data["neural_ode"]["residues"])
+    y1 = np.array(data["neural_ode"]["times"])
+    if len(x1) >= 2:
+        linear_coeffs = np.polyfit(x1, y1, 1)
+        equations["neural_ode"] = linear_coeffs
+        print(f"\n📈 Linear Fit (NeuralODE): time = {linear_coeffs[0]:.6f} * residues + {linear_coeffs[1]:.2f}")
+
+    # Fit quadratic for Openfold
+    x2 = np.array(data["openfold"]["residues"])
+    y2 = np.array(data["openfold"]["times"])
+    if len(x2) >= 3:
+        quad_coeffs = np.polyfit(x2, y2, 2)
+        equations["openfold"] = quad_coeffs
+        print(f"📉 Quadratic Fit (Openfold): time = {quad_coeffs[0]:.6f} * residues^2 + {quad_coeffs[1]:.4f} * residues + {quad_coeffs[2]:.2f}")
+
+    return equations
+
+
+def create_plot(data, equations, output_file=None):
     """Create residues vs time scatter plot"""
     fig, ax = plt.subplots(figsize=(12, 8))
 
-    # Plot neural ODE data
-    neural_residues = data["neural_ode"]["residues"]
-    neural_times = data["neural_ode"]["times"]
-
-    if neural_residues:
+    # Neural ODE
+    neural_residues = np.array(data["neural_ode"]["residues"])
+    neural_times = np.array(data["neural_ode"]["times"])
+    if len(neural_residues) > 0:
         ax.scatter(neural_residues, neural_times,
                    alpha=0.7, s=50, color='blue',
-                   label=f'Openfold Evoformer (n={len(neural_residues)})')
+                   label=f'Neural ODE Evoformer (n={len(neural_residues)})')
+        if "neural_ode" in equations:
+            a, b = equations["neural_ode"]
+            xfit = np.linspace(min(neural_residues), max(neural_residues), 100)
+            yfit = a * xfit + b
+            ax.plot(xfit, yfit, color='blue', linestyle='--', label='Linear Fit (Neural ODE)')
 
-    # Plot openfold data
-    openfold_residues = data["openfold"]["residues"]
-    openfold_times = data["openfold"]["times"]
-
-    if openfold_residues:
+    # Openfold
+    openfold_residues = np.array(data["openfold"]["residues"])
+    openfold_times = np.array(data["openfold"]["times"])
+    if len(openfold_residues) > 0:
         ax.scatter(openfold_residues, openfold_times,
                    alpha=0.7, s=50, color='red', marker='s',
-                   label=f'Neural ODE Evoformer (n={len(openfold_residues)})')
+                   label=f'Openfold Evoformer (n={len(openfold_residues)})')
+        if "openfold" in equations:
+            a, b, c = equations["openfold"]
+            xfit = np.linspace(min(openfold_residues), max(openfold_residues), 100)
+            yfit = a * xfit ** 2 + b * xfit + c
+            ax.plot(xfit, yfit, color='red', linestyle='--', label='Quadratic Fit (Openfold)')
 
-    # Formatting
-    ax.set_xlabel('Number of Residues', fontsize=12)
-    ax.set_ylabel('Execution Time (seconds)', fontsize=12)
-    ax.set_title(f'Execution Time vs Protein Size\nModel: {data["model_name"]}', fontsize=14)
-    ax.legend(fontsize=11)
+    ax.tick_params(axis='both', which='major', labelsize=16)
+    ax.set_xlabel('Number of Residues', fontsize=18)
+    ax.set_ylabel('Execution Time (seconds)', fontsize=18)
+    ax.set_title(f'Execution Time vs Protein Size', fontsize=20)
+    ax.legend(fontsize=18)
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
@@ -83,30 +114,16 @@ def print_summary(data):
     print("=" * 50)
     print(f"Model: {data['model_name']}")
 
-    neural_data = data["neural_ode"]
-    openfold_data = data["openfold"]
-
-    if neural_data["residues"]:
-        print(f"\n🔬 NeuralODE Evoformer:")
-        print(f"   Proteins tested: {len(neural_data['residues'])}")
-        print(f"   Avg time: {np.mean(neural_data['times']):.2f}s")
-        print(f"   Time range: [{min(neural_data['times']):.2f}s, {max(neural_data['times']):.2f}s]")
-        print(f"   Residue range: [{min(neural_data['residues'])}, {max(neural_data['residues'])}]")
-
-        # Time per residue analysis
-        time_per_residue = [t / r for t, r in zip(neural_data['times'], neural_data['residues'])]
-        print(f"   Avg time per residue: {np.mean(time_per_residue):.4f}s/residue")
-
-    if openfold_data["residues"]:
-        print(f"\n🧪 OpenfoldEvoformer:")
-        print(f"   Proteins tested: {len(openfold_data['residues'])}")
-        print(f"   Avg time: {np.mean(openfold_data['times']):.2f}s")
-        print(f"   Time range: [{min(openfold_data['times']):.2f}s, {max(openfold_data['times']):.2f}s]")
-        print(f"   Residue range: [{min(openfold_data['residues'])}, {max(openfold_data['residues'])}]")
-
-        # Time per residue analysis
-        time_per_residue = [t / r for t, r in zip(openfold_data['times'], openfold_data['residues'])]
-        print(f"   Avg time per residue: {np.mean(time_per_residue):.4f}s/residue")
+    for key, label in [("neural_ode", "🔬 NeuralODE Evoformer"), ("openfold", "🧪 Openfold Evoformer")]:
+        d = data[key]
+        if d["residues"]:
+            print(f"\n{label}:")
+            print(f"   Proteins tested: {len(d['residues'])}")
+            print(f"   Avg time: {np.mean(d['times']):.2f}s")
+            print(f"   Time range: [{min(d['times']):.2f}s, {max(d['times']):.2f}s]")
+            print(f"   Residue range: [{min(d['residues'])}, {max(d['residues'])}]")
+            time_per_residue = [t / r for t, r in zip(d['times'], d['residues'])]
+            print(f"   Avg time per residue: {np.mean(time_per_residue):.4f}s/residue")
 
 
 def main():
@@ -117,45 +134,36 @@ def main():
 
     args = parser.parse_args()
 
-    # If no JSON file provided (e.g., running in PyCharm), look for one automatically
     if not args.json_file:
-        # Look for benchmark JSON files in current directory
         json_files = list(Path('.').glob('benchmark_results_*.json'))
         if json_files:
-            args.json_file = str(json_files[0])  # Use first found
+            args.json_file = str(json_files[0])
             print(f"🔍 Auto-detected JSON file: {args.json_file}")
         else:
             print("❌ No JSON file provided and none found matching 'benchmark_results_*.json'")
             print("Usage: python plot_benchmark_results.py <json_file>")
             return 1
 
-    # Validate input file
     if not Path(args.json_file).exists():
         print(f"❌ File not found: {args.json_file}")
         return 1
 
-    # Load and analyze data
     print(f"📁 Loading benchmark data from: {args.json_file}")
     data = load_benchmark_data(args.json_file)
 
-    # Print summary
     print_summary(data)
 
-    # Generate output filename if not provided
-    output_file = args.output
-    if not output_file:
-        json_path = Path(args.json_file)
-        output_file = json_path.parent / f"{json_path.stem}_plot.png"
+    print(f"\n🔧 Fitting trend lines...")
+    equations = fit_and_print_equations(data)
 
-    # Create plot
-    print(f"\n📈 Creating plot...")
     if args.no_show:
         import matplotlib
-        matplotlib.use('Agg')  # Non-interactive backend
+        matplotlib.use('Agg')
 
-    create_plot(data, output_file)
+    output_file = args.output or str(Path(args.json_file).with_name(Path(args.json_file).stem + "_plot.png"))
+    create_plot(data, equations, output_file)
 
-    print(f"✅ Analysis complete!")
+    print(f"\n✅ Analysis complete!")
 
 
 if __name__ == "__main__":
