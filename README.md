@@ -6,21 +6,6 @@ openFoldODE implements a Neural Ordinary Differential Equation (Neural ODE) form
 
 References
 ----------
-- Gianluca Ceruti, Christian Lubich, Dominik Sulz  
-  Rank-adaptive time integration of tree tensor networks  
-  [SIAM J. Numer. Anal. 61, 194-222 (2023)](https://doi.org/10.1137/22M1473790)  
-  [Code repository](https://github.com/DominikSulz/rank_adaptive_integrator_for_TTN)
-- Gianluca Ceruti, Jonas Kusch, Christian Lubich  
-  A rank-adaptive robust integrator for dynamical low-rank approximation  
-  [BIT Numerical Mathematics 62, 1149-1174 (2022)](https://doi.org/10.1007/s10543-021-00907-7)  
-  [Code repository](https://github.com/JonasKu/publication-A-rank-adaptive-robust-integrator-for-dynamical-low-rank-approximation)
-- Christian Lubich, Bart Vandereycken, Hanna Walach  
-  Time integration of rank-constrained Tucker tensors  
-  [SIAM J. Numer. Anal. 56, 1273-1290 (2018)](https://doi.org/10.1137/17M1146889)
-
-
-References
-----------
 
 - Gustaf Ahdritz, Nazim Bouatta, Christina Floristean, Sachin Kadyan, Qinghui Xia, William Gerecke, Timothy J. O'Donnell, Daniel Berenberg, Ian Fisk, Niccolò Zanichelli, Bo Zhang, Arkadiusz Nowaczynski, Bei Wang, Marta M. Stepniewska-Dziubinska, Shang Zhang, Adegoke Ojewole, Murat Efe Guney, Stella Biderman, Andrew M. Watkins, Stephen Ra, Pablo Ribalta Lorenzo, Lucas Nivon, Brian Weitzner, Yih-En Andrew Ban, Shiyang Chen, Minjia Zhang, Conglong Li, Shuaiwen Leon Song, Yuxiong He, Peter K. Sorger, Emad Mostaque, Zhao Zhang, Richard Bonneau, Mohammed AlQuraishi
   OpenFold: retraining AlphaFold2 yields new insights into its learning mechanisms and capacity for generalization
