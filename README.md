@@ -40,5 +40,5 @@ Weissig, Ilya N. Shindyalov, Philip E. Bourne
 - Gustaf Ahdritz, Nazim Bouatta, Sachin Kadyan, Lukas Jarosch, Daniel Berenberg, 
 Ian Fisk, Andrew M. Watkins, Stephen Ra, Richard Bonneau, Mohammed AlQuraishi  
   OpenProteinSet: training data for structural biology at scale  
-  [NeurIPS 37, Article 204 (2023)](https://openreview.net/forum?id=gO0kS0eE0F&noteId=ly7X3fS4uJ)
+  [NeurIPS 37, Article 204 (2023)](https://openreview.net/forum?id=gO0kS0eE0F&noteId=ly7X3fS4uJ)  
   [AWS Open Data Registry](https://registry.opendata.aws/openfold/) (Accessed: 2025-08-05)
