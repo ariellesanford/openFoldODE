@@ -350,7 +350,7 @@ def main_analysis(protein_id: str = "1fv5_A", model_path: str = None, prediction
 
     # Find model and predictions if not specified
     if model_path is None:
-        model_files = list(Path("trained_models").glob("*1fv*final_model.pt"))
+        model_files = list(Path("../trained_models").glob("*1fv*final_model.pt"))
         if model_files:
             model_path = str(model_files[0])
             print(f"📦 Auto-found model: {model_path}")

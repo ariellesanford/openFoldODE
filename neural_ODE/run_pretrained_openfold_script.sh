@@ -13,12 +13,6 @@ TEMPLATE_MMCIF_DIR="${DATA_DIR}/template_data/pdb70_mmcif/mmcif_files"
 OUTPUT_DIR="${DATA_DIR}/predictions/${PDB_ID}"
 PRECOMPUTED_ALIGNMENTS="${DATA_DIR}/alignments"
 
-PDB_ID="6kwc"
-INPUT_FASTA_DIR="/home/visitor/PycharmProjects/openFold/openfold/examples/monomer/fasta_dir"
-TEMPLATE_MMCIF_DIR="${DATA_DIR}/template_data/pdb70_mmcif/mmcif_files"
-OUTPUT_DIR="${DATA_DIR}/predictions/${PDB_ID}"
-PRECOMPUTED_ALIGNMENTS="/home/visitor/PycharmProjects/openFold/openfold/examples/monomer/alignments"
-
 # === Change to the desired working directory ===
 cd /home/visitor/PycharmProjects/openFold/openfold
 
