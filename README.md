@@ -41,10 +41,10 @@ If you want to generate custom training and inference data:
    ```
 
 4. **Download PDB70 data**
+Change `DOWNLOAD_DIR` to your `{your_data_dir}` destination. Requires 113 GB storage.
    ```bash
    bash scripts/download_pdb70_mmcif_only.sh
    ```
-   *Note: Change `DOWNLOAD_DIR` to your `{your_data_dir}` destination. Requires 113 GB storage.*
 
 5. **Generate EvoFormer inputs**
    ```bash
