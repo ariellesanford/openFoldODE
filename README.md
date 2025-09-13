@@ -80,32 +80,56 @@ python run_test.py {specific_model_name.pt} --data-dir {your_data_dir} --splits-
 All trained models are stored in the `trained_models` directory. The best performing model is:
 - **Model**: `20250616_180845_full_ode_with_prelim_final_model.pt`
 - **Config/Stats**: `20250616_180845_full_ode_with_prelim.txt` (contains configuration settings, training progress, and performance statistics)
-
 ### Training
 
-#### Basic Training (Mini Data)
+#### Quick Start with Sample Data
 ```bash
-python training_runner.py \
-  --data-dir mini_data \
-  --splits-dir data_splits/mini \
-  --max-epochs 5 \
-  --no-prelim
+python training_runner.py --data-dir mini_data --splits-dir data_splits/mini --max-epochs 5 --no-prelim
 ```
 
-#### CPU Training
+#### General Usage
 ```bash
-python training_runner.py \
-  --data-dir mini_data \
-  --splits-dir data_splits/mini \
-  --max-epochs 5 \
-  --no-prelim \
-  cpu
+python training_runner.py --data-dir {your_data_dir} --splits-dir data_splits/{your_splits_dir} --max-epochs {num_epochs}
 ```
-*Note: CPU training runs significantly slower than GPU training*
+
+
+#### Training Runner Arguments and Configuration
+
+The `training_runner.py` script accepts the following arguments:
+
+**Core Arguments:**
+- `--data-dir` (str, default: `/media/visitor/Extreme SSD/data`) - Base data directory containing complete_blocks and endpoint_blocks
+- `--splits-dir` (str, default: `data_splits/jumbo`) - Directory containing train/val/test splits  
+- `--max-epochs` (int, default: 200) - Maximum epochs for main training
+- `device` (optional positional: `cpu` | `cuda`) - Force device selection (auto-detected if not specified) *Note: CPU training runs significantly slower than GPU training*
+
+**Preliminary Training Options:**
+- `--prelim` / `--no-prelim` (flag) - Enable/disable preliminary training (enabled by default)
+- `--prelim-max-epochs` (int, default: 100) - Maximum epochs for preliminary training
+- `--prelim-stride` (int, default: 4) - Stride for preliminary training blocks (e.g., 0→4→8→12→...→48)
+- `--prelim-chunk-size` (int, default: 4) - Number of blocks to process at once during preliminary training
+
+**Internal Model Configuration:**
+- `num_layers`: 2 - Number of neural network layers
+- `hidden_dim`: 128 - Hidden dimension size
+- `time_embedding_dim`: 32 - Time embedding dimension
+- `solver_method`: "dopri5" - ODE solver method
+- `solver_rtol`: 1e-5, `solver_atol`: 1e-5 - ODE solver tolerances
+- `adjoint`: True - Use adjoint method for memory-efficient backpropagation
+
+**Internal Training Configuration:**
+- `learning_rate`: 1e-4 - Initial learning rate
+- `batch_size`: 1, `chunk_size`: 4 - Batch and chunk sizes
+- `val_check_interval`: 50 - Validation check interval in steps
+- `log_interval`: 10 - Logging interval in steps
+- `save_interval`: 50 - Model save interval in steps
+- `early_stopping_patience`: 20 - Epochs to wait before early stopping
+- `early_stopping_min_delta`: 1e-4 - Minimum improvement for early stopping
+- `scheduler_patience`: 10 - Epochs to wait before reducing learning rate
+- `scheduler_factor`: 0.5 - Factor to reduce learning rate by
+- `scheduler_min_lr`: 1e-6 - Minimum learning rate
 
 ## Troubleshooting
-
-### Common Issues
 
 **Error: `$'\r': command not found`**
 ```bash
