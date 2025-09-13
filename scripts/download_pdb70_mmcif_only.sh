@@ -4,7 +4,7 @@ set -e
 # === CONFIG ===
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"  # Move up one level to project root
-DOWNLOAD_DIR="${PROJECT_DIR}/openfold/data"
+DOWNLOAD_DIR="${PROJECT_DIR}/neural_ode/mini_data"
 ROOT_DIR="${DOWNLOAD_DIR}/pdb70_mmcif"
 RAW_DIR="${ROOT_DIR}/raw"
 FLAT_DIR="${ROOT_DIR}/mmcif_files"

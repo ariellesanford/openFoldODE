@@ -355,7 +355,7 @@ class ProteinSplitGenerator:
 
     def save_results(self, proteins: List[Dict], train_proteins: List[Dict],
                      val_proteins: List[Dict], test_proteins: List[Dict]):
-        """Save results to files"""
+        """Save results to JSON file"""
 
         # Create output structure
         output = {
@@ -400,12 +400,7 @@ class ProteinSplitGenerator:
         with open(output_json, 'w') as f:
             json.dump(output, f, indent=2)
 
-        # Save chain lists
-        for split_name, split_data in output['splits'].items():
-            filename = os.path.join(self.output_dir, f'{split_name}_chains.txt')
-            with open(filename, 'w') as f:
-                f.write('\n'.join(split_data['pdb_chains']))
-            print(f"📄 {split_name.capitalize()} chains saved to {filename}")
+        print(f"📄 Balanced splits saved to {output_json}")
 
         return output_json, output
 
@@ -463,32 +458,33 @@ class ProteinSplitGenerator:
         self.print_summary(output)
 
         print(f"\n🎯 Dataset splits created successfully!")
-        print(f"\n📋 Output files:")
+        print(f"\n📋 Output file:")
         print(f"   - {output_json} (complete dataset with metadata and statistics)")
-        print(f"   - training_chains.txt ({len(train_proteins)} training PDB chains)")
-        print(f"   - validation_chains.txt ({len(val_proteins)} validation PDB chains)")
-        print(f"   - testing_chains.txt ({len(test_proteins)} testing PDB chains)")
-        print(f"\n🔧 These chain lists can be used with your existing download scripts")
-        print(f"   to fetch the actual Evoformer data from RODA S3.")
+        print(
+            f"   - Contains {len(train_proteins)} training, {len(val_proteins)} validation, and {len(test_proteins)} testing proteins")
+        print(f"\n🔧 Use this JSON file with download_split_data.py to fetch the actual data:")
+        print(f"   to fetch the actual Evoformer data from RODA S3:")
+        print(f"   python download_split_data.py --splits-file {os.path.basename(output_json)}")
 
 
 def main():
     # Get default output directory relative to script location
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    default_output_dir = os.path.join(script_dir, '..', 'data_splits','mini')
+    default_output_dir = os.path.join(script_dir, '..', 'data')
     default_output_dir = os.path.abspath(default_output_dir)  # Resolve relative path
+
     parser = argparse.ArgumentParser(
         description='Create balanced protein splits for neural ODE training',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
 
-    parser.add_argument('--total-size', type=int, default=30,
+    parser.add_argument('--total-size', type=int, default=130,
                         help='Total number of proteins to collect')
-    parser.add_argument('--train-size', type=int, default=10,
+    parser.add_argument('--train-size', type=int, default=80,
                         help='Number of training proteins')
-    parser.add_argument('--val-size', type=int, default=10,
+    parser.add_argument('--val-size', type=int, default=25,
                         help='Number of validation proteins')
-    parser.add_argument('--test-size', type=int, default=10,
+    parser.add_argument('--test-size', type=int, default=25,
                         help='Number of testing proteins')
     parser.add_argument('--seed', type=int, default=42,
                         help='Random seed for reproducibility')

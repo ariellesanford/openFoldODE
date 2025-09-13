@@ -12,10 +12,14 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 BASE_DIR="${SCRIPT_DIR}"
 
 # Split sizes
-TOTAL_SIZE=130
-TRAIN_SIZE=80
-VAL_SIZE=25
-TEST_SIZE=25
+#TOTAL_SIZE=130
+#TRAIN_SIZE=80
+#VAL_SIZE=25
+#TEST_SIZE=25
+TOTAL_SIZE=3
+TRAIN_SIZE=1
+VAL_SIZE=1
+TEST_SIZE=1
 
 # Output files
 OUTPUT_JSON="${BASE_DIR}/balanced_protein_splits.json"

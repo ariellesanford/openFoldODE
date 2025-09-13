@@ -307,7 +307,7 @@ def main():
 
     # Default paths
     default_output_dir = "/media/visitor/Extreme SSD/data"
-    default_splits_dir = os.path.join(script_dir, 'data_splits', 'failed')
+    default_splits_dir = os.path.join(script_dir, 'data_splits', 'mini')
 
     parser = argparse.ArgumentParser(
         description='Download RODA alignments and FASTA files for protein splits',

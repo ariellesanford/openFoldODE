@@ -7,17 +7,14 @@ import argparse
 import json
 import os
 import random
-import subprocess
 import sys
-from collections import defaultdict, Counter
+from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List, Set
 
-import requests
-
 # Import the original classification logic
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from balanced_protein_splits import ProteinSplitGenerator
+from neural_ODE.helper_scripts.old.balanced_protein_splits import ProteinSplitGenerator
 
 
 class ProteinSplitExpander(ProteinSplitGenerator):

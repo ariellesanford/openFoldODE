@@ -11,6 +11,7 @@ from pathlib import Path
 import glob
 from datetime import datetime
 import re
+import argparse
 
 
 def find_specific_model(outputs_dir: Path, model_name: str) -> Path:
@@ -35,16 +36,28 @@ def extract_full_model_name_from_path(model_path: Path) -> str:
 
 
 def main():
+    # Parse arguments
+    parser = argparse.ArgumentParser(description='Test neural ODE models')
+    parser.add_argument('model', nargs='?', default=None, help='Specific model name to test')
+    parser.add_argument('--data-dir', type=str, required=True, help='Base data directory')
+    parser.add_argument('--splits-dir', type=str, required=True, help='Splits directory')
+    args = parser.parse_args()
+
     # Get script directory and set up paths
     script_dir = Path(__file__).parent
-    # Support multiple data directories
+
+    # Support multiple data directories based on data-dir argument
     data_dirs = [
-        "/media/visitor/Extreme SSD/data/complete_blocks",
-        "/media/visitor/Extreme SSD/data/endpoint_blocks",
+        f"{args.data_dir}/complete_blocks",
+        f"{args.data_dir}/endpoint_blocks",
     ]
-    splits_dir = script_dir / "data_splits" / "jumbo"  # Changed to jumbo
+
+    splits_dir = Path(args.splits_dir)
     test_script = script_dir / "test_model.py"
     outputs_dir = script_dir / "trained_models"
+
+    # Use model from command line if provided
+    specific_model_name = args.model
 
     print("🧪 NEURAL ODE MODEL TESTING RUNNER")
     print("=" * 50)
@@ -79,155 +92,61 @@ def main():
         print(f"   Have you trained a model yet?")
         return 1
 
-    # Find the specific model
-    target_model_name = ("20250702_041628_stride24_chunk1_epochs20_final_model.pt")
-    print(f"🔍 Looking for specific model: {target_model_name}")
-
-    model_path = find_specific_model(outputs_dir, target_model_name)
-
-    if not model_path:
-        print(f"❌ Model file not found: {target_model_name}")
-        print(f"   Looking in: {outputs_dir}")
-        # List available models for debugging
-        available_models = list(outputs_dir.glob("*.pt"))
-        if available_models:
-            print(f"   Available models:")
-            for model in available_models:
-                print(f"     - {model.name}")
-        return 1
-
-    print(f"📦 Found model: {model_path.name}")
-
-    # Extract full model name and create predictions directory name
-    full_model_name = extract_full_model_name_from_path(model_path)
-    predictions_dir_name = f"predictions_{full_model_name}"
-    # Use first valid data directory for predictions
-    predictions_base_dir = Path(valid_data_dirs[0]).parent / "post_evoformer_predictions"
-    predictions_dir = predictions_base_dir / predictions_dir_name
-
-    print(f"🏷️  Full model name: {full_model_name}")
-    print(f"📁 Predictions will be saved to: {predictions_dir}")
-
-    # Show model info
-    try:
-        model_size_mb = model_path.stat().st_size / 1024 / 1024
-        model_date = datetime.fromtimestamp(model_path.stat().st_mtime)
-        print(f"   Size: {model_size_mb:.1f} MB")
-        print(f"   Modified: {model_date.strftime('%Y-%m-%d %H:%M:%S')}")
-    except:
-        pass
-
-    # Parse command line arguments for options
-    save_results = '--save-results' in sys.argv or '--save' in sys.argv
-    quick_test = '--quick' in sys.argv or '--quick-test' in sys.argv
-    small_proteins = '--small-proteins' in sys.argv
-    cpu_only = '--cpu' in sys.argv or 'cpu' in sys.argv
-
-    # Build command
-    cmd = [
-              sys.executable,
-              str(test_script),
-              "--model_path", str(model_path),
-              "--data_dirs"] + valid_data_dirs + [
-              "--splits_dir", str(splits_dir)
-          ]
-
-    # Add device selection
-    if cpu_only:
-        cmd.extend(["--device", "cpu"])
-        print("💻 Using CPU for testing")
+    # Find model to test
+    if specific_model_name:
+        # User specified a model
+        model_path = find_specific_model(outputs_dir, specific_model_name)
+        if not model_path:
+            print(f"❌ Specified model not found: {specific_model_name}")
+            print(f"   Looking in: {outputs_dir}")
+            return 1
     else:
-        cmd.extend(["--device", "cuda"])
-        print("🚀 Using CUDA for testing")
+        # Find the latest model
+        print("🔍 Looking for trained models...")
+        model_files = list(outputs_dir.glob("*_final_model.pt"))
 
-    # Add optional filters
-    if quick_test:
-        cmd.extend(["--max_proteins", "5"])
-        print("⚡ Quick test mode: testing first 5 proteins only")
+        if not model_files:
+            print(f"❌ No trained models found in {outputs_dir}")
+            print(f"   Train a model first using train_evoformer_ode.py")
+            return 1
 
-    if small_proteins:
-        cmd.extend(["--max_residues", "200"])
-        print("📏 Small proteins mode: proteins ≤200 residues only")
+        # Sort by modification time to get the latest
+        latest_model = max(model_files, key=lambda x: x.stat().st_mtime)
+        model_path = latest_model
+        print(f"📦 Found latest model: {latest_model.name}")
 
-    # Add result saving
-    if save_results:
-        results_file = f"test_results_{full_model_name}.json"
-        cmd.extend(["--output_file", results_file])
-        print(f"💾 Results will be saved to: {results_file}")
+    # Extract full model name for output directory
+    model_full_name = extract_full_model_name_from_path(model_path)
 
-    # Add prediction saving (always save for structure module)
-    cmd.append("--save_predictions")
-    cmd.extend(["--predictions_dir", str(predictions_dir)])
+    # Build test command with multiple data directories
+    cmd = [
+        sys.executable,
+        str(test_script),
+        "--model_path", str(model_path),
+        "--data_dirs", *valid_data_dirs,
+        "--splits_dir", str(splits_dir),
+        "--save_predictions",
+        "--predictions_dir", f"post_evoformer_predictions/{model_full_name}"
+    ]
 
-    print(f"\n🚀 Running test command:")
-    print(f"   {' '.join(cmd)}")
-    print(f"\n" + "=" * 50)
+    print(f"\n🚀 Running test with model: {model_path.name}")
+    print(f"📁 Data directories: {len(valid_data_dirs)}")
+    print(f"📂 Splits directory: {splits_dir}")
+    print(f"💾 Predictions will be saved to: post_evoformer_predictions/{model_full_name}")
+    print(f"\n🖥️  Command: {' '.join(cmd)}")
+    print("=" * 50)
 
+    # Run the test
     try:
-        # Run the test
-        result = subprocess.run(cmd, cwd=script_dir)
-
-        if result.returncode == 0:
-            print(f"\n✅ Testing completed successfully!")
-
-            # Show what was created
-            print(f"\n📁 Files created:")
-            if save_results:
-                results_path = Path(f"test_results_{full_model_name}.json")
-                if results_path.exists():
-                    size_mb = results_path.stat().st_size / 1024 / 1024
-                    print(f"  - {results_path.name} ({size_mb:.1f} MB) [Test results]")
-
-            # Check predictions directory
-            if predictions_dir.exists():
-                protein_dirs = [d for d in predictions_dir.iterdir() if d.is_dir()]
-                print(f"  - {predictions_dir_name}/ ({len(protein_dirs)} proteins) [Structure module ready]")
-
-                # Show a few examples
-                for i, protein_dir in enumerate(protein_dirs[:3]):
-                    print(f"    └── {protein_dir.name}/")
-                    files = list(protein_dir.glob("*.pt")) + list(protein_dir.glob("*.json"))
-                    for file in files:
-                        size_kb = file.stat().st_size / 1024
-                        print(f"        ├── {file.name} ({size_kb:.1f} KB)")
-
-                if len(protein_dirs) > 3:
-                    print(f"        └── ... and {len(protein_dirs) - 3} more proteins")
-
-            print(f"\n🎯 Ready for OpenFold structure module!")
-            print(f"   Use predictions in: post_evoformer_predictions/{predictions_dir_name}/")
-
-        else:
-            print(f"\n❌ Testing failed with return code: {result.returncode}")
-            return result.returncode
-
+        result = subprocess.run(cmd)
+        return result.returncode
     except KeyboardInterrupt:
-        print(f"\n⏹️  Testing interrupted by user")
+        print("\n⏹️  Testing interrupted by user")
         return 1
     except Exception as e:
-        print(f"\n❌ Error running test: {e}")
+        print(f"❌ Error running test: {e}")
         return 1
-
-    return 0
 
 
 if __name__ == "__main__":
-    print("🧪 Neural ODE Model Testing Runner")
-    print("Automatically finds specific model and runs comprehensive testing")
-    print("")
-    print("Usage:")
-    print("  python run_test.py                 # Basic test on all test proteins")
-    print("  python run_test.py --quick         # Quick test (first 5 proteins)")
-    print("  python run_test.py --save-results  # Save detailed JSON results")
-    print("  python run_test.py --small-proteins# Test only small proteins (≤200 residues)")
-    print("  python run_test.py --cpu           # Force CPU testing")
-    print("")
-    print("Features:")
-    print("  🎯 Uses specific model: 20250613_180436_baseline_no_prelim_final_model.pt")
-    print("  🧪 Tests on all proteins in test split (jumbo)")
-    print("  📊 Comprehensive evaluation metrics")
-    print("  💾 Saves predictions for OpenFold structure module")
-    print("  📁 Creates full-model-name predictions directory")
-    print("")
-
-    exit(main())
+    sys.exit(main())

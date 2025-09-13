@@ -227,6 +227,6 @@ def main():
 
 
 if __name__ == "__main__":
-    print_model_info("../trained_models/20250616_180845_full_ode_with_prelim_final_model.pt")
-    print_model_info("../trained_models/20250618_174724_full_ode_with_prelim2_final_model.pt")
+    print_model_info("../../trained_models/20250616_180845_full_ode_with_prelim_final_model.pt")
+    print_model_info("../../trained_models/20250618_174724_full_ode_with_prelim2_final_model.pt")
 # For running directly in script/IDE:

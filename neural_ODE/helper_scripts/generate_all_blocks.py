@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate 48 evoformer blocks for all proteins and move to complete_blocks when done
+Modified to accept data_dir as command line argument
 """
 
 import os
@@ -9,6 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 import time
+import argparse
 
 
 def find_python():
@@ -66,7 +68,7 @@ def get_last_block_index(protein_dir):
     return min(max(m_indices), max(z_indices))
 
 
-def run_single_iteration(protein_dir, current_index, evoformer_script, python_path, project_root):
+def run_single_iteration(protein_dir, current_index, evoformer_script, python_path, project_root, device="cuda:0"):
     """Run a single evoformer iteration"""
     recycle_dir = protein_dir / "recycle_0"
 
@@ -84,7 +86,7 @@ def run_single_iteration(protein_dir, current_index, evoformer_script, python_pa
         "--z_path", str(z_path),
         "--output_dir", str(recycle_dir),
         "--config_preset", "model_1_ptm",
-        "--device", "cuda:0"
+        "--device", device
     ]
 
     # Set up environment
@@ -179,10 +181,56 @@ def move_protein_to_complete(protein_dir, complete_dir):
 
 
 def main():
-    # Paths
-    incomplete_dir = Path("/media/visitor/Extreme SSD/data/incomplete_blocks")
-    complete_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
-    target_blocks = 48
+    parser = argparse.ArgumentParser(
+        description='Generate all 48 Evoformer blocks for proteins',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
+    parser.add_argument(
+        '--data-dir',
+        type=str,
+        required=True,
+        help='Base data directory containing incomplete_blocks folder'
+    )
+
+    parser.add_argument(
+        '--target-blocks',
+        type=int,
+        default=48,
+        help='Number of blocks to generate (default: 48)'
+    )
+
+    parser.add_argument(
+        '--device',
+        type=str,
+        default='cuda:0',
+        help='Device to use for computation (e.g., cuda:0, cpu)'
+    )
+
+    parser.add_argument(
+        '--max-proteins',
+        type=int,
+        default=None,
+        help='Maximum number of proteins to process (default: all)'
+    )
+
+    parser.add_argument(
+        '--protein-id',
+        type=str,
+        default=None,
+        help='Process only a specific protein ID'
+    )
+
+    args = parser.parse_args()
+
+    # Set up paths based on data_dir
+    data_dir = Path(args.data_dir)
+    incomplete_dir = data_dir / "incomplete_blocks"
+    complete_dir = data_dir / "complete_blocks"
+
+    # Create directories if they don't exist
+    incomplete_dir.mkdir(parents=True, exist_ok=True)
+    complete_dir.mkdir(parents=True, exist_ok=True)
 
     # Find dependencies
     python_path = find_python()
@@ -190,69 +238,69 @@ def main():
     project_root = Path(__file__).parent.parent
 
     print("🚀 48-Block Evoformer Generator")
+    print(f"📁 Data directory: {data_dir}")
     print(f"📁 Source: {incomplete_dir}")
     print(f"📁 Target: {complete_dir}")
-    print(f"🎯 Target blocks: {target_blocks}")
-    print(f"📜 Script: {evoformer_script}")
-    print("")
+    print(f"🎯 Target blocks: {args.target_blocks}")
+    print(f"💻 Device: {args.device}")
+    print(f"🐍 Python: {python_path}")
+    print(f"📜 Evoformer script: {evoformer_script}")
+    print("=" * 50)
 
-    # Create complete directory if it doesn't exist
-    complete_dir.mkdir(exist_ok=True)
-
-    # Find all protein directories
-    protein_dirs = []
-    for item in incomplete_dir.iterdir():
-        if item.is_dir() and item.name.endswith('_evoformer_blocks'):
-            protein_dirs.append(item)
-
-    if not protein_dirs:
-        print(f"❌ No protein directories found in {incomplete_dir}")
+    # Check if incomplete_dir exists and has content
+    if not incomplete_dir.exists():
+        print(f"❌ Incomplete blocks directory not found: {incomplete_dir}")
+        print("   Please run generate_evoformer_inputs.py first")
         return
 
-    print(f"🧬 Found {len(protein_dirs)} proteins to process")
+    # Get all protein directories
+    if args.protein_id:
+        # Process specific protein
+        protein_dirs = [d for d in incomplete_dir.iterdir()
+                        if d.is_dir() and args.protein_id in d.name]
+        if not protein_dirs:
+            print(f"❌ Protein {args.protein_id} not found in {incomplete_dir}")
+            return
+    else:
+        # Process all proteins
+        protein_dirs = [d for d in incomplete_dir.iterdir() if d.is_dir() and d.name.endswith('_evoformer_blocks')]
+
+    total_proteins = len(protein_dirs)
+    if total_proteins == 0:
+        print("❌ No protein directories found in incomplete_blocks/")
+        print("   Please run generate_evoformer_inputs.py first")
+        return
+
+    print(f"📊 Found {total_proteins} proteins to process")
+
+    # Limit number of proteins if requested
+    if args.max_proteins:
+        protein_dirs = protein_dirs[:args.max_proteins]
+        print(f"🔢 Processing only first {args.max_proteins} proteins")
 
     # Process each protein
-    completed_proteins = 0
-    failed_proteins = 0
-    start_time = time.time()
+    successful = 0
+    failed = 0
 
     for i, protein_dir in enumerate(protein_dirs, 1):
-        protein_name = protein_dir.name.replace('_evoformer_blocks', '')
+        print(f"\n[{i}/{len(protein_dirs)}] Processing {protein_dir.name}")
 
-        print(f"\n[{i}/{len(protein_dirs)}] Processing {protein_name}")
-        print("=" * 60)
-
-        # Generate blocks
-        if generate_blocks_for_protein(protein_dir, target_blocks, evoformer_script, python_path, project_root):
-            # Move to complete directory
-            print(f"📦 Moving {protein_name} to complete_blocks...")
+        if generate_blocks_for_protein(protein_dir, args.target_blocks,
+                                       evoformer_script, python_path, project_root, args.device):
             if move_protein_to_complete(protein_dir, complete_dir):
-                completed_proteins += 1
-                print(f"✅ {protein_name}: COMPLETED and moved")
+                successful += 1
             else:
-                failed_proteins += 1
-                print(f"❌ {protein_name}: Generated but move failed")
+                print(f"  ⚠️  Generated but couldn't move {protein_dir.name}")
+                failed += 1
         else:
-            failed_proteins += 1
-            print(f"❌ {protein_name}: Block generation failed")
+            failed += 1
 
-    # Final summary
-    total_time = time.time() - start_time
-
-    print("\n" + "=" * 60)
-    print("📊 FINAL SUMMARY")
-    print("=" * 60)
-    print(f"✅ Completed and moved: {completed_proteins}")
-    print(f"❌ Failed: {failed_proteins}")
-    print(f"⏱️  Total time: {total_time / 60:.1f} minutes")
-
-    if completed_proteins > 0:
-        avg_time = total_time / completed_proteins
-        print(f"📈 Average time per protein: {avg_time / 60:.1f} minutes")
-
-    print(f"\n📁 Results:")
-    print(f"  Complete: {complete_dir}")
-    print(f"  Remaining: {incomplete_dir}")
+    # Summary
+    print("\n" + "=" * 50)
+    print("📊 SUMMARY:")
+    print(f"   ✅ Successful: {successful}")
+    print(f"   ❌ Failed: {failed}")
+    print(f"   📁 Completed proteins in: {complete_dir}")
 
 
 if __name__ == "__main__":
