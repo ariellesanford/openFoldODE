@@ -41,7 +41,7 @@ If you want to generate custom training and inference data:
    ```
 
 4. **Download PDB70 data**
-Change `DOWNLOAD_DIR` to your `{your_data_dir}` destination. Requires 113 GB storage.
+*Change `DOWNLOAD_DIR` to your `{your_data_dir}` destination. Requires 113 GB storage.*
    ```bash
    bash scripts/download_pdb70_mmcif_only.sh
    ```
@@ -52,7 +52,7 @@ Change `DOWNLOAD_DIR` to your `{your_data_dir}` destination. Requires 113 GB sto
    ```
 
 6. **Generate blocks**
-   *Generating all blocks for at least some proteins will allow you to use preliminary training to guide the protein folding evolution to mimic that of the evoformer, which may ultimately lead to better predictions.
+   *Generating all blocks for at least some proteins will allow you to use preliminary training to guide the protein folding evolution to mimic that of the evoformer, which may ultimately lead to better predictions.*
    - For all blocks (needed for preliminary training):
      ```bash
      python helper_scripts/generate_all_blocks.py --data-dir {your_data_dir}
