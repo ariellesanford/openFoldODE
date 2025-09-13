@@ -18,7 +18,7 @@ openFoldODE implements a Neural Ordinary Differential Equation (Neural ODE) form
 
 ### Using Sample Data (Quick Testing)
 For quick testing, use the provided sample data:
-- **Data splits**: `data_splits/mini`
+- **Data splits directory**: `data_splits/mini`
 - **Data directory**: `mini_data`
 
 ### Generating Your Own Data
@@ -37,22 +37,22 @@ If you want to generate custom training and inference data:
 
 3. **Download AlphaFold parameters**
    ```bash
-   ../save_intermediates/scripts/download_alphafold_params.sh openfold/resources
+   bash ../save_intermediates/scripts/download_alphafold_params.sh openfold/resources
    ```
 
-4. **Download PDB70 data**
-*Change `DOWNLOAD_DIR` to your `{your_data_dir}` destination. Requires 113 GB storage.*
+4. **Download PDB70 data**  
+Change `DOWNLOAD_DIR` to your `{your_data_dir}` destination. Requires 113 GB storage.
    ```bash
    bash scripts/download_pdb70_mmcif_only.sh
    ```
 
-5. **Generate EvoFormer inputs**
+5. **Generate Evoformer inputs**
    ```bash
    python helper_scripts/generate_evoformer_inputs.py --data-dir {your_data_dir} --splits-dir "data_splits/{your_splits_dir}"
    ```
 
-6. **Generate blocks**
-   *Generating all blocks for at least some proteins will allow you to use preliminary training to guide the protein folding evolution to mimic that of the evoformer, which may ultimately lead to better predictions.*
+6. **Generate blocks**  
+   Generating all blocks for at least some proteins will allow you to use preliminary training to guide the protein folding evolution to mimic that of the evoformer, which may ultimately lead to better predictions.
    - For all blocks (needed for preliminary training):
      ```bash
      python helper_scripts/generate_all_blocks.py --data-dir {your_data_dir}
@@ -78,8 +78,9 @@ python run_test.py {specific_model_name.pt} --data-dir {your_data_dir} --splits-
 
 #### Available Models
 All trained models are stored in the `trained_models` directory. The best performing model is:
-- **Model**: `20250616_180845_full_ode_with_prelim_final_model.pt`
-- **Config/Stats**: `20250616_180845_full_ode_with_prelim.txt` (contains configuration settings, training progress, and performance statistics)
+`20250616_180845_full_ode_with_prelim_final_model.pt`  
+The configuration settings, training progress, and preformance statistics for this model are at:
+`20250616_180845_full_ode_with_prelim.txt` 
 ### Training
 
 #### Quick Start with Sample Data
@@ -129,9 +130,8 @@ The `training_runner.py` script accepts the following arguments:
 - `scheduler_factor`: 0.5 - Factor to reduce learning rate by
 - `scheduler_min_lr`: 1e-6 - Minimum learning rate
 
-## Troubleshooting
-
-**Error: `$'\r': command not found`**
+## Troubleshooting  
+If the error `$'\r': command not found` appears when you are trying to run any script try running:
 ```bash
 sed -i 's/\r$//' {script_path}
 ```
