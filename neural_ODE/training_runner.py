@@ -1,233 +1,265 @@
 #!/usr/bin/env python3
 """
-Training runner for Neural ODE model
+Training runner with preliminary training support - Updated for restructured train_evoformer_ode.py
+Uses only blocks 0→48 with adjoint method
+MODIFIED: Updated for simplified configuration structure
 """
 
 import os
 import sys
 import subprocess
-import time
-import torch
 from pathlib import Path
+import torch
 from datetime import datetime
-import argparse
-
-
-def run_training(config: dict) -> int:
-    """Run training with given configuration"""
-
-    script_dir = Path(__file__).parent
-    train_script = script_dir / "train_evoformer_ode_new.py"
-
-    if not train_script.exists():
-        print(f"❌ Training script not found: {train_script}")
-        return 1
-
-    # Build command
-    cmd = [sys.executable, str(train_script)]
-
-    # Add all config items as command line arguments
-    for key, value in config.items():
-        if isinstance(value, bool):
-            if value:
-                cmd.append(f"--{key.replace('_', '-')}")
-        elif isinstance(value, list):
-            cmd.extend([f"--{key.replace('_', '-')}", *[str(v) for v in value]])
-        else:
-            cmd.extend([f"--{key.replace('_', '-')}", str(value)])
-
-    # Print command for debugging
-    print(f"\n🖥️  Command: {' '.join(cmd)}")
-    print("=" * 80)
-
-    # Run training
-    try:
-        result = subprocess.run(cmd)
-        return result.returncode
-    except KeyboardInterrupt:
-        print("\n⏹️  Training interrupted by user")
-        return 1
-    except Exception as e:
-        print(f"❌ Error running training: {e}")
-        return 1
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Neural ODE Training Runner',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+    # Get script directory and set up paths
+    script_dir = Path(__file__).parent
 
-    # Optional arguments with defaults
-    parser.add_argument('--data-dir', type=str, default='/media/visitor/Extreme SSD/data',
-                        help='Base data directory containing complete_blocks and endpoint_blocks')
-    parser.add_argument('--splits-dir', type=str, default='data_splits/jumbo',
-                        help='Directory containing train/val/test splits')
-
-    # Epoch control
-    parser.add_argument('--max-epochs', type=int, default=200,
-                        help='Maximum epochs for main training (default: 200)')
-    parser.add_argument('--prelim-max-epochs', type=int, default=100,
-                        help='Maximum epochs for preliminary training (default: 100)')
-
-    # Preliminary training options
-    parser.add_argument('--no-prelim', action='store_true',
-                        help='Disable preliminary training')
-    parser.add_argument('--prelim', action='store_true',
-                        help='Enable preliminary training (default)')
-    parser.add_argument('--prelim-stride', type=int, default=4,
-                        help='Stride for preliminary training blocks (default: 4)')
-    parser.add_argument('--prelim-chunk-size', type=int, default=4,
-                        help='Chunk size for preliminary training (default: 4)')
-
-    # Quick test mode
-    parser.add_argument('--quick-test', action='store_true',
-                        help='Quick test mode (3 epochs each)')
-
-    # Memory options
-    parser.add_argument('--small-memory', action='store_true',
-                        help='Use memory-optimized settings')
-
-    # Device selection
-    parser.add_argument('device', nargs='?', choices=['cpu', 'cuda'], default=None,
-                        help='Force device selection')
-
-    args = parser.parse_args()
-
-    # Print header
-    print("Neural ODE Training Runner - Updated for Command Line Arguments")
-    print("Features: Blocks 0→48 only, Adjoint backprop, LR Scheduling, Early Stopping, Memory optimized")
-    print("")
-
-    # Device configuration
-    if args.device == 'cpu':
-        device = 'cpu'
-        print("🖥️  Forced CPU mode")
-    elif args.device == 'cuda':
-        if not torch.cuda.is_available():
-            print("❌ CUDA requested but not available!")
-            return 1
-        device = 'cuda'
-        print("🎮 Forced CUDA mode")
-    else:
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        print(f"🔧 Auto-detected device: {device}")
-
-    # Build data directories
+    # CHANGED: Support multiple data directories
     data_dirs = [
-        f"{args.data_dir}/complete_blocks",
-        f"{args.data_dir}/endpoint_blocks",
+        Path("/media/visitor/Extreme SSD/data/complete_blocks"),
+        Path("/media/visitor/Extreme SSD/data/endpoint_blocks"),
+        # Add more directories as needed
     ]
 
-    # Quick test mode overrides
-    if args.quick_test:
-        args.max_epochs = 3
-        args.prelim_max_epochs = 3
-        print("🚀 QUICK TEST MODE: 3 epochs only")
+    # NEW: Preliminary training directory (for intermediate blocks)
+    prelim_data_dir = Path("/media/visitor/Extreme SSD/data/complete_blocks")
 
-    # Determine if using preliminary training
-    use_prelim = not args.no_prelim
+    splits_dir = script_dir / "data_splits" / "jumbo"
+    output_dir = script_dir / "trained_models"
+    training_script = script_dir / "train_evoformer_ode.py"
 
-    # Build configuration
+    # Check if data directories exist
+    valid_data_dirs = []
+    for data_dir in data_dirs:
+        if data_dir.exists():
+            valid_data_dirs.append(str(data_dir))
+            print(f"✅ Found data directory: {data_dir}")
+        else:
+            print(f"⚠️  Data directory not found: {data_dir}")
+
+    if not valid_data_dirs:
+        print(f"❌ No valid data directories found!")
+        return 1
+
+    if not training_script.exists():
+        print(f"❌ Training script not found: {training_script}")
+        return 1
+
+    if not splits_dir.exists():
+        print(f"❌ Data splits directory not found: {splits_dir}")
+        return 1
+
+    # Create output directory
+    output_dir.mkdir(exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    experiment_name = f"{timestamp}_full_ode_with_prelim3"
+
+    # Configuration - simplified for restructured script
     config = {
-        "data_dirs": data_dirs,
-        "splits_dir": args.splits_dir,
-        "device": device,
-        "max_epochs": args.max_epochs,
-
-        # Preliminary training
-        "use_preliminary_training": use_prelim,
-        "prelim_max_epochs": args.prelim_max_epochs,
-        "prelim_stride": args.prelim_stride,
-        "prelim_chunk_size": args.prelim_chunk_size,
-
-        # Memory optimization (always enabled in hardcoded script)
-        "sequential_loading": True,
-        "aggressive_memory_cleanup": True,
-        "restore_best_weights": True,
+        'data_dirs': valid_data_dirs,
+        'splits_dir': str(splits_dir),
+        'device': 'cuda' if torch.cuda.is_available() else 'cpu',
+        'epochs': 10000,
+        'learning_rate': 1e-3,
+        'reduced_cluster_size': 64,
+        'hidden_dim': 64,
+        'integrator': 'rk4',
+        'use_fast_ode': False,
+        'use_amp': torch.cuda.is_available(),
+        'output_dir': str(output_dir),
+        'experiment_name': experiment_name,
+        # Enhanced features
+        'lr_patience': 3,
+        'lr_factor': 0.5,
+        'min_lr': 1e-6,
+        'early_stopping_patience': 10,
+        'early_stopping_min_delta': 0.0001,
+        'max_time_hours': 18,
+        # Memory optimizations (aggressive_cleanup is the only configurable one now)
+        'aggressive_cleanup': True,
+        # NEW: Preliminary training settings
+        'enable_preliminary_training': True,  # Set to True to enable
+        'prelim_data_dir': str(prelim_data_dir),
+        'prelim_block_stride': 24,
+        'prelim_max_epochs': 20,
+        'prelim_chunk_size': 2,  # Good balance of memory and stability
     }
 
-    # Small memory mode
-    if args.small_memory:
-        config.update({
-            "max_cluster_size": 128,
-            "chunk_size": 1,
-            "aggressive_memory_cleanup": True,
-        })
-        print("💾 Small memory mode enabled")
+    # Parse command line arguments
+    if 'cpu' in sys.argv:
+        config['device'] = 'cpu'
+        config['use_amp'] = False
+    elif 'cuda' in sys.argv:
+        config['device'] = 'cuda'
+        config['use_amp'] = torch.cuda.is_available()
 
-    # Generate experiment name
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    prelim_tag = "with_prelim" if use_prelim else "no_prelim"
-    memory_tag = "_smallmem" if args.small_memory else ""
-    device_tag = f"_{device}" if args.device else ""
+    # NEW: Enable preliminary training with command line flag
+    if '--with-preliminary' in sys.argv or '--prelim' in sys.argv:
+        config['enable_preliminary_training'] = True
+        print("🔄 Preliminary training enabled via command line")
 
-    experiment_name = f"{timestamp}_training_{prelim_tag}{memory_tag}{device_tag}"
-    config["experiment_name"] = experiment_name
-    config["output_dir"] = "trained_models"
+    # Disable preliminary training
+    if '--no-preliminary' in sys.argv or '--no-prelim' in sys.argv:
+        config['enable_preliminary_training'] = False
+        print("⏭️  Preliminary training disabled via command line")
 
-    # Show configuration
-    print(f"\n📋 CONFIGURATION:")
-    print(f"   Data directory: {args.data_dir}")
-    print(f"   Splits: {args.splits_dir}")
-    print(f"   Device: {device}")
-    print(f"   Max epochs: {args.max_epochs}")
-    if use_prelim:
-        print(f"   Preliminary training: Yes")
-        print(f"   - Max epochs: {args.prelim_max_epochs}")
-        print(f"   - Stride: {args.prelim_stride}")
-        print(f"   - Chunk size: {args.prelim_chunk_size}")
+    # Quick test mode
+    if '--quick-test' in sys.argv:
+        config['epochs'] = 3
+        config['max_residues'] = 100
+        config['reduced_cluster_size'] = 16
+        config['prelim_max_epochs'] = 2  # Shorter preliminary training for testing
+        print("🔧 Quick test mode: 3 epochs, small proteins, small clusters")
+
+    # Custom preliminary settings via command line
+    if '--prelim-stride' in sys.argv:
+        try:
+            idx = sys.argv.index('--prelim-stride')
+            config['prelim_block_stride'] = int(sys.argv[idx + 1])
+        except (IndexError, ValueError):
+            print("❌ Error: --prelim-stride requires an integer argument")
+            return 1
+
+    if '--prelim-epochs' in sys.argv:
+        try:
+            idx = sys.argv.index('--prelim-epochs')
+            config['prelim_max_epochs'] = int(sys.argv[idx + 1])
+        except (IndexError, ValueError):
+            print("❌ Error: --prelim-epochs requires an integer argument")
+            return 1
+
+    if '--prelim-chunk-size' in sys.argv:
+        try:
+            idx = sys.argv.index('--prelim-chunk-size')
+            config['prelim_chunk_size'] = int(sys.argv[idx + 1])
+        except (IndexError, ValueError):
+            print("❌ Error: --prelim-chunk-size requires an integer argument")
+            return 1
+
+    # Memory optimization flags
+    if '--small-memory' in sys.argv:
+        config['reduced_cluster_size'] = 32
+        config['prelim_chunk_size'] = 2
+        config['max_residues'] = 150
+        print("💾 Small memory mode: 32 clusters, chunk size 2, ≤150 residues")
+
+    print("🚀 Neural ODE Training Runner - Updated for Restructured Script")
+    print(f"📁 Data directories: {valid_data_dirs}")
+
+    if config['enable_preliminary_training']:
+        print(f"🔄 Preliminary training enabled:")
+        print(f"   Directory: {config['prelim_data_dir']}")
+        print(f"   Block stride: {config['prelim_block_stride']}")
+        print(f"   Chunk size: {config['prelim_chunk_size']}")
+        print(f"   Max epochs: {config['prelim_max_epochs']}")
+
+        # Check if preliminary data directory exists
+        if not prelim_data_dir.exists():
+            print(f"⚠️  Preliminary data directory not found: {prelim_data_dir}")
+            print("   Preliminary training will be skipped")
+            config['enable_preliminary_training'] = False
     else:
-        print(f"   Preliminary training: No")
-    print(f"   Experiment: {experiment_name}")
+        print("⏭️  Preliminary training disabled")
 
-    # Verify data directories exist
-    print(f"\n🔍 Checking data directories...")
-    valid_dirs = []
-    for data_dir in data_dirs:
-        if Path(data_dir).exists():
-            print(f"   ✅ {data_dir}")
-            valid_dirs.append(data_dir)
+    print(f"💻 Device: {config['device']}")
+    print(f"🔧 Memory: Aggressive cleanup={config['aggressive_cleanup']}")
+    print(f"🧮 Method: Adjoint backpropagation (0→48 blocks only)")
+    print(f"📊 Model: {'Fast ODE' if config['use_fast_ode'] else 'Full ODE'}")
+
+    # Build command for restructured script
+    cmd = [sys.executable, str(training_script)]
+    for key, value in config.items():
+        if key == 'data_dirs':
+            # Handle multiple data directories
+            cmd.extend(['--data_dirs'] + value)
+        elif isinstance(value, bool):
+            if value:
+                cmd.append(f'--{key}')
         else:
-            print(f"   ❌ {data_dir} (not found)")
+            cmd.extend([f'--{key}', str(value)])
 
-    if not valid_dirs:
-        print(f"\n❌ No valid data directories found!")
-        return 1
-
-    # Update config with only valid directories
-    config["data_dirs"] = valid_dirs
-
-    # Verify splits directory
-    if not Path(args.splits_dir).exists():
-        print(f"\n❌ Splits directory not found: {args.splits_dir}")
-        return 1
-
-    # Start training
-    print(f"\n🚀 Starting training...")
-    print(f"   Output will be saved to: trained_models/{experiment_name}_final_model.pt")
-    print(f"   Log file: trained_models/{experiment_name}.txt")
-
-    start_time = time.time()
+    # Show what will be executed
+    print(f"\n🔧 Training configuration:")
+    print(f"   Main training: {config['epochs']} epochs max")
+    print(f"   Learning rate: {config['learning_rate']}")
+    print(f"   Time limit: {config.get('max_time_hours', 'None')} hours")
+    print(f"   Cluster size: {config['reduced_cluster_size']}")
+    if config['enable_preliminary_training']:
+        print(f"   Preliminary: {config['prelim_max_epochs']} epochs on stride-{config['prelim_block_stride']} blocks")
+        print(f"   Chunk size: {config['prelim_chunk_size']} blocks per chunk")
 
     try:
-        result_code = run_training(config)
+        # Start the process with real-time output streaming
+        process = subprocess.Popen(
+            cmd,
+            cwd=script_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,  # Line buffered
+            universal_newlines=True
+        )
 
-        elapsed_time = time.time() - start_time
-        hours = int(elapsed_time // 3600)
-        minutes = int((elapsed_time % 3600) // 60)
-        seconds = int(elapsed_time % 60)
+        # Stream output to console in real-time
+        for line in process.stdout:
+            print(line, end='')  # Print to console immediately
 
+        # Wait for process to complete
+        result_code = process.wait()
+
+        print("\n" + "=" * 50)
         if result_code == 0:
-            print(f"\n✅ Training completed successfully!")
+            print("✅ Training completed successfully!")
+
+            # Show training results if available
+            training_log = output_dir / f"{experiment_name}.txt"
+            if training_log.exists():
+                # Try to extract key results from log
+                try:
+                    with open(training_log, 'r') as f:
+                        content = f.read()
+
+                        # Look for preliminary training results
+                        if config['enable_preliminary_training'] and 'PRELIMINARY TRAINING PHASE' in content:
+                            print("🔄 Preliminary training phase detected in log")
+                            if 'Preliminary training completed' in content:
+                                print("✅ Preliminary training completed successfully")
+
+                        # Look for early stopping or final results
+                        if '🛑 Early stopping triggered' in content:
+                            print("🛑 Training stopped early due to validation criteria")
+                        elif 'Best validation loss:' in content:
+                            # Try to extract best validation loss
+                            lines = content.split('\n')
+                            for line in lines:
+                                if 'Best validation loss:' in line:
+                                    print(f"🏆 {line.strip()}")
+                                    break
+
+                        if 'Learning rate reductions:' in content:
+                            lines = content.split('\n')
+                            for line in lines:
+                                if 'Learning rate reductions:' in line:
+                                    print(f"📉 {line.strip()}")
+                                elif 'Final learning rate:' in line:
+                                    print(f"🎛️  {line.strip()}")
+                                    break
+
+                        # Look for method confirmation
+                        if 'adjoint_0_to_48' in content:
+                            print("🧮 Confirmed: Adjoint method used for 0→48 transformation")
+                except:
+                    pass
+
+            print(f"\n📊 Training log: {output_dir}/{experiment_name}.txt")
+            print(f"🤖 Model saved to: {output_dir}/{experiment_name}_final_model.pt")
         else:
-            print(f"\n❌ Training failed with code: {result_code}")
-
-        print(f"⏱️  Total time: {hours}h {minutes}m {seconds}s")
-
-        output_dir = Path("trained_models")
-        print(f"\n📁 Check output directory: {output_dir}")
-        print(f"🔍 Check the training log for details: {output_dir}/{experiment_name}.txt")
+            print("❌ Training failed!")
+            print(f"🔍 Check the training log for details: {output_dir}/{experiment_name}.txt")
 
         return result_code
 
@@ -240,15 +272,40 @@ def main():
 
 
 if __name__ == "__main__":
-    print("Neural ODE Training Runner - Command Line Version")
+    print("Neural ODE Training Runner - Updated for Restructured Script")
     print("Features: Blocks 0→48 only, Adjoint backprop, LR Scheduling, Early Stopping, Memory optimized")
+    print("NEW: Updated for simplified configuration structure")
     print("")
     print("Usage:")
-    print("  python training_runner.py --data-dir mini_data --splits-dir data_splits/mini")
-    print("  python training_runner.py --data-dir mini_data --splits-dir data_splits/mini --max-epochs 10")
-    print("  python training_runner.py --data-dir mini_data --splits-dir data_splits/mini --quick-test")
-    print("  python training_runner.py --data-dir mini_data --splits-dir data_splits/mini --no-prelim")
-    print(
-        "  python training_runner.py --data-dir mini_data --splits-dir data_splits/mini --prelim-max-epochs 5 --max-epochs 10")
+    print("  python training_runner.py                          # Standard training (with preliminary)")
+    print("  python training_runner.py --no-prelim              # Disable preliminary training")
+    print("  python training_runner.py --prelim                 # Enable preliminary training (default)")
+    print("  python training_runner.py --quick-test             # Quick 3-epoch test")
+    print("  python training_runner.py --prelim-stride 8        # Custom stride")
+    print("  python training_runner.py --prelim-epochs 50       # Custom prelim epochs")
+    print("  python training_runner.py --prelim-chunk-size 2    # Custom chunk size")
+    print("  python training_runner.py --small-memory           # Memory-optimized settings")
+    print("  python training_runner.py cpu                      # Force CPU")
+    print("  python training_runner.py cuda                     # Force CUDA")
+    print("")
+    print("Preliminary Training:")
+    print("  • Runs BEFORE main 0→48 training")
+    print("  • Uses strided intermediate blocks (e.g., 0→4→8→12→16→20→24→28→32→36→40→44→48)")
+    print("  • Helps initialize model with intermediate dynamics")
+    print("  • Configurable stride length, epoch count, and chunk size")
+    print("  • Uses same validation set for early stopping")
+    print("  • Same early stopping delta as main training (hardcoded)")
+    print("")
+    print("Memory Optimization:")
+    print("  • Sequential loading always enabled (hardcoded)")
+    print("  • Best weights restoration always enabled (hardcoded)")
+    print("  • Configurable: cluster_size, chunk_size, aggressive_cleanup")
+    print("  • --small-memory flag for memory-constrained GPUs")
+    print("")
+    print("Data directory search order:")
+    print("  1. /media/visitor/Extreme SSD/data/complete_blocks")
+    print("  2. /media/visitor/Extreme SSD/data/endpoint_blocks")
+    print("  Preliminary: /media/visitor/Extreme SSD/data/complete_blocks")
+    print("  (Edit script to add more directories)")
     print("")
     sys.exit(main())
