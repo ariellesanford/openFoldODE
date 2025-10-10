@@ -160,7 +160,8 @@ def main():
         import matplotlib
         matplotlib.use('Agg')
 
-    output_file = args.output or str(Path(args.json_file).with_name(Path(args.json_file).stem + "_plot.png"))
+    output_file = args.output or str(Path(args.json_file).with_name(Path(args.json_file).stem + "_plot.pdf"))
+
     create_plot(data, equations, output_file)
 
     print(f"\n✅ Analysis complete!")
