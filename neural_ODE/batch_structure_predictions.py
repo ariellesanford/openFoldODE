@@ -51,9 +51,6 @@ def main():
     # Configuration - EDIT THESE FOR PYCHARM EXECUTION
     script_dir = Path(__file__).parent
 
-    # =======================================================================================
-    # PYCHARM CONFIGURATION - Edit these variables to run directly in PyCharm
-    # =======================================================================================
 
     SPLITS_FOLDER = "full"  # Change this to your desired splits folder
     ADDITIONAL_ARGS = [
@@ -62,9 +59,6 @@ def main():
         # "--run_metrics", "False"  # Uncomment to disable metrics
     ]
 
-    # =======================================================================================
-    # Command line parsing (will override PyCharm config if arguments provided)
-    # =======================================================================================
 
     if len(sys.argv) >= 2:
         # Use command line arguments
