@@ -2,7 +2,7 @@ Protein Folding with Neural Ordinary Differential Equations
 ==============
 [![arXiv](https://img.shields.io/badge/arXiv-2510.16253-b31b1b.svg)](https://arxiv.org/abs/2510.16253)
 
-openFoldODE implements a Neural Ordinary Differential Equation (Neural ODE) formulation of the Evoformer. Instead of fixed discrete blocks, we use a continuous-depth parameterization that preserves the Evoformer’s attention-based operations while enabling efficient and adaptive computation.
+openFoldODE implements a Neural ODE formulation of the Evoformer, the attention-based module at the heart of AlphaFold 2 that models interactions governing protein folding. Instead of fixed discrete blocks, we use a continuous-depth parameterization that preserves the Evoformer’s attention-based operations while enabling efficient and adaptive computation.
 
 ## Getting Started
 
