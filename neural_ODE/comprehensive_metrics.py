@@ -662,57 +662,57 @@ class ComprehensiveMetricsCollector:
 
         # Structure Quality Rankings
         if "by_avg_plddt" in rankings:
-            print(f"\n🏆 STRUCTURE QUALITY RANKING (Average pLDDT):")
+            print(f"\nSTRUCTURE QUALITY RANKING (Average pLDDT):")
             for i, (method, plddt) in enumerate(rankings["by_avg_plddt"], 1):
                 confidence = "🟢 Very High" if plddt >= 90 else "🟡 High" if plddt >= 70 else "🟠 Medium" if plddt >= 50 else "🔴 Low"
                 print(f"  {i}. {method}: {plddt:.1f} pLDDT {confidence}")
 
         # Representation Accuracy Rankings
         if "by_total_adaptive_loss" in rankings:
-            print(f"\n🎯 REPRESENTATION ACCURACY RANKING (Adaptive Loss):")
+            print(f"\nREPRESENTATION ACCURACY RANKING (Adaptive Loss):")
             for i, (method, loss) in enumerate(rankings["by_total_adaptive_loss"], 1):
                 print(f"  {i}. {method}: {loss:.6f} adaptive loss")
 
         if "by_msa_cosine_similarity" in rankings:
-            print(f"\n🧬 MSA REPRESENTATION SIMILARITY:")
+            print(f"\nMSA REPRESENTATION SIMILARITY:")
             for i, (method, sim) in enumerate(rankings["by_msa_cosine_similarity"], 1):
                 quality = "Excellent" if sim >= 0.95 else "Good" if sim >= 0.90 else "Fair" if sim >= 0.80 else "Poor"
                 print(f"  {i}. {method}: {sim:.4f} cosine similarity ({quality})")
 
         # Auxiliary Loss Rankings
         if "by_masked_msa_loss" in rankings:
-            print(f"\n🎭 MASKED MSA LOSS RANKING:")
+            print(f"\nMASKED MSA LOSS RANKING:")
             for i, (method, loss) in enumerate(rankings["by_masked_msa_loss"], 1):
                 print(f"  {i}. {method}: {loss:.6f} masked MSA loss")
 
         if "by_distogram_loss" in rankings:
-            print(f"\n📐 DISTOGRAM LOSS RANKING:")
+            print(f"\nDISTOGRAM LOSS RANKING:")
             for i, (method, loss) in enumerate(rankings["by_distogram_loss"], 1):
                 print(f"  {i}. {method}: {loss:.6f} distogram loss")
 
         # Structural Accuracy Rankings
         if self.has_reference:
             if "by_rmsd" in rankings:
-                print(f"\n📏 STRUCTURAL RMSD RANKING (vs Reference):")
+                print(f"\nSTRUCTURAL RMSD RANKING (vs Reference):")
                 for i, (method, rmsd) in enumerate(rankings["by_rmsd"], 1):
                     quality = "🟢 Excellent" if rmsd <= 2.0 else "🟡 Good" if rmsd <= 4.0 else "🟠 Fair" if rmsd <= 6.0 else "🔴 Poor"
                     print(f"  {i}. {method}: {rmsd:.2f} Å {quality}")
 
             if "by_gdt_ts" in rankings:
-                print(f"\n🎲 GDT-TS RANKING (vs Reference):")
+                print(f"\nGDT-TS RANKING (vs Reference):")
                 for i, (method, gdt) in enumerate(rankings["by_gdt_ts"], 1):
                     quality = "🟢 Excellent" if gdt >= 0.8 else "🟡 Good" if gdt >= 0.6 else "🟠 Fair" if gdt >= 0.4 else "🔴 Poor"
                     print(f"  {i}. {method}: {gdt:.3f} {quality}")
 
             if "by_tm_score" in rankings:
-                print(f"\n🔄 TM-SCORE RANKING (vs Reference):")
+                print(f"\nTM-SCORE RANKING (vs Reference):")
                 for i, (method, tm) in enumerate(rankings["by_tm_score"], 1):
                     quality = "🟢 Same fold" if tm >= 0.5 else "🟠 Different fold"
                     quality += " (High sim)" if tm >= 0.8 else " (Med sim)" if tm >= 0.6 else " (Low sim)"
                     print(f"  {i}. {method}: {tm:.3f} {quality}")
 
         # Summary statistics
-        print(f"\n📈 SUMMARY STATISTICS:")
+        print(f"\nSUMMARY STATISTICS:")
         print(f"   Total methods analyzed: {len(all_metrics)}")
         print(f"   Methods with structure quality: {len(rankings.get('by_avg_plddt', []))}")
         print(f"   Methods with representation loss: {len(rankings.get('by_total_adaptive_loss', []))}")
@@ -777,7 +777,7 @@ def integrate_comprehensive_metrics(runner_instance):
         with open(summary_file, 'w') as f:
             json.dump(summary, f, indent=2, default=str)
 
-        print(f"\n📊 Comprehensive metrics saved to: {summary_file}")
+        print(f"\nComprehensive metrics saved to: {summary_file}")
         runner_instance.comprehensive_metrics.print_comprehensive_summary(
             runner_instance.method_metrics, rankings
         )

@@ -717,63 +717,6 @@ def setup_schedulers(optimizer, config: TrainingConfig, has_validation: bool, re
 
     return lr_scheduler, early_stopping
 
-# def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, logger) -> bool:
-#     """Run preliminary training phase - now with LR scheduling support"""
-#     if not config.enable_preliminary_training:
-#         return True
-#
-#     print(f"\n🚀 PRELIMINARY TRAINING PHASE")
-#     print(f"=" * 60)
-#
-#     # Get preliminary proteins
-#     prelim_train_proteins = DataManager.get_available_proteins([config.prelim_data_dir], config.splits_dir, 'training', single_dir=True)
-#     prelim_val_proteins = DataManager.get_available_proteins([config.prelim_data_dir], config.splits_dir, 'validation', single_dir=True)
-#
-#     # Filter by size
-#     if config.max_residues:
-#         prelim_train_proteins = DataManager.filter_proteins_by_size(prelim_train_proteins, config.max_residues, config.prelim_data_dir)
-#         prelim_val_proteins = DataManager.filter_proteins_by_size(prelim_val_proteins, config.max_residues, config.prelim_data_dir)
-#
-#     if not prelim_train_proteins:
-#         print("❌ No preliminary training proteins found")
-#         return False
-#
-#     # Setup preliminary phase
-#     prelim_phase = TrainingPhase(config, is_preliminary=True)
-#     prelim_lr_scheduler, prelim_early_stopping = setup_schedulers(optimizer, config, bool(prelim_val_proteins))
-#
-#     # Training loop
-#     for epoch in range(config.prelim_max_epochs):
-#         print(f"\n📈 Preliminary Epoch {epoch + 1}/{config.prelim_max_epochs}")
-#         print(f"🎛️  LR: {optimizer.param_groups[0]['lr']:.2e}")  # Show current LR
-#
-#         epoch_losses, successful_proteins = prelim_phase.run_epoch(prelim_train_proteins, model, optimizer, scaler, logger, epoch + 1, config.prelim_max_epochs)
-#
-#         # Validation
-#         val_results = None
-#         if prelim_val_proteins:
-#             print(f"\n🔍 Preliminary validation on {len(prelim_val_proteins)} proteins...")
-#             val_results = prelim_phase.validate(prelim_val_proteins, model)
-#
-#         if logger:
-#             logger.log_epoch_end(val_results, is_preliminary=True, optimizer=optimizer)
-#
-#         # Training summary
-#         if epoch_losses:
-#             avg_train_loss = sum(epoch_losses) / len(epoch_losses)
-#             print(f"📊 Training: {avg_train_loss:.5f} ({successful_proteins}/{len(prelim_train_proteins)})")
-#
-#             # LR scheduling - NEW: Add LR scheduler step for preliminary training
-#             if prelim_lr_scheduler and val_results:
-#                 prelim_lr_scheduler.step(val_results['avg_loss'], epoch + 1)
-#
-#         # Early stopping check
-#         if val_results and prelim_early_stopping(val_results['avg_loss'], epoch + 1, model):
-#             print(f"\n🛑 Early stopping triggered in preliminary training!")
-#             break
-#
-#     print(f"\n✅ Preliminary training completed!")
-#     return True
 
 
 def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, logger) -> bool:
@@ -781,7 +724,7 @@ def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, l
     if not config.enable_preliminary_training:
         return True
 
-    print(f"\n🚀 PRELIMINARY TRAINING PHASE")
+    print(f"\nPRELIMINARY TRAINING PHASE")
     print(f"=" * 60)
 
     # Get preliminary proteins
@@ -808,8 +751,8 @@ def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, l
     max_nan_epochs = 3
 
     for epoch in range(config.prelim_max_epochs):
-        print(f"\n📈 Preliminary Epoch {epoch + 1}/{config.prelim_max_epochs}")
-        print(f"🎛️  LR: {optimizer.param_groups[0]['lr']:.2e}")
+        print(f"\nPreliminary Epoch {epoch + 1}/{config.prelim_max_epochs}")
+        print(f"LR: {optimizer.param_groups[0]['lr']:.2e}")
 
         epoch_losses, successful_proteins = prelim_phase.run_epoch(
             prelim_train_proteins, model, optimizer, scaler, logger, epoch + 1, config.prelim_max_epochs
@@ -830,11 +773,11 @@ def run_preliminary_training(config: TrainingConfig, model, optimizer, scaler, l
                 # Simple LR reduction
                 for group in optimizer.param_groups:
                     group['lr'] *= 0.5
-                print(f"🔽 Emergency LR reduction: {group['lr']:.2e}")
+                print(f"Emergency LR reduction: {group['lr']:.2e}")
                 continue
             else:
                 consecutive_nan_epochs = 0
-                print(f"📊 Training: {avg_train_loss:.5f} ({successful_proteins}/{len(prelim_train_proteins)})")
+                print(f"Training: {avg_train_loss:.5f} ({successful_proteins}/{len(prelim_train_proteins)})")
 
         # Validation
         val_results = None
@@ -872,7 +815,7 @@ def save_final_model(model, config: TrainingConfig, logger, training_stats: Dict
 
     torch.save(save_dict, model_path)
     logger.log_training_complete(model_path)
-    print(f"🤖 Model saved: {model_path}")
+    print(f"Model saved: {model_path}")
 
 
 def main():
