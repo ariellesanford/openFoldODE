@@ -24,6 +24,14 @@ if not save_intermediates_path.exists():
 if save_intermediates_path.exists():
     sys.path.insert(0, str(save_intermediates_path))
 
+# Import tmtools for proper TM-score calculation
+try:
+    from tmtools import tm_align
+    TMTOOLS_AVAILABLE = True
+except ImportError:
+    TMTOOLS_AVAILABLE = False
+    print("⚠️  tmtools not installed. Run: pip install tmtools")
+
 try:
     from openfold.model.heads import MaskedMSAHead, DistogramHead
     from openfold.utils.loss import masked_msa_loss, distogram_loss
@@ -266,7 +274,7 @@ class ComprehensiveMetricsCollector:
         }
 
     def calculate_rmsd(self, pred_pdb_path: Path) -> Optional[float]:
-        """Calculate RMSD between predicted and reference structures"""
+        """Calculate RMSD after optimal structural alignment using tmtools"""
         if not self.has_reference:
             return None
 
@@ -274,10 +282,20 @@ class ComprehensiveMetricsCollector:
         if pred_coords is None:
             return None
 
+        if TMTOOLS_AVAILABLE:
+            # Use tmtools for aligned RMSD
+            pred_seq = 'A' * len(pred_coords)
+            ref_seq = 'A' * len(self.reference_coords)
+            try:
+                result = tm_align(pred_coords, self.reference_coords, pred_seq, ref_seq)
+                return float(result.rmsd)
+            except Exception as e:
+                print(f"⚠️  tmtools RMSD failed: {e}, falling back to unaligned")
+
+        # Fallback to unaligned RMSD
         min_len = min(len(self.reference_coords), len(pred_coords))
         ref_subset = self.reference_coords[:min_len]
         pred_subset = pred_coords[:min_len]
-
         diff = ref_subset - pred_subset
         return float(np.sqrt(np.mean(np.sum(diff ** 2, axis=1))))
 
@@ -304,25 +322,61 @@ class ComprehensiveMetricsCollector:
 
         return float(gdt_ts / 4.0)
 
-    def calculate_tm_score_approximate(self, pred_pdb_path: Path) -> Optional[float]:
-        """Approximate TM-score calculation"""
+    def calculate_tm_score(self, pred_pdb_path: Path) -> Optional[Dict[str, float]]:
+        """
+        Calculate TM-score using tmtools with proper structural alignment.
+        
+        This uses the official TM-align algorithm which performs optimal 
+        superposition (rotation + translation) before computing TM-score.
+        
+        Returns:
+            Dict with tm_score and tm_score_scaled, or None if failed
+        """
         if not self.has_reference:
+            return None
+
+        if not TMTOOLS_AVAILABLE:
+            print("⚠️  tmtools not available, skipping TM-score")
             return None
 
         pred_coords = self._parse_pdb_coordinates(pred_pdb_path)
         if pred_coords is None:
             return None
 
-        min_len = min(len(self.reference_coords), len(pred_coords))
-        ref_subset = self.reference_coords[:min_len]
-        pred_subset = pred_coords[:min_len]
+        # tmtools requires sequences - use placeholder 'A' for each residue
+        pred_seq = 'A' * len(pred_coords)
+        ref_seq = 'A' * len(self.reference_coords)
 
-        distances = np.sqrt(np.sum((ref_subset - pred_subset) ** 2, axis=1))
-        L = len(ref_subset)
-        d0 = 1.24 * (L - 15) ** (1 / 3) - 1.8 if L > 21 else 0.5
-
-        tm_score = np.mean(1.0 / (1.0 + (distances / d0) ** 2))
-        return float(tm_score)
+        try:
+            result = tm_align(pred_coords, self.reference_coords, pred_seq, ref_seq)
+            
+            # Standard TM-score (normalized by reference length)
+            tm_score = float(result.tm_norm_chain2)
+            
+            # Scale-normalized TM-score: first normalize structures to same size, then compute
+            # This rewards correct topology even if the structure is inflated/deflated
+            pred_centered = pred_coords - pred_coords.mean(axis=0)
+            ref_centered = self.reference_coords - self.reference_coords.mean(axis=0)
+            
+            pred_scale = np.sqrt(np.sum(pred_centered ** 2) / len(pred_coords))
+            ref_scale = np.sqrt(np.sum(ref_centered ** 2) / len(self.reference_coords))
+            
+            # Normalize prediction to same scale as reference
+            scale_factor = ref_scale / pred_scale if pred_scale > 0 else 1.0
+            pred_scaled = pred_centered * scale_factor
+            
+            # Recompute TM-score with scaled coordinates
+            result_scaled = tm_align(pred_scaled, ref_centered, pred_seq, ref_seq)
+            tm_score_scaled = float(result_scaled.tm_norm_chain2)
+            
+            return {
+                "tm_score": tm_score,
+                "tm_score_scaled": tm_score_scaled,
+                "scale_factor": scale_factor
+            }
+        except Exception as e:
+            print(f"⚠️  TM-score calculation failed: {e}")
+            return None
 
     def compute_detailed_representation_loss(self, msa_path: Path, pair_path: Path,
                                              ground_truth_msa_path: Path, ground_truth_pair_path: Path) -> Dict:
@@ -505,6 +559,7 @@ class ComprehensiveMetricsCollector:
             "masked_msa_loss": float(msa_loss_value),
             "distogram_loss": float(distogram_loss_value)
         }
+
     def collect_all_metrics(self, method_name: str, output_dir: Path,
                             msa_path: Path = None, pair_path: Path = None,
                             ground_truth_msa_path: Path = None,
@@ -549,9 +604,11 @@ class ComprehensiveMetricsCollector:
                 gdt_ts = self.calculate_gdt_ts(pdb_path)
                 if gdt_ts is not None:
                     structural_accuracy["gdt_ts"] = gdt_ts
-                tm_score = self.calculate_tm_score_approximate(pdb_path)
-                if tm_score is not None:
-                    structural_accuracy["tm_score_approx"] = tm_score
+                tm_result = self.calculate_tm_score(pdb_path)
+                if tm_result is not None:
+                    structural_accuracy["tm_score"] = tm_result["tm_score"]
+                    structural_accuracy["tm_score_scaled"] = tm_result["tm_score_scaled"]
+                    structural_accuracy["scale_factor"] = tm_result["scale_factor"]
                 metrics["structural_accuracy"] = structural_accuracy
             else:
                 metrics["structural_accuracy"] = None
@@ -646,10 +703,10 @@ class ComprehensiveMetricsCollector:
             if gdt_methods:
                 rankings["by_gdt_ts"] = sorted(gdt_methods, key=lambda x: x[1], reverse=True)
 
-            tm_methods = [(name, metrics["structural_accuracy"].get("tm_score_approx"))
+            tm_methods = [(name, metrics["structural_accuracy"].get("tm_score"))
                           for name, metrics in all_methods.items()
                           if metrics.get("structural_accuracy") and metrics["structural_accuracy"].get(
-                    "tm_score_approx") is not None]
+                    "tm_score") is not None]
             if tm_methods:
                 rankings["by_tm_score"] = sorted(tm_methods, key=lambda x: x[1], reverse=True)
 
@@ -710,6 +767,16 @@ class ComprehensiveMetricsCollector:
                     quality = "🟢 Same fold" if tm >= 0.5 else "🟠 Different fold"
                     quality += " (High sim)" if tm >= 0.8 else " (Med sim)" if tm >= 0.6 else " (Low sim)"
                     print(f"  {i}. {method}: {tm:.3f} {quality}")
+
+            if "by_tm_score_scaled" in rankings:
+                print(f"\nTM-SCORE SCALED RANKING (scale-normalized, rewards correct shape):")
+                for i, (method, tm) in enumerate(rankings["by_tm_score_scaled"], 1):
+                    quality = "🟢 Same fold" if tm >= 0.5 else "🟠 Different fold"
+                    quality += " (High sim)" if tm >= 0.8 else " (Med sim)" if tm >= 0.6 else " (Low sim)"
+                    # Find the scale factor for this method
+                    scale = all_metrics.get(method, {}).get("structural_accuracy", {}).get("scale_factor", 1.0)
+                    scale_info = f" [scale: {scale:.2f}x]" if scale and abs(scale - 1.0) > 0.05 else ""
+                    print(f"  {i}. {method}: {tm:.3f} {quality}{scale_info}")
 
         # Summary statistics
         print(f"\nSUMMARY STATISTICS:")
@@ -840,23 +907,140 @@ def analyze_method_predictions(pdb_id: str, methods_config: Dict[str, Dict]) -> 
 
 
 if __name__ == "__main__":
-    print("🧬 Comprehensive Structure Prediction Metrics")
-    print("=" * 50)
-    print("This module provides comprehensive metrics for structure prediction analysis.")
-    print("\nKey features:")
-    print("• Finds reference structures in openfold_deconstructed directories")
-    print("• Computes structural accuracy (RMSD, GDT-TS, TM-score)")
-    print("• Analyzes confidence scores (pLDDT distributions)")
-    print("• Evaluates representation losses (MSA, pair, single)")
-    print("• Computes OpenFold auxiliary losses (masked MSA, distogram)")
-    print("• Integrates with existing prediction pipelines")
-    print("\nUsage examples:")
-    print("  # Standalone usage:")
-    print("  collector = ComprehensiveMetricsCollector('1fv5_A')")
-    print("  metrics = collector.collect_all_metrics(...)")
-    print("")
-    print("  # Integration with runner:")
-    print("  integrate_comprehensive_metrics(runner_instance)")
-    print("")
-    print("  # Batch analysis:")
-    print("  results = analyze_method_predictions('1fv5_A', methods_config)")
+    # === CONFIGURATION ===
+    pdb_id = "1fv5_A"
+    base_path = Path('/Volumes/Extreme SSD/data/structure_predictions') / pdb_id
+    neural_ode_pred = "predictions_20250616_180845_full_ode_with_prelim"
+    
+    # Define all prediction paths
+    methods = {
+        "Neural ODE": base_path / "neuralODE" / neural_ode_pred / f"{pdb_id}_model_1_ptm_relaxed.pdb",
+        "Half Evoformer": base_path / "half_evoformer" / f"{pdb_id}_model_1_ptm_relaxed.pdb",
+        "OpenFold 0recycles": base_path / "openfold_0recycles" / "predictions" / f"{pdb_id}_model_1_ptm_relaxed.pdb",
+        "OpenFold Deconstructed": base_path / "openfold_deconstructed" / f"{pdb_id}_model_1_ptm_relaxed.pdb",
+    }
+    
+    # Define reference structures
+    references = {
+        "openfold_deconstructed": base_path / "openfold_deconstructed" / f"{pdb_id}_model_1_ptm_relaxed.pdb",
+        "openfold_0recycles": base_path / "openfold_0recycles" / "predictions" / f"{pdb_id}_model_1_ptm_relaxed.pdb",
+    }
+    
+    # First, let's do a sanity check - compare a structure to itself
+    print("=" * 80)
+    print("SANITY CHECK: Comparing openfold_deconstructed to itself")
+    print("=" * 80)
+    
+    ref_path = references["openfold_deconstructed"]
+    ref_coords = []
+    with open(ref_path, 'r') as f:
+        for line in f:
+            if line.startswith('ATOM') and line[13:16].strip() == 'CA':
+                x = float(line[30:38])
+                y = float(line[38:46])
+                z = float(line[46:54])
+                ref_coords.append([x, y, z])
+    ref_coords = np.array(ref_coords)
+    
+    ref_seq = 'A' * len(ref_coords)
+    result = tm_align(ref_coords, ref_coords, ref_seq, ref_seq)
+    print(f"Self-comparison TM-score (should be 1.0): {result.tm_norm_chain1:.4f}")
+    print(f"Self-comparison RMSD (should be 0.0): {result.rmsd:.4f}")
+    print(f"Number of CA atoms: {len(ref_coords)}")
+    
+    # Now compare the two OpenFold methods
+    print("\n" + "=" * 80)
+    print("COMPARING: openfold_deconstructed vs openfold_0recycles")
+    print("=" * 80)
+    
+    pred_path = references["openfold_0recycles"]
+    pred_coords = []
+    with open(pred_path, 'r') as f:
+        for line in f:
+            if line.startswith('ATOM') and line[13:16].strip() == 'CA':
+                x = float(line[30:38])
+                y = float(line[38:46])
+                z = float(line[46:54])
+                pred_coords.append([x, y, z])
+    pred_coords = np.array(pred_coords)
+    
+    print(f"openfold_deconstructed CA atoms: {len(ref_coords)}")
+    print(f"openfold_0recycles CA atoms: {len(pred_coords)}")
+    print(f"\nFirst 3 CA coords (deconstructed): {ref_coords[:3]}")
+    print(f"First 3 CA coords (0recycles): {pred_coords[:3]}")
+    
+    pred_seq = 'A' * len(pred_coords)
+    ref_seq = 'A' * len(ref_coords)
+    
+    result = tm_align(pred_coords, ref_coords, pred_seq, ref_seq)
+    print(f"\nTM-score (norm by ref): {result.tm_norm_chain2:.4f}")
+    print(f"TM-score (norm by pred): {result.tm_norm_chain1:.4f}")
+    print(f"RMSD: {result.rmsd:.4f}")
+    print(f"Rotation matrix:\n{result.u}")
+    print(f"Translation vector: {result.t}")
+    
+    # Compute TM-scores against each reference
+    for ref_name, ref_path in references.items():
+        print(f"\n{'='*80}")
+        print(f"TM-scores vs {ref_name}")
+        print(f"{'='*80}")
+        
+        if not ref_path.exists():
+            print(f"Reference not found: {ref_path}")
+            continue
+        
+        # Load reference coordinates directly
+        ref_coords = []
+        with open(ref_path, 'r') as f:
+            for line in f:
+                if line.startswith('ATOM') and line[13:16].strip() == 'CA':
+                    x = float(line[30:38])
+                    y = float(line[38:46])
+                    z = float(line[46:54])
+                    ref_coords.append([x, y, z])
+        ref_coords = np.array(ref_coords)
+        print(f"Reference CA atoms: {len(ref_coords)}")
+        
+        print(f"\n{'Method':<25} {'TM-score':<12} {'TM-align':<12} {'RMSD':<12}")
+        print(f"{'-'*60}")
+        
+        for method_name, pred_path in methods.items():
+            if not pred_path.exists():
+                print(f"{method_name:<25} File not found")
+                continue
+            
+            # Load prediction coordinates
+            pred_coords = []
+            with open(pred_path, 'r') as f:
+                for line in f:
+                    if line.startswith('ATOM') and line[13:16].strip() == 'CA':
+                        x = float(line[30:38])
+                        y = float(line[38:46])
+                        z = float(line[46:54])
+                        pred_coords.append([x, y, z])
+            pred_coords = np.array(pred_coords)
+            
+            # Use tmtools
+            pred_seq = 'A' * len(pred_coords)
+            ref_seq = 'A' * len(ref_coords)
+            
+            try:
+                result = tm_align(pred_coords, ref_coords, pred_seq, ref_seq)
+                
+                # TM-score normalized by chain 2 (reference)
+                tm_score = result.tm_norm_chain2
+                
+                # TM-align score (normalized by chain 1 - the query/prediction)
+                tm_align_score = result.tm_norm_chain1
+                
+                rmsd = result.rmsd
+                
+                print(f"{method_name:<25} {tm_score:<12.4f} {tm_align_score:<12.4f} {rmsd:<12.2f}")
+            except Exception as e:
+                print(f"{method_name:<25} Error: {e}")
+    
+    print(f"\n{'='*80}")
+    print("TM-score: normalized by reference length")
+    print("TM-align: normalized by prediction length") 
+    print("Both use structural alignment (rotation+translation)")
+    print(f"{'='*80}")
