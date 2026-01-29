@@ -1,0 +1,80 @@
+{
+  "full_model": {
+    "config": {},
+    "n_params": 854854,
+    "train_time": 27.467489004135132,
+    "final_train_loss": 904.7832946777344,
+    "test_loss": 758.1248184204102,
+    "avg_inference_time_ms": 69.5411205291748
+  },
+  "no_row_attn": {
+    "config": {
+      "ablate_row_attn": true
+    },
+    "n_params": 836930,
+    "train_time": 9.157793283462524,
+    "final_train_loss": 913.6743286132812,
+    "test_loss": 787.5229476928711,
+    "avg_inference_time_ms": 58.77103805541992
+  },
+  "no_col_attn": {
+    "config": {
+      "ablate_col_attn": true
+    },
+    "n_params": 870598,
+    "train_time": 10.050235509872437,
+    "final_train_loss": 850.4192901611328,
+    "test_loss": 721.9595886230469,
+    "avg_inference_time_ms": 67.54746437072754
+  },
+  "no_msa_transition": {
+    "config": {
+      "ablate_msa_transition": true
+    },
+    "n_params": 394566,
+    "train_time": 9.612827777862549,
+    "final_train_loss": 890.0564239501953,
+    "test_loss": 749.3582748413086,
+    "avg_inference_time_ms": 65.76347351074219
+  },
+  "no_outer_product": {
+    "config": {
+      "ablate_outer_product": true
+    },
+    "n_params": 866566,
+    "train_time": 9.108432531356812,
+    "final_train_loss": 910.8416687011719,
+    "test_loss": 761.8025466918946,
+    "avg_inference_time_ms": 54.0034294128418
+  },
+  "no_triangle": {
+    "config": {
+      "ablate_triangle": true
+    },
+    "n_params": 829766,
+    "train_time": 8.941877841949463,
+    "final_train_loss": 886.2830810546875,
+    "test_loss": 733.39599609375,
+    "avg_inference_time_ms": 54.73299026489258
+  },
+  "no_pair_transition": {
+    "config": {
+      "ablate_pair_transition": true
+    },
+    "n_params": 739398,
+    "train_time": 9.04362177848816,
+    "final_train_loss": 908.4135803222656,
+    "test_loss": 743.1521896362304,
+    "avg_inference_time_ms": 60.553884506225586
+  },
+  "no_time_embed": {
+    "config": {
+      "ablate_time_embed": true
+    },
+    "n_params": 854596,
+    "train_time": 9.94893193244934,
+    "final_train_loss": 1030.6694946289062,
+    "test_loss": 787.3671783447265,
+    "avg_inference_time_ms": 70.50342559814453
+  }
+}
