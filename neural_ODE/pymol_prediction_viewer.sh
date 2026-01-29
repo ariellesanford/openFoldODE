@@ -12,7 +12,7 @@ DATA_DIR="/Volumes/Extreme SSD/data"
 # CONFIGURATION - EDIT THESE VARIABLES TO RUN DIRECTLY
 # =======================================================================================
 
-PDB_ID="1fv5_A"                    # Change this to your protein ID
+PDB_ID="1o70_A"                    # Change this to your protein ID
 STRUCTURE_TYPE="relaxed"           # Change to "unrelaxed" if you want unrelaxed structures
 NEURAL_ODE_PREDICTIONS=()          # Empty = auto-discover all available Neural ODE predictions
 
@@ -138,8 +138,9 @@ if [ ${#PDB_FILES[@]} -eq 0 ]; then
     exit 1
 fi
 
-# Create PyMOL script
-PYMOL_SCRIPT=$(mktemp /tmp/pymol_view_XXXXXX.pml)
+# Create PyMOL script (Mac-compatible)
+PYMOL_SCRIPT="/tmp/pymol_view_${PDB_ID}_$$.pml"
+rm -f "$PYMOL_SCRIPT"
 
 echo "# PyMOL script for ${PDB_ID}" > "$PYMOL_SCRIPT"
 echo "bg_color white" >> "$PYMOL_SCRIPT"

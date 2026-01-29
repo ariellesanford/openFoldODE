@@ -19,8 +19,8 @@ class StructurePredictionRunner:
 
         # Base directories
         self.script_dir = Path(__file__).parent
-        self.root_dir = Path("/home/visitor/PycharmProjects/openFold")
-        self.data_dir = Path("/media/visitor/Extreme SSD/data")
+        self.root_dir = Path("/Users/ariellesanford/Projects/openFoldODE")  # wherever it is on your Mac
+        self.data_dir = Path("/Volumes/Extreme SSD/data")
 
         # Configuration
         self.neural_ode_predictions_base_dir = self.data_dir / "post_evoformer_predictions"
@@ -449,7 +449,7 @@ def main():
 
         try:
             # Import and run comprehensive metrics
-            from comprehensive_metrics import integrate_comprehensive_metrics
+            from neural_ODE.comprehensive_metrics_old import integrate_comprehensive_metrics
 
             # Add metrics collection to the runner
             integrate_comprehensive_metrics(runner)

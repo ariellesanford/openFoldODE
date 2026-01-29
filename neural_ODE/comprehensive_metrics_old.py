@@ -32,24 +32,13 @@ def parse_pdb_ca_coords(pdb_path: Path) -> Optional[np.ndarray]:
 
 
 def compute_tm_metrics(pred_coords: np.ndarray, ref_coords: np.ndarray) -> Dict:
-    """Compute TM-score, RMSD, GDT-TS and other metrics using tmtools"""
+    """Compute TM-score and RMSD using tmtools"""
     pred_seq = 'A' * len(pred_coords)
     ref_seq = 'A' * len(ref_coords)
     result = tm_align(pred_coords, ref_coords, pred_seq, ref_seq)
-    
-    # Apply alignment to get per-residue distances
-    aligned_pred = pred_coords @ result.u + result.t
-    distances = np.sqrt(np.sum((aligned_pred - ref_coords) ** 2, axis=1))
-    
     return {
         "tm_score": float(result.tm_norm_chain2),
         "rmsd": float(result.rmsd),
-        "gdt_ts": float(np.mean([np.mean(distances <= t) for t in [1, 2, 4, 8]])),
-        "gdt_ha": float(np.mean([np.mean(distances <= t) for t in [0.5, 1, 2, 4]])),
-        "frac_within_2A": float(np.mean(distances <= 2.0)),
-        "frac_within_4A": float(np.mean(distances <= 4.0)),
-        "max_deviation": float(np.max(distances)),
-        "median_distance": float(np.median(distances)),
     }
 
 
@@ -144,11 +133,7 @@ def process_all_proteins(base_path: Path):
                     .replace("_full_ode_with_prelim2", "_v2")
                     .replace("_full_ode_with_prelim", "")
                 )
-                results[display_name][ref_name].append({
-                    "pdb_id": pdb_id,
-                    "length": protein_length,
-                    **metrics
-                })
+                results[display_name][ref_name].append((pdb_id, protein_length, metrics["tm_score"], metrics["rmsd"]))
 
     return results
 
@@ -158,102 +143,69 @@ def print_summary_stats(results):
     references = ["openfold_deconstructed", "openfold_0recycles"]
     
     for ref_name in references:
-        print(f"\n{'='*90}")
+        print(f"\n{'='*80}")
         print(f"Summary Statistics vs {ref_name}")
-        print(f"{'='*90}")
-        print(f"\n{'Method':<30} {'N':<5} {'TM-score':<18} {'GDT-TS':<18} {'RMSD':<18}")
-        print(f"{'-'*90}")
+        print(f"{'='*80}")
+        print(f"\n{'Method':<35} {'N':<6} {'TM-score':<20} {'RMSD':<20}")
+        print(f"{'-'*80}")
         
         for method in sorted(results.keys()):
             data = results[method].get(ref_name, [])
             if not data:
                 continue
             
+            tm_scores = [d[2] for d in data]
+            rmsds = [d[3] for d in data]
             n = len(data)
-            tm_scores = [d["tm_score"] for d in data]
-            gdt_ts = [d["gdt_ts"] for d in data]
-            rmsds = [d["rmsd"] for d in data]
             
-            print(f"{method:<30} {n:<5} "
-                  f"{np.mean(tm_scores):.3f} ± {np.std(tm_scores):.3f}    "
-                  f"{np.mean(gdt_ts):.3f} ± {np.std(gdt_ts):.3f}    "
-                  f"{np.mean(rmsds):.2f} ± {np.std(rmsds):.2f}")
+            tm_mean, tm_std = np.mean(tm_scores), np.std(tm_scores)
+            rmsd_mean, rmsd_std = np.mean(rmsds), np.std(rmsds)
+            
+            print(f"{method:<35} {n:<6} {tm_mean:.3f} ± {tm_std:.3f}        {rmsd_mean:.2f} ± {rmsd_std:.2f}")
 
 
 def plot_scatter(results, output_dir: Path):
-    """Generate scatter plots: TM-score, GDT-TS, and RMSD vs protein length"""
+    """Generate scatter plots: TM-score and RMSD vs protein length"""
     references = ["openfold_deconstructed", "openfold_0recycles"]
     
     for ref_name in references:
-        fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+        fig, axes = plt.subplots(1, 2, figsize=(14, 6))
         
+        # Collect data for plotting
         for method in sorted(results.keys()):
             data = results[method].get(ref_name, [])
-            if not data or method == ref_name:
+            if not data:
                 continue
             
-            lengths = [d["length"] for d in data]
-            tm_scores = [d["tm_score"] for d in data]
-            gdt_ts = [d["gdt_ts"] for d in data]
-            rmsds = [d["rmsd"] for d in data]
+            lengths = [d[1] for d in data]
+            tm_scores = [d[2] for d in data]
+            rmsds = [d[3] for d in data]
+            
+            # Skip self-comparisons (TM=1.0)
+            if method == ref_name:
+                continue
             
             axes[0].scatter(lengths, tm_scores, label=method, alpha=0.7, s=30)
-            axes[1].scatter(lengths, gdt_ts, label=method, alpha=0.7, s=30)
-            axes[2].scatter(lengths, rmsds, label=method, alpha=0.7, s=30)
+            axes[1].scatter(lengths, rmsds, label=method, alpha=0.7, s=30)
         
         axes[0].set_xlabel("Protein Length (residues)")
         axes[0].set_ylabel("TM-score")
-        axes[0].set_title(f"TM-score vs Protein Length")
+        axes[0].set_title(f"TM-score vs Protein Length (ref: {ref_name})")
         axes[0].axhline(y=0.5, color='r', linestyle='--', label='Same fold threshold')
         axes[0].legend(fontsize=8, loc='best')
         axes[0].grid(True, alpha=0.3)
         
         axes[1].set_xlabel("Protein Length (residues)")
-        axes[1].set_ylabel("GDT-TS")
-        axes[1].set_title(f"GDT-TS vs Protein Length")
+        axes[1].set_ylabel("RMSD (Å)")
+        axes[1].set_title(f"RMSD vs Protein Length (ref: {ref_name})")
         axes[1].legend(fontsize=8, loc='best')
         axes[1].grid(True, alpha=0.3)
         
-        axes[2].set_xlabel("Protein Length (residues)")
-        axes[2].set_ylabel("RMSD (Å)")
-        axes[2].set_title(f"RMSD vs Protein Length")
-        axes[2].legend(fontsize=8, loc='best')
-        axes[2].grid(True, alpha=0.3)
-        
-        plt.suptitle(f"Metrics vs {ref_name}", fontsize=12, fontweight='bold')
         plt.tight_layout()
         plot_path = output_dir / f"scatter_vs_{ref_name}.png"
         plt.savefig(plot_path, dpi=150)
         print(f"Saved: {plot_path}")
         plt.close()
-
-
-def save_per_protein_metrics(results, output_dir: Path):
-    """Save per-protein metrics to CSV file"""
-    import csv
-    
-    references = ["openfold_deconstructed", "openfold_0recycles"]
-    
-    for ref_name in references:
-        csv_path = output_dir / f"per_protein_metrics_vs_{ref_name}.csv"
-        
-        with open(csv_path, 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(["pdb_id", "length", "method", "tm_score", "gdt_ts", "rmsd"])
-            
-            for method in sorted(results.keys()):
-                data = results[method].get(ref_name, [])
-                for d in data:
-                    writer.writerow([
-                        d["pdb_id"],
-                        d["length"],
-                        method,
-                        f"{d['tm_score']:.4f}",
-                        f"{d['gdt_ts']:.4f}",
-                        f"{d['rmsd']:.2f}"
-                    ])
-        
-        print(f"Saved: {csv_path}")
 
 
 if __name__ == "__main__":
@@ -263,5 +215,4 @@ if __name__ == "__main__":
     
     results = process_all_proteins(base_path)
     print_summary_stats(results)
-    save_per_protein_metrics(results, output_dir)
     plot_scatter(results, output_dir)
